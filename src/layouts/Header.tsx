@@ -17,6 +17,11 @@ export const Header = () => {
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
 
+                <div className="flex items-center gap-2 mr-4">
+                    <img src="/logo.png" alt="Ээлеп кал" className="w-8 h-8 rounded-lg object-contain" />
+                    <span className="font-black text-brand-primary text-xl tracking-tighter hidden sm:block">Ээлеп кал</span>
+                </div>
+
                 <div className="relative w-64 hidden lg:block">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
