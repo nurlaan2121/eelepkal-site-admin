@@ -6,8 +6,9 @@ export const authService = {
         const response = await apiClient.post<AuthResponse>('/api/auth/admins/sign-in', data);
         return response.data;
     },
-    signUpSuperAdmin: async (data: SuperAdminRegistrationRequest): Promise<void> => {
-        await apiClient.post('/api/auth/super-admin/send-otp-email', data);
+    signUpSuperAdmin: async (data: SuperAdminRegistrationRequest): Promise<any> => {
+        const response = await apiClient.post('/api/auth/super-admin/send-otp-email', data);
+        return response.data;
     },
     verifyEmail: async (data: VerifyEmailRequest): Promise<AuthResponse> => {
         const response = await apiClient.post<AuthResponse>('/api/auth/super-admin/verify-email', data);

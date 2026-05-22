@@ -116,12 +116,19 @@ export const LoginPage = () => {
                 ...data,
                 phoneNumber: `+996${data.phoneNumber}`
             };
-            await authService.signUpSuperAdmin(formattedData);
-            toast.success('Код подтверждения отправлен на вашу почту!');
+            const response = await authService.signUpSuperAdmin(formattedData);
+
+            // Show success message from server if available
+            toast.success(response?.message || 'Код подтверждения отправлен на вашу почту!');
+
+            // Successful request - move to verification step
             setIsVerifying(true);
             startResendTimer();
         } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Ошибка при регистрации');
+            // Log full error for debugging but show clear message to user
+            console.error('Registration error:', error);
+            const errorMessage = error.response?.data?.message || error.message || 'Ошибка при регистрации';
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
