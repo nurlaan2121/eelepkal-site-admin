@@ -4,6 +4,7 @@ import { UserPlus, Search, Shield, Mail, Phone, MapPin, MoreVertical, Trash2, X 
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { superAdminService, AdminPersonal } from '../../../api/admin/superAdminService';
+import { AddAdminModal } from './AddAdminModal';
 
 // ─── Admin Action Menu ───
 const AdminActionMenu: React.FC<{ admin: AdminPersonal; onDelete: (id: number) => void; isDeleting: boolean }> = ({
@@ -146,6 +147,7 @@ const AdminSkeleton = () => (
 export const SuperAdminAdminsPage: React.FC = () => {
     const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
 
     const { data: admins = [], isLoading } = useQuery({
         queryKey: ['super-admin-admins'],
@@ -175,7 +177,10 @@ export const SuperAdminAdminsPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Администраторы</h1>
                     <p className="text-slate-400 text-sm mt-0.5">{admins.length} администраторов в системе</p>
                 </div>
-                <button className="flex items-center justify-center gap-2 h-12 px-6 w-full md:w-auto bg-brand-primary text-white rounded-2xl font-black text-sm shadow-lg shadow-brand-100 active:scale-95 transition-all">
+                <button 
+                    onClick={() => setIsAddModalOpen(true)}
+                    className="flex items-center justify-center gap-2 h-12 px-6 w-full md:w-auto bg-brand-primary text-white rounded-2xl font-black text-sm shadow-lg shadow-brand-100 active:scale-95 transition-all"
+                >
                     <UserPlus size={18} />
                     <span>Добавить администратора</span>
                 </button>
@@ -229,6 +234,15 @@ export const SuperAdminAdminsPage: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Add Admin Modal */}
+            <AddAdminModal 
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSuccess={() => {
+                    queryClient.invalidateQueries({ queryKey: ['super-admin-admins'] });
+                }}
+            />
         </div>
     );
 };
