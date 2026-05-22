@@ -60,7 +60,7 @@ export const CreateVenuePage: React.FC = () => {
                 {STEPS.map((step, i) => (
                     <React.Fragment key={step.id}>
                         <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${currentStep >= step.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 text-gray-400'
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${currentStep >= step.id ? 'bg-brand-600 text-white' : 'bg-gray-100 text-gray-400'
                                 }`}>
                                 {currentStep > step.id ? <Check size={20} /> : <step.icon size={20} />}
                             </div>
@@ -72,7 +72,7 @@ export const CreateVenuePage: React.FC = () => {
                             </div>
                         </div>
                         {i < STEPS.length - 1 && (
-                            <div className={`flex-1 h-px ${currentStep > step.id ? 'bg-emerald-600' : 'bg-gray-200'}`} />
+                            <div className={`flex-1 h-px ${currentStep > step.id ? 'bg-brand-600' : 'bg-gray-200'}`} />
                         )}
                     </React.Fragment>
                 ))}
@@ -106,7 +106,7 @@ export const CreateVenuePage: React.FC = () => {
                                         <label className="text-sm font-medium text-gray-700">Описание</label>
                                         <textarea
                                             {...basicForm.register('description')}
-                                            className="w-full min-h-[120px] p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                                            className="w-full min-h-[120px] p-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all"
                                             placeholder="Опишите заведение, атмосферу, кухню..."
                                         />
                                         {basicForm.formState.errors.description && (
@@ -172,8 +172,8 @@ export const CreateVenuePage: React.FC = () => {
                                                     socialForm.trigger('tags');
                                                 }}
                                                 className={`px-4 py-2 rounded-full text-sm border transition-all ${(socialForm.watch('tags') || []).includes(tag)
-                                                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                                                        : 'bg-white border-gray-200 text-gray-600 hover:border-emerald-600'
+                                                    ? 'bg-brand-600 border-brand-600 text-white'
+                                                    : 'bg-white border-gray-200 text-gray-600 hover:border-brand-600'
                                                     }`}
                                             >
                                                 {tag}

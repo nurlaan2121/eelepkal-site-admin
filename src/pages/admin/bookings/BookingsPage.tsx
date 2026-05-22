@@ -32,7 +32,7 @@ export const AdminBookingsPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Бронирования</h1>
                     <p className="text-gray-500 text-sm md:text-base">Управление резервами на сегодня</p>
                 </div>
-                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-emerald-100">
+                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100">
                     <Calendar size={20} />
                     <span>Новая бронь</span>
                 </Button>
@@ -45,7 +45,7 @@ export const AdminBookingsPage: React.FC = () => {
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab ? 'bg-emerald-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
+                                className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap ${activeTab === tab ? 'bg-brand-primary text-white shadow-md' : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 {tab}
@@ -72,8 +72,8 @@ export const AdminBookingsPage: React.FC = () => {
                                     <h3 className="font-bold text-gray-900 text-lg leading-tight">{booking.customerName}</h3>
                                     <p className="text-xs text-gray-400 font-bold tracking-wide uppercase mt-0.5">{booking.customerPhone}</p>
                                 </div>
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
-                                        booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${booking.status === 'CONFIRMED' ? 'bg-brand-100 text-brand-700' :
+                                    booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                                     }`}>
                                     {booking.status === 'CONFIRMED' ? 'ОК' : booking.status === 'PENDING' ? 'WAIT' : 'CANCEL'}
                                 </span>
@@ -81,17 +81,17 @@ export const AdminBookingsPage: React.FC = () => {
 
                             <div className="grid grid-cols-3 gap-3 mb-4">
                                 <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col items-center">
-                                    <Hash size={14} className="text-emerald-500 mb-1" />
+                                    <Hash size={14} className="text-brand-500 mb-1" />
                                     <p className="text-[10px] text-gray-400 uppercase font-bold">Стол</p>
                                     <p className="text-sm font-black text-gray-800">№{booking.tableNumber}</p>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col items-center">
-                                    <Clock size={14} className="text-emerald-500 mb-1" />
+                                    <Clock size={14} className="text-brand-500 mb-1" />
                                     <p className="text-[10px] text-gray-400 uppercase font-bold">Время</p>
                                     <p className="text-sm font-black text-gray-800">{booking.bookingTime}</p>
                                 </div>
                                 <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col items-center">
-                                    <User size={14} className="text-emerald-500 mb-1" />
+                                    <User size={14} className="text-brand-500 mb-1" />
                                     <p className="text-[10px] text-gray-400 uppercase font-bold">Гости</p>
                                     <p className="text-sm font-black text-gray-800">{booking.guestsCount}</p>
                                 </div>
@@ -100,7 +100,7 @@ export const AdminBookingsPage: React.FC = () => {
                             <div className="flex gap-2">
                                 {booking.status === 'PENDING' ? (
                                     <>
-                                        <button className="flex-1 py-3 bg-emerald-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-emerald-100">
+                                        <button className="flex-1 py-3 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand-100">
                                             <Check size={16} />
                                             Принять
                                         </button>
@@ -141,23 +141,23 @@ export const AdminBookingsPage: React.FC = () => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-100">
+                                        <span className="text-xs font-black text-brand-600 bg-brand-50 px-2.5 py-1.5 rounded-lg border border-brand-100">
                                             №{booking.tableNumber}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-sm text-gray-900">
-                                            <Clock size={16} className="text-emerald-500" />
+                                            <Clock size={16} className="text-brand-500" />
                                             {booking.bookingTime}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-gray-700 flex items-center gap-1.5 pt-6">
-                                        <User size={16} className="text-emerald-500" />
+                                        <User size={16} className="text-brand-500" />
                                         {booking.guestsCount} чел.
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${booking.status === 'CONFIRMED' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
-                                                booking.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-red-50 text-red-700 border-red-100'
+                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${booking.status === 'CONFIRMED' ? 'bg-brand-50 text-brand-700 border-brand-100' :
+                                            booking.status === 'PENDING' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-red-50 text-red-700 border-red-100'
                                             }`}>
                                             {booking.status === 'CONFIRMED' ? 'Подтвержден' : booking.status === 'PENDING' ? 'Ожидание' : 'Отменен'}
                                         </span>
@@ -166,7 +166,7 @@ export const AdminBookingsPage: React.FC = () => {
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {booking.status === 'PENDING' && (
                                                 <>
-                                                    <button className="p-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 shadow-md">
+                                                    <button className="p-2 rounded-lg bg-brand-primary text-white hover:bg-brand-600 shadow-md">
                                                         <Check size={16} />
                                                     </button>
                                                     <button className="p-2 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors">

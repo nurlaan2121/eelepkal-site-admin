@@ -61,7 +61,7 @@ export const SuperAdminBookingsPage: React.FC = () => {
                         <div key={booking.id} className="p-4 active:bg-gray-50 transition-colors">
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm">
+                                    <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-sm">
                                         {booking.customerName.charAt(0)}
                                     </div>
                                     <div>
@@ -69,8 +69,8 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                         <p className="text-[11px] text-gray-400 font-bold">{booking.customerPhone}</p>
                                     </div>
                                 </div>
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
-                                        booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${booking.status === 'CONFIRMED' ? 'bg-brand-100 text-brand-700' :
+                                    booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
                                     }`}>
                                     {booking.status === 'CONFIRMED' ? 'ОК' : booking.status === 'PENDING' ? 'Ждет' : 'Отмена'}
                                 </span>
@@ -80,14 +80,14 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                 <div>
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Заведение</p>
                                     <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                                        <Building size={12} className="text-emerald-500" />
+                                        <Building size={12} className="text-brand-500" />
                                         {booking.venueName}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Гости</p>
                                     <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
-                                        <User size={12} className="text-emerald-500" />
+                                        <User size={12} className="text-brand-500" />
                                         {booking.guestsCount} чел.
                                     </p>
                                 </div>
@@ -96,11 +96,11 @@ export const SuperAdminBookingsPage: React.FC = () => {
                             <div className="flex items-center justify-between text-[11px]">
                                 <div className="flex items-center gap-3 font-bold text-gray-500">
                                     <div className="flex items-center gap-1">
-                                        <Calendar size={12} className="text-emerald-500" />
+                                        <Calendar size={12} className="text-brand-500" />
                                         {new Date(booking.bookingDate).toLocaleDateString('ru-RU')}
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Clock size={12} className="text-emerald-500" />
+                                        <Clock size={12} className="text-brand-500" />
                                         {booking.bookingTime}
                                     </div>
                                 </div>
@@ -129,7 +129,7 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                 <tr key={booking.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold group-hover:scale-110 transition-transform">
+                                            <div className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 text-xs font-bold group-hover:scale-110 transition-transform">
                                                 {booking.customerName.charAt(0)}
                                             </div>
                                             <div>
@@ -140,14 +140,14 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-sm text-gray-700 font-bold">
-                                            <Building size={16} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                                            <Building size={16} className="text-gray-400 group-hover:text-brand-500 transition-colors" />
                                             {booking.venueName}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="space-y-0.5">
                                             <div className="flex items-center gap-1.5 text-sm text-gray-900 font-bold">
-                                                <Calendar size={14} className="text-emerald-500" />
+                                                <Calendar size={14} className="text-brand-500" />
                                                 {new Date(booking.bookingDate).toLocaleDateString('ru-RU')}
                                             </div>
                                             <div className="flex items-center gap-1.5 text-xs text-gray-500 font-bold">
@@ -158,13 +158,13 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 font-bold text-gray-700">
                                         <div className="flex items-center gap-1.5">
-                                            <User size={16} className="text-emerald-500" />
+                                            <User size={16} className="text-brand-500" />
                                             {booking.guestsCount}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight border ${booking.status === 'CONFIRMED'
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                            ? 'bg-brand-50 text-brand-700 border-brand-100'
                                             : booking.status === 'PENDING'
                                                 ? 'bg-amber-50 text-amber-700 border-amber-100'
                                                 : 'bg-red-50 text-red-700 border-red-100'

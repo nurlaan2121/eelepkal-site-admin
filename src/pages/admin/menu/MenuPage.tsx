@@ -41,7 +41,7 @@ export const AdminMenuPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Меню</h1>
                     <p className="text-gray-500 text-sm md:text-base">Управление блюдами и стоп-листами</p>
                 </div>
-                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-emerald-100 font-bold uppercase tracking-widest text-xs">
+                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100 font-bold uppercase tracking-widest text-xs">
                     <Plus size={20} />
                     <span>Добавить блюдо</span>
                 </Button>
@@ -64,8 +64,8 @@ export const AdminMenuPage: React.FC = () => {
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
                                 className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 whitespace-nowrap ${activeCategory === cat
-                                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg'
-                                        : 'bg-white border-gray-100 text-gray-500 hover:border-emerald-200'
+                                    ? 'bg-brand-primary border-brand-primary text-white shadow-lg'
+                                    : 'bg-white border-gray-100 text-gray-500 hover:border-brand-200'
                                     }`}
                             >
                                 {cat}
@@ -101,11 +101,11 @@ export const AdminMenuPage: React.FC = () => {
                                                 <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">
                                                     {item.category}
                                                 </span>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${item.isAvailable ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                                <span className={`w-1.5 h-1.5 rounded-full ${item.isAvailable ? 'bg-brand-500' : 'bg-red-500'}`} />
                                             </div>
                                         </div>
                                         <div className="flex items-end justify-between">
-                                            <p className="text-lg font-black text-emerald-600">
+                                            <p className="text-lg font-black text-brand-primary">
                                                 {item.price} <span className="text-[10px] uppercase">{item.currency}</span>
                                             </p>
                                             <div className="flex gap-1.5">
@@ -157,15 +157,15 @@ export const AdminMenuPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${item.isAvailable ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                            <span className={`text-[10px] font-black uppercase tracking-tight ${item.isAvailable ? 'text-emerald-700' : 'text-red-700'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${item.isAvailable ? 'bg-brand-500' : 'bg-red-500'}`} />
+                                            <span className={`text-[10px] font-black uppercase tracking-tight ${item.isAvailable ? 'text-brand-700' : 'text-red-700'}`}>
                                                 {item.isAvailable ? 'В наличии' : 'Стоп-лист'}
                                             </span>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 text-gray-400 hover:text-emerald-600">
+                                            <button className="p-2 text-gray-400 hover:text-brand-600">
                                                 <Edit2 size={18} />
                                             </button>
                                             <button className="p-2 text-gray-400 hover:text-red-600">

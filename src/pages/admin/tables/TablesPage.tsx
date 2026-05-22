@@ -29,7 +29,7 @@ export const AdminTablesPage: React.FC = () => {
     const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.status === filter);
 
     const statusStyles = {
-        AVAILABLE: 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-emerald-50',
+        AVAILABLE: 'border-brand-200 bg-brand-50 text-brand-700 shadow-brand-50',
         OCCUPIED: 'border-blue-200 bg-blue-50 text-blue-700 shadow-blue-50',
         RESERVED: 'border-amber-200 bg-amber-50 text-amber-700 shadow-amber-50',
     };
@@ -46,7 +46,7 @@ export const AdminTablesPage: React.FC = () => {
                         <LayoutGrid size={20} />
                         <span className="hidden md:inline">Схема зала</span>
                     </Button>
-                    <Button className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-emerald-100">
+                    <Button className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-brand-100">
                         <Plus size={20} />
                         <span>Добавить стол</span>
                     </Button>
@@ -60,8 +60,8 @@ export const AdminTablesPage: React.FC = () => {
                         key={s}
                         onClick={() => setFilter(s as any)}
                         className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${filter === s
-                                ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
-                                : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'
+                            ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
+                            : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'
                             }`}
                     >
                         {s === 'ALL' ? 'Все' : s === 'AVAILABLE' ? 'Свободны' : s === 'OCCUPIED' ? 'Заняты' : 'Бронь'}

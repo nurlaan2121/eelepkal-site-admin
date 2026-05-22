@@ -19,7 +19,7 @@ export const SuperAdminDashboard: React.FC = () => {
                     change="12%"
                     isPositive={true}
                     icon={Store}
-                    color="emerald"
+                    color="brand"
                 />
                 <AnalyticsCard
                     title="Брони"
@@ -52,7 +52,7 @@ export const SuperAdminDashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
                         <h3 className="font-black text-gray-900 uppercase text-xs tracking-widest">Новые регистрации</h3>
-                        <button className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700">Все</button>
+                        <button className="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:text-brand-700">Все</button>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {[1, 2, 3, 4, 5].map((i) => (
@@ -66,7 +66,7 @@ export const SuperAdminDashboard: React.FC = () => {
                                         <p className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">Бишкек • {i * 10} мин назад</p>
                                     </div>
                                 </div>
-                                <ArrowUpRight className="text-emerald-500" size={20} />
+                                <ArrowUpRight className="text-brand-500" size={20} />
                             </div>
                         ))}
                     </div>
@@ -91,14 +91,14 @@ export const SuperAdminDashboard: React.FC = () => {
 
                         <motion.div
                             whileTap={{ scale: 0.98 }}
-                            className="flex gap-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-100/50"
+                            className="flex gap-4 p-4 rounded-2xl bg-brand-50 border-2 border-brand-100/50"
                         >
-                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                            <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center text-brand-600 shrink-0">
                                 <Users size={24} />
                             </div>
                             <div>
-                                <p className="text-xs font-black text-emerald-900 uppercase tracking-tight">Новые отзывы</p>
-                                <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">Получено 15 новых отзывов за последние 24ч</p>
+                                <p className="text-xs font-black text-brand-900 uppercase tracking-tight">Новые отзывы</p>
+                                <p className="text-xs text-brand-700 mt-0.5 leading-relaxed font-medium">Получено 15 новых отзывов за последние 24ч</p>
                             </div>
                         </motion.div>
                     </div>

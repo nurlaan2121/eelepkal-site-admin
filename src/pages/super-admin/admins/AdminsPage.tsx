@@ -36,7 +36,7 @@ export const SuperAdminAdminsPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Администраторы</h1>
                     <p className="text-gray-500 text-sm md:text-base">Управление учетными записями менеджеров ресторанов</p>
                 </div>
-                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-emerald-100">
+                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100">
                     <UserPlus size={20} />
                     <span>Создать админа</span>
                 </Button>
@@ -84,13 +84,13 @@ export const SuperAdminAdminsPage: React.FC = () => {
                                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                         <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Заведение</p>
                                         <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                                            <Building size={12} className="text-emerald-500" />
+                                            <Building size={12} className="text-brand-500" />
                                             {admin.venueName}
                                         </p>
                                     </div>
                                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                                         <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Статус</p>
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${admin.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${admin.status === 'ACTIVE' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
                                             }`}>
                                             {admin.status === 'ACTIVE' ? 'Активен' : 'Отключен'}
                                         </span>
@@ -141,12 +141,12 @@ export const SuperAdminAdminsPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2 text-gray-700 font-bold">
-                                            <Building size={16} className="text-emerald-500" />
+                                            <Building size={16} className="text-brand-500" />
                                             {admin.venueName}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${admin.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${admin.status === 'ACTIVE' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-700'
                                             }`}>
                                             {admin.status === 'ACTIVE' ? 'Активен' : 'Отключен'}
                                         </span>
@@ -155,7 +155,7 @@ export const SuperAdminAdminsPage: React.FC = () => {
                                         {admin.lastLogin}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button className="p-2 text-gray-400 hover:text-emerald-600 transition-colors">
+                                        <button className="p-2 text-gray-400 hover:text-brand-600 transition-colors">
                                             <MoreVertical size={18} />
                                         </button>
                                     </td>

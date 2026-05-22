@@ -76,7 +76,7 @@ export const LoginPage = () => {
                             initial={{ y: -20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ delay: 0.2 }}
-                            className="w-20 h-20 bg-emerald-600 rounded-[24px] flex items-center justify-center mb-6 shadow-xl shadow-emerald-200"
+                            className="w-20 h-20 bg-brand-primary rounded-[24px] flex items-center justify-center mb-6 shadow-xl shadow-brand-100"
                         >
                             <LogIn className="w-10 h-10 text-white" />
                         </motion.div>
@@ -93,7 +93,7 @@ export const LoginPage = () => {
                                     {...register('email')}
                                     type="email"
                                     placeholder="your@email.com"
-                                    className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-emerald-500 transition-all outline-none ${errors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'
+                                    className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${errors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'
                                         }`}
                                 />
                             </div>
@@ -108,13 +108,13 @@ export const LoginPage = () => {
                                     {...register('password')}
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="••••••••"
-                                    className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-emerald-500 transition-all outline-none ${errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'
+                                    className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'
                                         }`}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-emerald-500 transition-colors"
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
                                 >
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
@@ -130,21 +130,21 @@ export const LoginPage = () => {
                                         className="peer sr-only"
                                         {...register('rememberMe')}
                                     />
-                                    <div className="w-5 h-5 border-2 border-slate-200 rounded-lg peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-all" />
+                                    <div className="w-5 h-5 border-2 border-slate-200 rounded-lg peer-checked:bg-brand-primary peer-checked:border-brand-primary transition-all" />
                                     <div className="absolute inset-0 flex items-center justify-center text-white opacity-0 peer-checked:opacity-100 transition-opacity">
                                         <CheckIcon className="w-3.5 h-3.5" />
                                     </div>
                                 </div>
                                 <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">Запомнить</span>
                             </label>
-                            <button type="button" className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition-colors">
+                            <button type="button" className="text-sm font-bold text-brand-primary hover:text-brand-700 transition-colors">
                                 Сброс пароля
                             </button>
                         </div>
 
                         <Button
                             type="submit"
-                            className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-emerald-100 active:scale-[0.98] transition-transform"
+                            className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100 active:scale-[0.98] transition-transform"
                             isLoading={isLoading}
                         >
                             Войти

@@ -8,11 +8,11 @@ interface AnalyticsCardProps {
     change?: string;
     isPositive?: boolean;
     icon: LucideIcon;
-    color: 'emerald' | 'blue' | 'amber' | 'purple';
+    color: 'brand' | 'blue' | 'amber' | 'purple';
 }
 
 const colorMap = {
-    emerald: 'bg-emerald-50 text-emerald-600',
+    brand: 'bg-brand-50 text-brand-600',
     blue: 'bg-blue-50 text-blue-600',
     amber: 'bg-amber-50 text-amber-600',
     purple: 'bg-purple-50 text-purple-600',
@@ -36,7 +36,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({
                     <Icon size={24} />
                 </div>
                 {change && (
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${isPositive ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'
+                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${isPositive ? 'bg-brand-50 text-brand-700' : 'bg-red-50 text-red-700'
                         }`}>
                         {isPositive ? '+' : ''}{change}
                     </span>

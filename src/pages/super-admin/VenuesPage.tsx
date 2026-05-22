@@ -38,7 +38,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                 </div>
                 <Button
                     onClick={() => navigate('/super-admin/venues/create')}
-                    className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-emerald-100"
+                    className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100"
                 >
                     <Plus size={20} />
                     <span>Добавить заведение</span>
@@ -57,7 +57,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                         />
                     </div>
                     <div className="flex w-full md:w-auto gap-2">
-                        <select className="flex-1 md:flex-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all appearance-none">
+                        <select className="flex-1 md:flex-none bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all appearance-none">
                             <option>Все статусы</option>
                             <option>Активные</option>
                             <option>Неактивные</option>
@@ -86,12 +86,12 @@ export const SuperAdminVenuesPage: React.FC = () => {
                             <div key={venue.id} className="p-4 active:bg-gray-50 transition-colors">
                                 <div className="flex items-start justify-between mb-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100">
+                                        <div className="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 border border-brand-100">
                                             <Store size={24} />
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-gray-900">{venue.name}</h3>
-                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${venue.venueStatus === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${venue.venueStatus === 'ACTIVE' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
                                                 }`}>
                                                 {venue.venueStatus === 'ACTIVE' ? 'Активен' : 'Неактивен'}
                                             </span>
@@ -140,7 +140,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                                 <tr key={venue.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 border border-emerald-100 group-hover:scale-110 transition-transform">
+                                            <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 border border-brand-100 group-hover:scale-110 transition-transform">
                                                 <Store size={20} />
                                             </div>
                                             <div>
@@ -154,7 +154,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${venue.venueStatus === 'ACTIVE'
-                                            ? 'bg-emerald-100 text-emerald-700'
+                                            ? 'bg-brand-100 text-brand-700'
                                             : 'bg-gray-100 text-gray-700'
                                             }`}>
                                             {venue.venueStatus === 'ACTIVE' ? 'Активен' : 'Неактивен'}
@@ -162,7 +162,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <button className="p-2 text-gray-400 hover:text-emerald-600 transition-colors">
+                                            <button className="p-2 text-gray-400 hover:text-brand-600 transition-colors">
                                                 <Edit2 size={18} />
                                             </button>
                                             <button

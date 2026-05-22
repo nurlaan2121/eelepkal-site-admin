@@ -13,8 +13,8 @@ export const AdminDashboard: React.FC = () => {
                     <p className="text-gray-500 text-sm md:text-base font-medium">Сводка на {new Date().toLocaleDateString('ru-RU')}</p>
                 </div>
                 <div className="flex items-center gap-2 self-start md:self-auto">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200 shadow-sm shadow-emerald-50">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-brand-100 text-brand-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-brand-200 shadow-sm shadow-brand-50">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
                         Открыто
                     </div>
                 </div>
@@ -28,7 +28,7 @@ export const AdminDashboard: React.FC = () => {
                     change="+5"
                     isPositive={true}
                     icon={Calendar}
-                    color="emerald"
+                    color="brand"
                 />
                 <AnalyticsCard
                     title="Столы"
@@ -57,7 +57,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
                         <h3 className="font-black text-gray-900 uppercase text-xs tracking-widest">Ближайшие брони</h3>
-                        <button className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700">Весь график</button>
+                        <button className="text-[10px] font-black uppercase tracking-widest text-brand-600 hover:text-brand-700">Весь график</button>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {[
@@ -70,7 +70,7 @@ export const AdminDashboard: React.FC = () => {
                             <div key={i} className="p-5 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-2xl bg-white border-2 border-slate-50 flex flex-col items-center justify-center shadow-sm">
-                                        <Clock size={12} className="text-emerald-500 mb-0.5" />
+                                        <Clock size={12} className="text-brand-500 mb-0.5" />
                                         <span className="text-sm font-black text-gray-900">{booking.time}</span>
                                     </div>
                                     <div>
@@ -79,13 +79,13 @@ export const AdminDashboard: React.FC = () => {
                                             <span className="text-[10px] font-bold text-gray-400 uppercase flex items-center gap-1">
                                                 <Users size={10} /> {booking.guests} чел.
                                             </span>
-                                            <span className="text-[10px] font-bold text-emerald-600 uppercase bg-emerald-50 px-1.5 py-0.5 rounded-md">
+                                            <span className="text-[10px] font-bold text-brand-600 uppercase bg-brand-50 px-1.5 py-0.5 rounded-md">
                                                 {booking.table}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
-                                <ArrowUpRight className="text-slate-300 group-hover:text-emerald-500" size={20} />
+                                <ArrowUpRight className="text-slate-300 group-hover:text-brand-500" size={20} />
                             </div>
                         ))}
                     </div>
@@ -105,7 +105,7 @@ export const AdminDashboard: React.FC = () => {
                                 </div>
                                 <p className="text-xs text-gray-600 leading-relaxed font-medium italic">"Прекрасное обслуживание и вкусная еда. Очень уютная атмосфера!"</p>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-full bg-emerald-600 text-[10px] flex items-center justify-center font-black text-white shadow-lg shadow-emerald-100">AK</div>
+                                    <div className="w-8 h-8 rounded-full bg-brand-primary text-[10px] flex items-center justify-center font-black text-white shadow-lg shadow-brand-100">AK</div>
                                     <span className="text-[11px] font-black text-gray-700 uppercase tracking-tight">Айсулуу К.</span>
                                 </div>
                             </div>
