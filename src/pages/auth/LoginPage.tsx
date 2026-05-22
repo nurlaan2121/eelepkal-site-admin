@@ -111,21 +111,20 @@ export const LoginPage = () => {
     const onRegisterSubmit = async (data: RegisterFormValues) => {
         setIsLoading(true);
         try {
-            // Add prefix to phone number
             const formattedData = {
                 ...data,
                 phoneNumber: `+996${data.phoneNumber}`
             };
             const response = await authService.signUpSuperAdmin(formattedData);
 
-            // Show success message from server if available
-            toast.success(response?.message || 'Код подтверждения отправлен на вашу почту!');
-
-            // Successful request - move to verification step
-            setIsVerifying(true);
-            startResendTimer();
+            if (response?.httpStatus === 'OK') {
+                toast.success(response?.message || 'Код подтверждения отправлен на вашу почту!');
+                setIsVerifying(true);
+                startResendTimer();
+            } else {
+                toast.error(response?.message || 'Ошибка при регистрации');
+            }
         } catch (error: any) {
-            // Log full error for debugging but show clear message to user
             console.error('Registration error:', error);
             const errorMessage = error.response?.data?.message || error.message || 'Ошибка при регистрации';
             toast.error(errorMessage);
