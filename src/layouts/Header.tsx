@@ -17,9 +17,9 @@ export const Header = () => {
                     {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
 
-                <div className="flex items-center gap-2 mr-4">
+                <div className="flex items-center gap-2 mr-4 min-w-0 flex-shrink-0">
                     <img src="/logo.png" alt="Ээлеп кал" className="w-8 h-8 rounded-lg object-contain" />
-                    <span className="font-black text-brand-primary text-xl tracking-tighter hidden sm:block">Ээлеп кал</span>
+                    <span className="font-black text-brand-primary text-lg md:text-xl tracking-tighter truncate">Ээлеп кал</span>
                 </div>
 
                 <div className="relative w-64 hidden lg:block">
