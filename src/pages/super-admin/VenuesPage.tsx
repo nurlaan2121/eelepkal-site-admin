@@ -29,13 +29,13 @@ export const SuperAdminVenuesPage: React.FC = () => {
         initialPageParam: 0,
     });
 
-    const venues = data?.pages.flatMap((page) => page) || [];
+    const venues = data?.pages.flatMap((page) => page || []) || [];
 
     React.useEffect(() => {
-        if (inView && hasNextPage) {
+        if (inView && hasNextPage && !isFetchingNextPage) {
             fetchNextPage();
         }
-    }, [inView, hasNextPage, fetchNextPage]);
+    }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
     const deleteMutation = useMutation({
         mutationFn: (id: number) => superAdminVenueService.deleteVenue(id),
@@ -45,8 +45,8 @@ export const SuperAdminVenuesPage: React.FC = () => {
     });
 
     const filteredVenues = venues.filter((v) =>
-        v.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.address.toLowerCase().includes(searchTerm.toLowerCase())
+        (v.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (v.address?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
     return (
