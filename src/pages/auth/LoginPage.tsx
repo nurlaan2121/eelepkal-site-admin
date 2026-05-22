@@ -90,7 +90,7 @@ export const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 venueId: response.venueId
-            }, response.accessToken);
+            }, response.token);
 
             toast.success('Успешный вход!');
 
@@ -153,7 +153,7 @@ export const LoginPage = () => {
                 email: response.email,
                 role: response.role,
                 venueId: response.venueId
-            }, response.accessToken);
+            }, response.token);
 
             toast.success('Регистрация успешно завершена!');
             navigate('/super-admin/dashboard');

@@ -6,7 +6,7 @@ export interface SignInRequest {
 }
 
 export interface AuthResponse {
-    accessToken: string;
+    token: string;
     role: UserRole;
     venueId?: number;
     userId: number;
