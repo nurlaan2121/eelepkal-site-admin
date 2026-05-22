@@ -20,6 +20,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         delete safeHeaders.host;
         delete safeHeaders.connection;
 
+        // Ensure Authorization header is passed even if lowercase/uppercase issues occur
+        const authHeader = req.headers.authorization || req.headers.Authorization;
+        if (authHeader) {
+            safeHeaders['authorization'] = authHeader;
+        }
+
         const config = {
             method: req.method,
             url: targetUrl,

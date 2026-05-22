@@ -13,15 +13,16 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config) => {
     const token = useAuthStore.getState().accessToken;
+
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers['Authorization'] = `Bearer ${token}`;
     }
 
     // Transform /some/path into ?path=some/path
     if (config.url && config.url !== PROXY_URL) {
         const path = config.url.startsWith('/') ? config.url.substring(1) : config.url;
         config.params = { ...config.params, path };
-        config.url = ''; // Let baseURL handle the rest (/api/proxy)
+        config.url = PROXY_URL;
     }
 
     return config;
