@@ -210,7 +210,17 @@ export const SuperAdminAdminsPage: React.FC = () => {
                     <div className="flex flex-col items-center justify-center py-16 text-center">
                         <Shield size={48} className="text-slate-200 mb-4" />
                         <p className="text-slate-400 font-bold">Администраторы не найдены</p>
-                        {searchTerm && <p className="text-xs text-slate-300 mt-1">Попробуйте изменить запрос</p>}
+                        {searchTerm ? (
+                            <p className="text-xs text-slate-300 mt-1">Попробуйте изменить запрос</p>
+                        ) : (
+                            <button
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="mt-6 flex items-center justify-center gap-2 h-11 px-6 bg-gradient-to-r from-brand-700 to-brand-900 hover:from-brand-600 hover:to-brand-800 text-white rounded-2xl font-black text-sm shadow-xl shadow-brand-900/30 active:scale-95 transition-all border-2 border-brand-600"
+                            >
+                                <UserPlus size={16} />
+                                <span>Добавить администратора</span>
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="divide-y divide-slate-50">
