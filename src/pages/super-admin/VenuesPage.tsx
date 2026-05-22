@@ -11,7 +11,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { VenueListItem, VenueCondition } from '../../types/venue';
 
 // ─────────── Replace Admin Modal ───────────
