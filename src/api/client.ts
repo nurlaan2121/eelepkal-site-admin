@@ -22,7 +22,7 @@ apiClient.interceptors.request.use((config) => {
     if (config.url && config.url !== PROXY_URL) {
         const path = config.url.startsWith('/') ? config.url.substring(1) : config.url;
         config.params = { ...config.params, path };
-        config.url = PROXY_URL;
+        config.url = '';
     }
 
     return config;
