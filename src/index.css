@@ -7,8 +7,26 @@
 }
 
 @layer base {
+
+  html,
   body {
-    @apply bg-slate-50 text-slate-900 antialiased;
+    @apply antialiased overflow-x-hidden;
+    touch-action: manipulation;
+    overscroll-behavior: none;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 min-h-screen;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font-size: 16px !important;
+    /* Prevent iOS auto-zoom on focus */
   }
 }
 

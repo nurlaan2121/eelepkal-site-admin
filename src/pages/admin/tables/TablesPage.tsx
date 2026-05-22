@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, LayoutGrid, Info, Trash2, Edit2 } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Table {
     id: number;
@@ -29,39 +29,39 @@ export const AdminTablesPage: React.FC = () => {
     const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.status === filter);
 
     const statusStyles = {
-        AVAILABLE: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-        OCCUPIED: 'border-blue-200 bg-blue-50 text-blue-700',
-        RESERVED: 'border-amber-200 bg-amber-50 text-amber-700',
+        AVAILABLE: 'border-emerald-200 bg-emerald-50 text-emerald-700 shadow-emerald-50',
+        OCCUPIED: 'border-blue-200 bg-blue-50 text-blue-700 shadow-blue-50',
+        RESERVED: 'border-amber-200 bg-amber-50 text-amber-700 shadow-amber-50',
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-6 pb-20 md:pb-0">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 md:px-0">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 font-display">Управление столами</h1>
-                    <p className="text-gray-500">Настройка схемы зала и статусов столов в реальном времени</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Схема столов</h1>
+                    <p className="text-gray-500 text-sm md:text-base">Мониторинг залов в реальном времени</p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2">
-                        <LayoutGrid size={18} />
-                        Схема зала
+                <div className="flex gap-2 w-full md:w-auto">
+                    <Button variant="outline" className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl">
+                        <LayoutGrid size={20} />
+                        <span className="hidden md:inline">Схема зала</span>
                     </Button>
-                    <Button className="gap-2">
-                        <Plus size={18} />
-                        Добавить стол
+                    <Button className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-emerald-100">
+                        <Plus size={20} />
+                        <span>Добавить стол</span>
                     </Button>
                 </div>
             </div>
 
             {/* Filters */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex overflow-x-auto no-scrollbar gap-2 px-1 md:px-0 pb-2">
                 {['ALL', 'AVAILABLE', 'OCCUPIED', 'RESERVED'].map((s) => (
                     <button
                         key={s}
                         onClick={() => setFilter(s as any)}
-                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${filter === s
-                                ? 'bg-slate-900 border-slate-900 text-white'
-                                : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${filter === s
+                                ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
+                                : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'
                             }`}
                     >
                         {s === 'ALL' ? 'Все' : s === 'AVAILABLE' ? 'Свободны' : s === 'OCCUPIED' ? 'Заняты' : 'Бронь'}
@@ -70,47 +70,50 @@ export const AdminTablesPage: React.FC = () => {
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6">
-                {filteredTables.map((table) => (
-                    <motion.div
-                        layout
-                        initial={{ scale: 0.9, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        key={table.id}
-                        className={`relative p-6 rounded-2xl border-2 transition-shadow hover:shadow-lg ${statusStyles[table.status]}`}
-                    >
-                        <div className="absolute top-3 right-3 text-[10px] font-bold uppercase opacity-60">
-                            {table.type}
-                        </div>
-
-                        <div className="flex flex-col items-center text-center space-y-3">
-                            <div className="w-12 h-12 rounded-full border-2 border-current flex items-center justify-center font-bold text-xl">
-                                {table.number}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+                <AnimatePresence mode="popLayout">
+                    {filteredTables.map((table) => (
+                        <motion.div
+                            layout
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            key={table.id}
+                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation shadow-sm ${statusStyles[table.status]}`}
+                        >
+                            <div className="absolute top-3 right-3 text-[9px] font-black uppercase opacity-40">
+                                {table.type}
                             </div>
-                            <div>
-                                <p className="text-xs font-bold uppercase opacity-80 mb-1">
-                                    {table.status === 'AVAILABLE' ? 'Свободен' : table.status === 'OCCUPIED' ? 'Занят' : 'Забронирован'}
-                                </p>
-                                <div className="flex items-center justify-center gap-1.5 font-medium">
-                                    <Users size={14} />
-                                    <span>{table.capacity} мест</span>
+
+                            <div className="flex flex-col items-center text-center space-y-3">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-current flex items-center justify-center font-black text-xl md:text-2xl bg-white/40 backdrop-blur-sm">
+                                    {table.number}
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                        {table.status === 'AVAILABLE' ? 'FREE' : table.status === 'OCCUPIED' ? 'BUSY' : 'RSVN'}
+                                    </p>
+                                    <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                                        <Users size={12} strokeWidth={3} />
+                                        <span>{table.capacity} мест</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="mt-6 flex items-center justify-center gap-2 pt-4 border-t border-current/10">
-                            <button className="p-1.5 rounded-lg hover:bg-white/50 transition-colors">
-                                <Edit2 size={16} />
-                            </button>
-                            <button className="p-1.5 rounded-lg hover:bg-white/50 transition-colors">
-                                <Info size={16} />
-                            </button>
-                            <button className="p-1.5 rounded-lg hover:bg-red-500 hover:text-white transition-colors">
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </motion.div>
-                ))}
+                            <div className="mt-5 pt-4 border-t border-current/10 flex items-center justify-around">
+                                <button className="p-2 rounded-xl hover:bg-white/50 transition-colors">
+                                    <Settings2 size={18} />
+                                </button>
+                                <button className="p-2 rounded-xl hover:bg-white/50 transition-colors">
+                                    <Edit2 size={18} />
+                                </button>
+                                <button className="p-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
         </div>
     );

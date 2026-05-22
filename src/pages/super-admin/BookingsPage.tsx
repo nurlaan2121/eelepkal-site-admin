@@ -1,9 +1,9 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Calendar, Search, Filter, Clock, User, Phone, Building } from 'lucide-react';
+import { Calendar, Search, Filter, Clock, User, Phone, Building, Info } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface GlobalBooking {
     id: number;
@@ -27,38 +27,96 @@ export const SuperAdminBookingsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 font-display">Все бронирования</h1>
-                <p className="text-gray-500">Глобальный список резервов во всех заведениях системы</p>
+            <div className="px-1 md:px-0">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Все бронирования</h1>
+                <p className="text-gray-500 text-sm md:text-base">Глобальный список резервов во всех заведениях системы</p>
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/30">
                     <div className="relative w-full md:w-96">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <Input
                             placeholder="Поиск по клиенту или заведению..."
-                            className="pl-10 h-11"
+                            className="pl-10 h-11 bg-white"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" className="gap-2">
-                            <Filter size={18} />
+                    <div className="flex w-full md:w-auto gap-2">
+                        <Button variant="outline" className="flex-1 md:flex-none gap-2 h-11 rounded-xl font-bold text-xs uppercase tracking-wider">
+                            <Filter size={16} />
                             Фильтры
                         </Button>
-                        <Button variant="outline" className="gap-2">
-                            <Calendar size={18} />
-                            За все время
+                        <Button variant="outline" className="flex-1 md:flex-none gap-2 h-11 rounded-xl font-bold text-xs uppercase tracking-wider">
+                            <Calendar size={16} />
+                            Сегодня
                         </Button>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                {/* Mobile Cards */}
+                <div className="md:hidden divide-y divide-gray-100">
+                    {bookings.map((booking) => (
+                        <div key={booking.id} className="p-4 active:bg-gray-50 transition-colors">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 font-bold text-sm">
+                                        {booking.customerName.charAt(0)}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-gray-900">{booking.customerName}</h3>
+                                        <p className="text-[11px] text-gray-400 font-bold">{booking.customerPhone}</p>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${booking.status === 'CONFIRMED' ? 'bg-emerald-100 text-emerald-700' :
+                                        booking.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                                    }`}>
+                                    {booking.status === 'CONFIRMED' ? 'ОК' : booking.status === 'PENDING' ? 'Ждет' : 'Отмена'}
+                                </span>
+                            </div>
+
+                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Заведение</p>
+                                    <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                                        <Building size={12} className="text-emerald-500" />
+                                        {booking.venueName}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Гости</p>
+                                    <p className="text-xs font-bold text-gray-700 flex items-center gap-1.5">
+                                        <User size={12} className="text-emerald-500" />
+                                        {booking.guestsCount} чел.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px]">
+                                <div className="flex items-center gap-3 font-bold text-gray-500">
+                                    <div className="flex items-center gap-1">
+                                        <Calendar size={12} className="text-emerald-500" />
+                                        {new Date(booking.bookingDate).toLocaleDateString('ru-RU')}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <Clock size={12} className="text-emerald-500" />
+                                        {booking.bookingTime}
+                                    </div>
+                                </div>
+                                <button className="p-2 text-slate-400">
+                                    <Info size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full text-left font-medium">
                         <thead>
-                            <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
+                            <tr className="bg-gray-50/50 text-gray-500 text-xs uppercase tracking-wider font-bold">
                                 <th className="px-6 py-4">Клиент</th>
                                 <th className="px-6 py-4">Заведение</th>
                                 <th className="px-6 py-4">Дата и Время</th>
@@ -66,60 +124,55 @@ export const SuperAdminBookingsPage: React.FC = () => {
                                 <th className="px-6 py-4">Статус</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-50">
+                        <tbody className="divide-y divide-gray-100 font-medium">
                             {bookings.map((booking) => (
-                                <motion.tr
-                                    key={booking.id}
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="hover:bg-slate-50/50 transition-colors"
-                                >
+                                <tr key={booking.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-xs font-bold group-hover:scale-110 transition-transform">
                                                 {booking.customerName.charAt(0)}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-gray-900">{booking.customerName}</p>
-                                                <p className="text-xs text-gray-400">{booking.customerPhone}</p>
+                                                <p className="text-sm font-bold text-gray-900">{booking.customerName}</p>
+                                                <p className="text-[11px] text-gray-400">{booking.customerPhone}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                                            <Building size={16} className="text-gray-400" />
+                                        <div className="flex items-center gap-2 text-sm text-gray-700 font-bold">
+                                            <Building size={16} className="text-gray-400 group-hover:text-emerald-500 transition-colors" />
                                             {booking.venueName}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-1.5 text-sm text-gray-900 font-medium">
+                                        <div className="space-y-0.5">
+                                            <div className="flex items-center gap-1.5 text-sm text-gray-900 font-bold">
                                                 <Calendar size={14} className="text-emerald-500" />
                                                 {new Date(booking.bookingDate).toLocaleDateString('ru-RU')}
                                             </div>
-                                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                                            <div className="flex items-center gap-1.5 text-xs text-gray-500 font-bold">
                                                 <Clock size={14} />
                                                 {booking.bookingTime}
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-1.5 text-sm font-medium text-gray-900">
+                                    <td className="px-6 py-4 font-bold text-gray-700">
+                                        <div className="flex items-center gap-1.5">
                                             <User size={16} className="text-emerald-500" />
                                             {booking.guestsCount}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${booking.status === 'CONFIRMED'
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                : booking.status === 'PENDING'
-                                                    ? 'bg-amber-50 text-amber-700 border-amber-100'
-                                                    : 'bg-red-50 text-red-700 border-red-100'
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight border ${booking.status === 'CONFIRMED'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                            : booking.status === 'PENDING'
+                                                ? 'bg-amber-50 text-amber-700 border-amber-100'
+                                                : 'bg-red-50 text-red-700 border-red-100'
                                             }`}>
                                             {booking.status === 'CONFIRMED' ? 'Подтверждено' : booking.status === 'PENDING' ? 'Ожидает' : 'Отменено'}
                                         </span>
                                     </td>
-                                </motion.tr>
+                                </tr>
                             ))}
                         </tbody>
                     </table>

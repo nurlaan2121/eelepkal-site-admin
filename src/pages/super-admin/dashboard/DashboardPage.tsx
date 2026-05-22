@@ -1,20 +1,20 @@
 import React from 'react';
-import { Users, Store, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
+import { Users, Store, Calendar, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { AnalyticsCard } from '../../../components/ui/AnalyticsCard';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const SuperAdminDashboard: React.FC = () => {
     return (
-        <div className="space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900 font-display">Панель управления</h1>
-                <p className="text-gray-500">Добро пожаловать в глобальную систему «Ээлеп кал»</p>
+        <div className="space-y-6 md:space-y-8 pb-10">
+            <div className="px-1 md:px-0">
+                <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Панель управления</h1>
+                <p className="text-gray-500 text-sm md:text-base font-medium">Глобальный мониторинг системы «Ээлеп кал»</p>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Stats Grid - Optimized for 2 columns on mobile */}
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 px-1 md:px-0">
                 <AnalyticsCard
-                    title="Всего заведений"
+                    title="Заведения"
                     value="124"
                     change="12%"
                     isPositive={true}
@@ -22,7 +22,7 @@ export const SuperAdminDashboard: React.FC = () => {
                     color="emerald"
                 />
                 <AnalyticsCard
-                    title="Всего бронирований"
+                    title="Брони"
                     value="1,452"
                     change="8%"
                     isPositive={true}
@@ -30,7 +30,7 @@ export const SuperAdminDashboard: React.FC = () => {
                     color="blue"
                 />
                 <AnalyticsCard
-                    title="Активные пользователи"
+                    title="Юзеры"
                     value="8.4k"
                     change="24%"
                     isPositive={true}
@@ -38,8 +38,8 @@ export const SuperAdminDashboard: React.FC = () => {
                     color="purple"
                 />
                 <AnalyticsCard
-                    title="Глобальная выручка"
-                    value="450k сом"
+                    title="Выручка"
+                    value="450k"
                     change="5%"
                     isPositive={false}
                     icon={TrendingUp}
@@ -49,48 +49,63 @@ export const SuperAdminDashboard: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Activity */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                        <h3 className="font-semibold text-gray-900">Последние регистрации заведений</h3>
-                        <button className="text-sm text-emerald-600 hover:underline font-medium">Смотреть все</button>
+                <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
+                        <h3 className="font-black text-gray-900 uppercase text-xs tracking-widest">Новые регистрации</h3>
+                        <button className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:text-emerald-700">Все</button>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {[1, 2, 3, 4, 5].map((i) => (
-                            <div key={i} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 font-bold uppercase text-xs">
+                            <div key={i} className="p-5 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 font-black uppercase text-sm">
                                         R{i}
                                     </div>
                                     <div>
-                                        <p className="text-sm font-medium text-gray-900">Ресторан «Ала-Тоо {i}»</p>
-                                        <p className="text-xs text-gray-500">Бишкек, пр. Чуй {i * 10}</p>
+                                        <p className="text-sm font-black text-gray-900">Ресторан «Ала-Тоо {i}»</p>
+                                        <p className="text-[11px] text-gray-400 font-bold uppercase tracking-tight">Бишкек • {i * 10} мин назад</p>
                                     </div>
                                 </div>
-                                <span className="text-xs text-gray-400">2 часа назад</span>
+                                <ArrowUpRight className="text-emerald-500" size={20} />
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Notifications/Alerts */}
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-                    <h3 className="font-semibold text-gray-900 mb-4">Важные уведомления</h3>
+                <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-6">
+                    <h3 className="font-black text-gray-900 uppercase text-xs tracking-widest">Внимание</h3>
                     <div className="space-y-4">
-                        <div className="flex gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100">
-                            <AlertCircle className="text-amber-600 shrink-0" size={20} />
-                            <div>
-                                <p className="text-sm font-medium text-amber-900">Ошибка оплаты</p>
-                                <p className="text-xs text-amber-700">3 транзакции требуют ручного подтверждения</p>
+                        <motion.div
+                            whileTap={{ scale: 0.98 }}
+                            className="flex gap-4 p-4 rounded-2xl bg-amber-50 border-2 border-amber-100/50"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                                <AlertCircle size={24} />
                             </div>
-                        </div>
-                        <div className="flex gap-3 p-3 rounded-lg bg-emerald-50 border border-emerald-100">
-                            <AlertCircle className="text-emerald-600 shrink-0" size={20} />
                             <div>
-                                <p className="text-sm font-medium text-emerald-900">Новые отзывы</p>
-                                <p className="text-xs text-emerald-700">Получено 15 новых отзывов за последние 24ч</p>
+                                <p className="text-xs font-black text-amber-900 uppercase tracking-tight">Ошибки оплаты</p>
+                                <p className="text-xs text-amber-700 mt-0.5 leading-relaxed font-medium">3 транзакции требуют ручного подтверждения</p>
                             </div>
-                        </div>
+                        </motion.div>
+
+                        <motion.div
+                            whileTap={{ scale: 0.98 }}
+                            className="flex gap-4 p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-100/50"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                <Users size={24} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-black text-emerald-900 uppercase tracking-tight">Новые отзывы</p>
+                                <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed font-medium">Получено 15 новых отзывов за последние 24ч</p>
+                            </div>
+                        </motion.div>
                     </div>
+
+                    <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform shadow-xl shadow-slate-200">
+                        Открыть центр поддержки
+                    </button>
                 </div>
             </div>
         </div>

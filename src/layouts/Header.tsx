@@ -1,14 +1,23 @@
 import React from 'react';
-import { Bell, User, Search, Menu } from 'lucide-react';
+import { Bell, User, Search, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
 
 export const Header = () => {
     const { user } = useAuthStore();
+    const { isMobileMenuOpen, toggleMobileMenu } = useUIStore();
 
     return (
-        <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
-            <div className="flex items-center flex-1">
-                <div className="relative w-64 hidden md:block">
+        <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <button
+                    onClick={toggleMobileMenu}
+                    className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-lg lg:hidden transition-colors"
+                >
+                    {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+
+                <div className="relative w-64 hidden lg:block">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                         type="text"
