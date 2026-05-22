@@ -13,9 +13,33 @@ export interface Venue {
 export interface VenueListItem {
     venueId: number;
     name: string;
-    firstImageUrl: string;
+    firstImageUrl: string | null;
     address: string;
     adminFullName: string;
     rating: number;
     averageCheck: number;
+}
+
+export interface AdminForReplace {
+    adminId: number;
+    fullName: string;
+    email: string;
+}
+
+export interface VenueCondition {
+    venueId: number;
+    deposit: number;
+    cancelAllowed: boolean;
+    cancellationDeadline: string;
+    editAllowed: boolean;
+    editingDeadline: string;
+}
+
+export interface PaymentDetail {
+    id: number;
+    venueTitle: string;
+    taxIdentificationNumber: string;
+    bankAccountNumber: string;
+    bankName: string;
+    qrcodeUrl: string;
 }
