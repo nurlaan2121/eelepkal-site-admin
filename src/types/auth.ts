@@ -24,3 +24,8 @@ export interface SuperAdminRegistrationRequest {
     password: string;
     phoneNumber: string;
 }
+
+export interface VerifyEmailRequest {
+    email: string;
+    otp: string;
+}

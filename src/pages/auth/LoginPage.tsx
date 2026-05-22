@@ -20,16 +20,24 @@ const registerSchema = z.object({
     fullName: z.string().min(2, 'Минимум 2 символа'),
     email: z.string().email('Некорректный email'),
     password: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
-    phoneNumber: z.string().regex(/^\+996\d{9}$/, 'Пример: +996777874587'),
+    phoneNumber: z.string().regex(/^\d{9}$/, 'Введите 9 цифр номера (напр: 705123456)'),
+});
+
+const otpSchema = z.object({
+    otp: z.string().length(4, 'OTP должен состоять из 4 цифр'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
+type OtpFormValues = z.infer<typeof otpSchema>;
 
 export const LoginPage = () => {
     const [isLogin, setIsLogin] = React.useState(true);
+    const [isVerifying, setIsVerifying] = React.useState(false);
     const [showPassword, setShowPassword] = React.useState(false);
+    const [showRegisterPassword, setShowRegisterPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [resendTimer, setResendTimer] = React.useState(0);
     const setAuth = useAuthStore((state) => state.setAuth);
     const navigate = useNavigate();
 
@@ -45,10 +53,29 @@ export const LoginPage = () => {
         register: registerSignup,
         handleSubmit: handleSubmitSignup,
         formState: { errors: registerErrors },
-        reset: resetSignup,
+        getValues: getSignupValues,
     } = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
     });
+
+    const {
+        register: registerOtp,
+        handleSubmit: handleSubmitOtp,
+        formState: { errors: otpErrors },
+    } = useForm<OtpFormValues>({
+        resolver: zodResolver(otpSchema),
+    });
+
+    // Handle resend timer
+    React.useEffect(() => {
+        let interval: any;
+        if (resendTimer > 0) {
+            interval = setInterval(() => {
+                setResendTimer((prev) => prev - 1);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [resendTimer]);
 
     const onLoginSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
@@ -79,15 +106,53 @@ export const LoginPage = () => {
         }
     };
 
+    const startResendTimer = () => setResendTimer(90);
+
     const onRegisterSubmit = async (data: RegisterFormValues) => {
         setIsLoading(true);
         try {
-            await authService.signUpSuperAdmin(data);
+            // Add prefix to phone number
+            const formattedData = {
+                ...data,
+                phoneNumber: `+996${data.phoneNumber}`
+            };
+            await authService.signUpSuperAdmin(formattedData);
             toast.success('Код подтверждения отправлен на вашу почту!');
-            resetSignup();
-            setIsLogin(true);
+            setIsVerifying(true);
+            startResendTimer();
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Ошибка при регистрации');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        if (resendTimer > 0) return;
+        const data = getSignupValues();
+        await onRegisterSubmit(data);
+    };
+
+    const onOtpSubmit = async (data: OtpFormValues) => {
+        setIsLoading(true);
+        try {
+            const signupData = getSignupValues();
+            const response = await authService.verifyEmail({
+                email: signupData.email,
+                otp: data.otp
+            });
+
+            setAuth({
+                id: response.userId,
+                email: response.email,
+                role: response.role,
+                venueId: response.venueId
+            }, response.accessToken);
+
+            toast.success('Регистрация успешно завершена!');
+            navigate('/super-admin/dashboard');
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Неверный OTP код');
         } finally {
             setIsLoading(false);
         }
@@ -113,27 +178,81 @@ export const LoginPage = () => {
                         </motion.div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ээлеп кал</h1>
                         <p className="text-slate-500 mt-2 font-medium">
-                            {isLogin ? 'Админ-панель системы бронирования' : 'Регистрация нового супер-админа'}
+                            {isVerifying ? 'Подтверждение почты' : isLogin ? 'Админ-панель системы бронирования' : 'Регистрация нового супер-админа'}
                         </p>
                     </div>
 
-                    <div className="flex p-1 bg-slate-100 rounded-2xl mb-8">
-                        <button
-                            onClick={() => setIsLogin(true)}
-                            className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            Вход
-                        </button>
-                        <button
-                            onClick={() => setIsLogin(false)}
-                            className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            Регистрация
-                        </button>
-                    </div>
+                    {!isVerifying && (
+                        <div className="flex p-1 bg-slate-100 rounded-2xl mb-8">
+                            <button
+                                onClick={() => setIsLogin(true)}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Вход
+                            </button>
+                            <button
+                                onClick={() => setIsLogin(false)}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                            >
+                                Регистрация
+                            </button>
+                        </div>
+                    )}
 
                     <AnimatePresence mode="wait">
-                        {isLogin ? (
+                        {isVerifying ? (
+                            <motion.form
+                                key="otp"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                onSubmit={handleSubmitOtp(onOtpSubmit)}
+                                className="space-y-6"
+                            >
+                                <div className="text-center mb-6">
+                                    <p className="text-sm text-slate-500 font-medium">Мы отправили 4-значный код на <br /> <span className="font-bold text-slate-900">{getSignupValues().email}</span></p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Код из письма</label>
+                                    <input
+                                        {...registerOtp('otp')}
+                                        type="text"
+                                        maxLength={4}
+                                        placeholder="0000"
+                                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary rounded-2xl transition-all outline-none"
+                                    />
+                                    {otpErrors.otp && <p className="text-[10px] font-bold text-red-500 text-center mt-1">{otpErrors.otp.message}</p>}
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100"
+                                    isLoading={isLoading}
+                                >
+                                    Подтвердить
+                                </Button>
+
+                                <div className="text-center">
+                                    <button
+                                        type="button"
+                                        disabled={resendTimer > 0}
+                                        onClick={handleResendOtp}
+                                        className={`text-xs font-black uppercase tracking-widest transition-colors ${resendTimer > 0 ? 'text-slate-300' : 'text-brand-primary hover:text-brand-700'}`}
+                                    >
+                                        Отправить код повторно {resendTimer > 0 && `(${Math.floor(resendTimer / 60)}:${(resendTimer % 60).toString().padStart(2, '0')})`}
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsVerifying(false)}
+                                    className="w-full text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                                >
+                                    Назад к регистрации
+                                </button>
+                            </motion.form>
+                        ) : isLogin ? (
                             <motion.form
                                 key="login"
                                 initial={{ opacity: 0, x: -20 }}
@@ -225,12 +344,15 @@ export const LoginPage = () => {
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Телефон</label>
                                     <div className="relative">
-                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                                            <Phone className="w-5 h-5 text-slate-400" />
+                                            <span className="text-base font-bold text-slate-900 border-r border-slate-200 pr-2">+996</span>
+                                        </div>
                                         <input
                                             {...registerSignup('phoneNumber')}
                                             type="tel"
-                                            placeholder="+996777874587"
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            placeholder="770123456"
+                                            className={`w-full h-14 pl-24 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>
                                     {registerErrors.phoneNumber && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.phoneNumber.message}</p>}
@@ -242,10 +364,17 @@ export const LoginPage = () => {
                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
                                             {...registerSignup('password')}
-                                            type={showPassword ? 'text' : 'password'}
+                                            type={showRegisterPassword ? 'text' : 'password'}
                                             placeholder="••••••••"
                                             className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
+                                        >
+                                            {showRegisterPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
                                     </div>
                                     {registerErrors.password && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.password.message}</p>}
                                 </div>
