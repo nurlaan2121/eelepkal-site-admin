@@ -13,12 +13,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const targetUrl = `${BACKEND_URL}/${path}`;
 
     try {
+        // Filter out headers that could trigger CORS or cause issues
+        const safeHeaders = { ...req.headers };
+        delete safeHeaders.origin;
+        delete safeHeaders.referer;
+        delete safeHeaders.host;
+        delete safeHeaders.connection;
+
         const config = {
             method: req.method,
             url: targetUrl,
             headers: {
-                ...req.headers,
-                host: 'eelepkal.com', // Override host to match backend
+                ...safeHeaders,
+                host: 'eelepkal.com',
             },
             data: req.body,
             params: { ...req.query },
