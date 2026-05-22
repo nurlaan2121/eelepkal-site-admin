@@ -1,169 +1,233 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Search, Shield, Building, Mail, MoreVertical, Clock } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
+import { UserPlus, Search, Shield, Mail, Phone, MapPin, MoreVertical, Trash2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
+import { superAdminService, AdminPersonal } from '../../../api/admin/superAdminService';
 
-interface AdminUser {
-    id: number;
-    fullName: string;
-    email: string;
-    venueName: string;
-    status: 'ACTIVE' | 'INACTIVE';
-    lastLogin: string;
-}
+// ─── Admin Action Menu ───
+const AdminActionMenu: React.FC<{ admin: AdminPersonal; onDelete: (id: number) => void; isDeleting: boolean }> = ({
+    admin, onDelete, isDeleting
+}) => {
+    const [open, setOpen] = React.useState(false);
+    const menuRef = React.useRef<HTMLDivElement>(null);
 
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={menuRef} className="relative">
+            <button
+                onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+            >
+                <MoreVertical size={18} />
+            </button>
+            <AnimatePresence>
+                {open && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-10 z-40 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                    >
+                        <div className="p-1.5">
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpen(false);
+                                    if (confirm(`Удалить администратора ${admin.fullName}?`)) onDelete(admin.id);
+                                }}
+                                disabled={isDeleting}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                            >
+                                <Trash2 size={16} className="text-red-500" />
+                                <span className="text-sm font-bold text-red-500">Удалить</span>
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// ─── Admin Card ───
+const AdminCard: React.FC<{ admin: AdminPersonal; onDelete: (id: number) => void; isDeleting: boolean }> = ({
+    admin, onDelete, isDeleting
+}) => {
+    const initials = admin.fullName
+        .split(' ')
+        .map(n => n.charAt(0))
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+
+    const colors = [
+        'from-brand-700 to-brand-950',
+        'from-violet-600 to-purple-900',
+        'from-emerald-600 to-teal-900',
+        'from-amber-500 to-orange-800',
+        'from-rose-600 to-pink-900',
+    ];
+    const colorClass = colors[admin.id % colors.length];
+
+    return (
+        <div className="p-4 bg-white">
+            <div className="flex items-start gap-3">
+                {/* Avatar */}
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${colorClass} flex items-center justify-center text-white font-black text-lg flex-shrink-0 shadow-sm`}>
+                    {initials || <Shield size={22} />}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                            <h3 className="font-black text-slate-900 text-base leading-tight truncate">{admin.fullName}</h3>
+                            <div className="flex items-center gap-1.5 mt-1">
+                                <span className="text-[10px] font-black text-brand-700 bg-brand-50 px-2 py-0.5 rounded-lg border border-brand-100 uppercase tracking-widest">
+                                    Администратор
+                                </span>
+                            </div>
+                        </div>
+                        <AdminActionMenu admin={admin} onDelete={onDelete} isDeleting={isDeleting} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Details */}
+            <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                    <Mail size={13} className="flex-shrink-0 text-brand-500" />
+                    <span className="text-xs font-semibold text-slate-600 truncate">{admin.email}</span>
+                </div>
+                {admin.phoneNumber && (
+                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                        <Phone size={13} className="flex-shrink-0 text-emerald-500" />
+                        <span className="text-xs font-semibold text-slate-600">{admin.phoneNumber}</span>
+                    </div>
+                )}
+                {admin.workAddress && (
+                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                        <MapPin size={13} className="flex-shrink-0 text-amber-500" />
+                        <span className="text-xs font-semibold text-slate-600 line-clamp-1">{admin.workAddress}</span>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ─── Skeleton ───
+const AdminSkeleton = () => (
+    <div className="p-4 animate-pulse">
+        <div className="flex gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex-shrink-0" />
+            <div className="flex-1 space-y-2 pt-1">
+                <div className="h-4 bg-slate-100 rounded-lg w-2/3" />
+                <div className="h-3 bg-slate-50 rounded-lg w-1/4" />
+            </div>
+        </div>
+        <div className="mt-3 space-y-2">
+            <div className="h-9 bg-slate-50 rounded-xl" />
+            <div className="h-9 bg-slate-50 rounded-xl" />
+        </div>
+    </div>
+);
+
+// ─── Main Page ───
 export const SuperAdminAdminsPage: React.FC = () => {
+    const queryClient = useQueryClient();
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    const admins: AdminUser[] = [
-        { id: 1, fullName: 'Данияр Ахметов', email: 'daniyar@venue.kg', venueName: 'Bellagio', status: 'ACTIVE', lastLogin: '10 мин назад' },
-        { id: 2, fullName: 'Айзада Бекбоева', email: 'aizada@cafe.kg', venueName: 'Faiza', status: 'ACTIVE', lastLogin: '2 часа назад' },
-        { id: 3, fullName: 'Нурбек Усенов', email: 'nurbek@lounge.kg', venueName: 'Sky Lounge', status: 'INACTIVE', lastLogin: '3 дня назад' },
-    ];
+    const { data: admins = [], isLoading } = useQuery({
+        queryKey: ['super-admin-admins'],
+        queryFn: superAdminService.getAdmins,
+    });
 
-    const filteredAdmins = admins.filter(a =>
-        a.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        a.venueName.toLowerCase().includes(searchTerm.toLowerCase())
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => superAdminService.deleteAdmin(id),
+        onSuccess: () => {
+            toast.success('Администратор удалён');
+            queryClient.invalidateQueries({ queryKey: ['super-admin-admins'] });
+        },
+        onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка удаления'),
+    });
+
+    const filtered = admins.filter(a =>
+        (a.fullName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (a.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        (a.workAddress?.toLowerCase() || '').includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="px-1 md:px-0">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Администраторы</h1>
-                    <p className="text-gray-500 text-sm md:text-base">Управление учетными записями менеджеров ресторанов</p>
+                <div>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Администраторы</h1>
+                    <p className="text-slate-400 text-sm mt-0.5">{admins.length} администраторов в системе</p>
                 </div>
-                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100">
-                    <UserPlus size={20} />
-                    <span>Создать админа</span>
-                </Button>
+                <button className="flex items-center justify-center gap-2 h-12 px-6 w-full md:w-auto bg-brand-primary text-white rounded-2xl font-black text-sm shadow-lg shadow-brand-100 active:scale-95 transition-all">
+                    <UserPlus size={18} />
+                    <span>Добавить администратора</span>
+                </button>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/30">
-                    <div className="relative w-full md:w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <Input
-                            placeholder="Поиск администратора..."
-                            className="pl-10 h-11 bg-white"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+            {/* Search */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+                    <input
+                        type="text"
+                        placeholder="Поиск по имени, email или адресу..."
+                        className="w-full h-11 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border-0 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {/* Cards */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                {isLoading ? (
+                    <div className="divide-y divide-slate-50">
+                        {Array.from({ length: 4 }).map((_, i) => <AdminSkeleton key={i} />)}
                     </div>
-                </div>
-
-                {/* Mobile Cards */}
-                <div className="md:hidden divide-y divide-gray-100">
-                    {filteredAdmins.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500">Администраторы не найдены</div>
-                    ) : (
-                        filteredAdmins.map((admin) => (
-                            <div key={admin.id} className="p-4 active:bg-gray-50 transition-colors">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100">
-                                            <Shield size={24} />
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-900">{admin.fullName}</h3>
-                                            <div className="flex items-center gap-1 text-[11px] text-gray-400 uppercase font-bold tracking-wider">
-                                                <Mail size={10} />
-                                                {admin.email}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button className="p-2 text-gray-400">
-                                        <MoreVertical size={20} />
-                                    </button>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Заведение</p>
-                                        <p className="text-xs font-bold text-gray-700 flex items-center gap-1">
-                                            <Building size={12} className="text-brand-500" />
-                                            {admin.venueName}
-                                        </p>
-                                    </div>
-                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                        <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Статус</p>
-                                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${admin.status === 'ACTIVE' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-600'
-                                            }`}>
-                                            {admin.status === 'ACTIVE' ? 'Активен' : 'Отключен'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400">
-                                        <Clock size={12} />
-                                        Входил {admin.lastLogin}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-xs font-bold active:bg-slate-50">
-                                            Профиль
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-
-                {/* Desktop Table */}
-                <div className="hidden md:block overflow-x-auto text-sm">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-bold">
-                                <th className="px-6 py-4">Администратор</th>
-                                <th className="px-6 py-4">Доступ к заведению</th>
-                                <th className="px-6 py-4">Статус</th>
-                                <th className="px-6 py-4">Последний вход</th>
-                                <th className="px-6 py-4 text-right">Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100 font-medium">
-                            {filteredAdmins.map((admin) => (
-                                <tr key={admin.id} className="hover:bg-gray-50/50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-500 border border-slate-100 group-hover:scale-110 transition-transform">
-                                                <Shield size={20} />
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-gray-900">{admin.fullName}</p>
-                                                <p className="text-xs text-gray-400">{admin.email}</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2 text-gray-700 font-bold">
-                                            <Building size={16} className="text-brand-500" />
-                                            {admin.venueName}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${admin.status === 'ACTIVE' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-700'
-                                            }`}>
-                                            {admin.status === 'ACTIVE' ? 'Активен' : 'Отключен'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-xs text-gray-500 font-bold">
-                                        {admin.lastLogin}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="p-2 text-gray-400 hover:text-brand-600 transition-colors">
-                                            <MoreVertical size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
+                ) : filtered.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <Shield size={48} className="text-slate-200 mb-4" />
+                        <p className="text-slate-400 font-bold">Администраторы не найдены</p>
+                        {searchTerm && <p className="text-xs text-slate-300 mt-1">Попробуйте изменить запрос</p>}
+                    </div>
+                ) : (
+                    <div className="divide-y divide-slate-50">
+                        <AnimatePresence>
+                            {filtered.map((admin) => (
+                                <motion.div
+                                    key={admin.id}
+                                    initial={{ opacity: 0, x: -8 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 8 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <AdminCard
+                                        admin={admin}
+                                        onDelete={(id) => deleteMutation.mutate(id)}
+                                        isDeleting={deleteMutation.isPending}
+                                    />
+                                </motion.div>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </AnimatePresence>
+                    </div>
+                )}
             </div>
         </div>
     );
