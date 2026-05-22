@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = 'https://eelepkal.com';
+// All frontend requests go through the serverless proxy to bypass CORS
+const PROXY_URL = '/api/proxy';
 
 export const apiClient = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: PROXY_URL,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -15,6 +16,14 @@ apiClient.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Transform /some/path into ?path=some/path
+    if (config.url && config.url !== PROXY_URL) {
+        const path = config.url.startsWith('/') ? config.url.substring(1) : config.url;
+        config.params = { ...config.params, path };
+        config.url = ''; // Let baseURL handle the rest (/api/proxy)
+    }
+
     return config;
 });
 

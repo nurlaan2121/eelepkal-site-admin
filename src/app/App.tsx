@@ -6,6 +6,12 @@ import { SuperAdminLayout } from '../layouts/SuperAdminLayout';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { SuperAdminDashboard } from '../pages/super-admin/dashboard/DashboardPage';
 import { AdminDashboard } from '../pages/admin/dashboard/DashboardPage';
+import { SuperAdminVenuesPage } from '../pages/super-admin/VenuesPage';
+import { CreateVenuePage } from '../pages/super-admin/venues/CreateVenuePage';
+import { SuperAdminAdminsPage } from '../pages/super-admin/admins/AdminsPage';
+import { AdminTablesPage } from '../pages/admin/tables/TablesPage';
+import { AdminMenuPage } from '../pages/admin/menu/MenuPage';
+import { AdminBookingsPage } from '../pages/admin/bookings/BookingsPage';
 
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'SUPER_ADMIN' | 'ADMIN' }) => {
     const { user } = useAuthStore();
@@ -34,7 +40,10 @@ export const App = () => {
                 >
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<SuperAdminDashboard />} />
-                    <Route path="venues" element={<div>Управление заведениями</div>} />
+                    <Route path="venues">
+                        <Route index element={<SuperAdminVenuesPage />} />
+                        <Route path="create" element={<CreateVenuePage />} />
+                    </Route>
                     <Route path="admins" element={<div>Управление администраторами</div>} />
                     <Route path="bookings" element={<div>Все бронирования</div>} />
                     <Route path="statistics" element={<div>Общая статистика</div>} />
