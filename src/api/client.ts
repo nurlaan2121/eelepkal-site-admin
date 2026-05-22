@@ -15,7 +15,9 @@ apiClient.interceptors.request.use((config) => {
     const token = useAuthStore.getState().accessToken;
 
     if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+        const authValue = `Bearer ${token}`;
+        config.headers.Authorization = authValue;
+        config.headers['authorization'] = authValue;
     }
 
     // Transform /some/path into ?path=some/path

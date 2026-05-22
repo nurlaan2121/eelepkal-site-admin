@@ -49,10 +49,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         return res.status(response.status).json(response.data);
     } catch (error: any) {
-        console.error('Proxy error:', error.message);
-        if (error.response) {
-            return res.status(error.response.status).json(error.response.data);
-        }
-        return res.status(500).json({ error: 'Internal Server Error', message: error.message });
+        const status = error.response?.status || 500;
+        const data = error.response?.data || {};
+
+        console.error(`Proxy Error [${req.method}] ${path}:`, {
+            status,
+            message: error.message,
+            data
+        });
+
+        return res.status(status).json({
+            ...data,
+            proxyError: true,
+            originalStatus: status,
+            targetPath: path
+        });
     }
 }
