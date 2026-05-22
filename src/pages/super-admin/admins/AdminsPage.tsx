@@ -179,7 +179,7 @@ export const SuperAdminAdminsPage: React.FC = () => {
                 </div>
                 <button 
                     onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center justify-center gap-2 h-12 px-6 w-full md:w-auto bg-brand-primary text-white rounded-2xl font-black text-sm shadow-lg shadow-brand-100 active:scale-95 transition-all"
+                    className="flex items-center justify-center gap-2 h-12 px-6 w-full md:w-auto bg-gradient-to-r from-brand-700 to-brand-900 hover:from-brand-600 hover:to-brand-800 text-white rounded-2xl font-black text-sm shadow-xl shadow-brand-900/30 active:scale-95 transition-all border-2 border-brand-600"
                 >
                     <UserPlus size={18} />
                     <span>Добавить администратора</span>
