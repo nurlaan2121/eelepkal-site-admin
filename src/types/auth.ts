@@ -17,3 +17,10 @@ export interface ExceptionResponse {
     message: string;
     debugMessage: string;
 }
+
+export interface SuperAdminRegistrationRequest {
+    fullName: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+}
