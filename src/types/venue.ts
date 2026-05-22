@@ -9,3 +9,13 @@ export interface Venue {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface VenueListItem {
+    venueId: number;
+    name: string;
+    firstImageUrl: string;
+    address: string;
+    adminFullName: string;
+    rating: number;
+    averageCheck: number;
+}

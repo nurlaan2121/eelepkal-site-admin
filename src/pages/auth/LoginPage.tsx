@@ -224,6 +224,11 @@ export const LoginPage = () => {
                                     <input
                                         {...registerOtp('otp')}
                                         type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        onInput={(e) => {
+                                            e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '');
+                                        }}
                                         maxLength={4}
                                         placeholder="0000"
                                         className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary rounded-2xl transition-all outline-none"
@@ -326,7 +331,7 @@ export const LoginPage = () => {
                                         <input
                                             {...registerSignup('fullName')}
                                             type="text"
-                                            placeholder="Иван Иванов"
+                                            placeholder="Асан Асанов"
                                             className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.fullName ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>

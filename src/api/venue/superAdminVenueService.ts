@@ -1,19 +1,10 @@
 import { apiClient } from '../client';
-// import { Venue } from '../../types/venue';
-
-export interface GetAllVenuesResponse {
-    id: number;
-    name: string;
-    address: string;
-    description: string;
-    venueStatus: string;
-    // Add other fields as needed based on openapi.json
-}
+import { VenueListItem } from '../../types/venue';
 
 export const superAdminVenueService = {
-    getAllVenues: async (page = 1, pageSize = 10): Promise<GetAllVenuesResponse[]> => {
-        const response = await apiClient.get<GetAllVenuesResponse[]>('/api/super-admin-venue/getAllVenues', {
-            params: { page, pageSize },
+    getAllVenues: async (offset = 0, limit = 10): Promise<VenueListItem[]> => {
+        const response = await apiClient.get<VenueListItem[]>('/api/super-admin-venue/get-all-venues', {
+            params: { offset, limit },
         });
         return response.data;
     },
