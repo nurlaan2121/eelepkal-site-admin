@@ -302,16 +302,31 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
 
         setIsUploading(true);
         try {
+            let qrUrl = formData.qrCodeUrl;
+
             // Upload QR code if file selected
             if (qrFile) {
-                const qrUrl = await superAdminVenueService.uploadFileToS3(qrFile);
-                setFormData(prev => ({ ...prev, qrCodeUrl: qrUrl }));
+                toast.info('Загрузка QR кода...');
+                qrUrl = await superAdminVenueService.uploadFileToS3(qrFile);
+                console.log('QR code uploaded:', qrUrl);
             }
 
-            // Submit payment details
-            addMutation.mutate();
+            // Prepare final data with the QR URL
+            const finalData = {
+                ...formData,
+                qrCodeUrl: qrUrl,
+            };
+
+            // Submit payment details with the correct data
+            await superAdminVenueService.addPaymentDetail(venue.venueId, finalData);
+            
+            toast.success('Реквизиты успешно добавлены!');
+            queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+            handleClose();
         } catch (error: any) {
-            toast.error(error?.response?.data?.message || 'Ошибка загрузки файла');
+            console.error('Upload error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка загрузки файла';
+            toast.error(errorMessage);
         } finally {
             setIsUploading(false);
         }

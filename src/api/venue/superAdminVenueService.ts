@@ -1,5 +1,6 @@
 import { apiClient } from '../client';
 import { VenueListItem, AdminForReplace, VenueCondition, PaymentDetail } from '../../types/venue';
+import { useAuthStore } from '../../store/authStore';
 
 export const superAdminVenueService = {
     getAllVenues: async (offset = 0, limit = 10): Promise<VenueListItem[]> => {
@@ -44,11 +45,26 @@ export const superAdminVenueService = {
     uploadFileToS3: async (file: File): Promise<string> => {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await apiClient.post('/api/s3', formData, {
+        
+        // Get auth token
+        const token = useAuthStore.getState().accessToken;
+        
+        // Send directly to backend, bypassing proxy for file uploads
+        const response = await fetch('https://eelepkal.com/api/s3', {
+            method: 'POST',
             headers: {
-                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${token}`,
+                // Don't set Content-Type - let browser set it with boundary
             },
+            body: formData,
         });
-        return response.data.data;
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Upload failed' }));
+            throw new Error(error.message || 'Upload failed');
+        }
+
+        const result = await response.json();
+        return result.data;
     },
 };
