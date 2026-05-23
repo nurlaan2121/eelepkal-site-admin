@@ -73,7 +73,12 @@ export const VenueDetailPage: React.FC = () => {
     const amenitiesDataRaw = amenities.data as any;
     const contactsRaw = contacts.data as any;
     const publicAdminData = publicAdmin.data as any;
-    const descriptionData = description.data as { description: string };
+    const descriptionRaw = description.data as any;
+
+    // Parse description - API might return string or object
+    const descriptionText = typeof descriptionRaw === 'string' 
+        ? descriptionRaw 
+        : descriptionRaw?.description || '';
 
     // Parse working hours from API format {"MONDAY": "08:00 - 00:00"} to {mondayOpen: "08:00", mondayClose: "00:00"}
     const parseWorkingHours = (rawData: any): any => {
@@ -442,7 +447,7 @@ export const VenueDetailPage: React.FC = () => {
                             <div className="h-px w-12 bg-slate-100" />
                         </div>
                         <p className="text-slate-600 text-lg leading-[1.8] font-medium whitespace-pre-wrap max-w-xl mx-auto px-4">
-                            {descriptionData?.description || basicData?.description || 'Описание пока не заполнено владельцем заведения'}
+                            {descriptionText || basicData?.description || 'Описание пока не заполнено владельцем заведения'}
                         </p>
                         <Button variant="ghost" className="text-orange-500 font-black uppercase tracking-widest text-xs" onClick={() => console.log('Edit Desc')}>
                             Редактировать описание
