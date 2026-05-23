@@ -158,8 +158,8 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueAmenities: async (venueId: number): Promise<number[]> => {
-        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-amenities/${venueId}`);
+    getVenueAmenities: async (venueId: number): Promise<any> => {
+        const response = await apiClient.get<any>(`/api/super-admin-venue/get-amenities/${venueId}`);
         return response.data;
     },
 

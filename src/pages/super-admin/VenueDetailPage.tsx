@@ -70,7 +70,7 @@ export const VenueDetailPage: React.FC = () => {
     const basicData = basic.data as BasicInfoData;
     const detailsData = details.data as VenueDetailsData;
     const hoursDataRaw = hours.data as any;
-    const amenitiesData = amenities.data as number[];
+    const amenitiesDataRaw = amenities.data as any;
     const contactsData = contacts.data as VenueContactData;
     const publicAdminData = publicAdmin.data as any;
     const descriptionData = description.data as { description: string };
@@ -107,6 +107,19 @@ export const VenueDetailPage: React.FC = () => {
     };
 
     const hoursData = parseWorkingHours(hoursDataRaw);
+
+    // Parse amenities from API format {"5": "VIP кабины", "26": "Доставка"} to [5, 26]
+    const parseAmenities = (rawData: any): number[] => {
+        if (!rawData || typeof rawData !== 'object') return [];
+        if (Array.isArray(rawData)) return rawData;
+        
+        // Extract keys (IDs) from the object and convert to numbers
+        return Object.keys(rawData)
+            .map(key => parseInt(key, 10))
+            .filter(id => !isNaN(id));
+    };
+
+    const amenitiesData = parseAmenities(amenitiesDataRaw);
 
     const getTodayStatus = () => {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
