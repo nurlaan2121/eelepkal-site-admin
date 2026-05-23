@@ -6,7 +6,7 @@ import {
     Globe, Instagram, MessageCircle, Send, Facebook,
     Clock, ConciergeBell, FileText,
     UserCog, Star, Users, Wallet,
-    CheckCircle2, AlertCircle, Info, Layers, Sofa, LayoutGrid, Utensils
+    CheckCircle2, AlertCircle, Info, Layers, Sofa, LayoutGrid, Utensils, UtensilsCrossed
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
@@ -310,8 +310,31 @@ export const VenueDetailPage: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
+                            {/* Parse capacities from object format if needed */}
+                            {detailsData?.capacities && typeof detailsData.capacities === 'object' && !Array.isArray(detailsData.capacities) && Object.entries(detailsData.capacities as Record<string, any>).map(([title, value], i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Users size={20} /></div>
+                                    <div>
+                                        <p className="text-[9px] font-black uppercase text-slate-400">{title}</p>
+                                        <p className="font-bold text-sm">{String(value)} чел.</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </VenueInfoCard>
+
+                    {/* 4.5. Cuisine Types Section */}
+                    {(detailsData as any)?.typesOfCuisines && (
+                        <VenueInfoCard title="Типы кухни" icon={<UtensilsCrossed size={20} />} onEdit={() => console.log('Edit Cuisines')}>
+                            <div className="flex flex-wrap gap-2">
+                                {(detailsData as any).typesOfCuisines.split(',').map((cuisine: string, idx: number) => (
+                                    <span key={idx} className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-xl text-xs font-black border border-orange-100 uppercase tracking-wider">
+                                        {cuisine.trim()}
+                                    </span>
+                                ))}
+                            </div>
+                        </VenueInfoCard>
+                    )}
 
                     {/* 5. Working Hours List */}
                     <VenueInfoCard title="График работы" icon={<Clock size={20} />} onEdit={() => console.log('Edit Hours')}>
