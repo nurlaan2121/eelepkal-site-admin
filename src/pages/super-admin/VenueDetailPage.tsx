@@ -439,20 +439,14 @@ export const VenueDetailPage: React.FC = () => {
                         )}
                     </VenueInfoCard>
 
-                    {/* 9. Description (Typography focused) */}
-                    <div className="py-10 space-y-6 text-center">
-                        <div className="flex items-center justify-center gap-4 mb-4">
-                            <div className="h-px w-12 bg-slate-100" />
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Описание</h3>
-                            <div className="h-px w-12 bg-slate-100" />
+                    {/* 9. Description Section */}
+                    <VenueInfoCard title="Описание" icon={<FileText size={20} />} onEdit={() => console.log('Edit Desc')}>
+                        <div className="prose prose-slate max-w-none">
+                            <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                {descriptionText || basicData?.description || 'Описание пока не заполнено владельцем заведения'}
+                            </p>
                         </div>
-                        <p className="text-slate-600 text-lg leading-[1.8] font-medium whitespace-pre-wrap max-w-xl mx-auto px-4">
-                            {descriptionText || basicData?.description || 'Описание пока не заполнено владельцем заведения'}
-                        </p>
-                        <Button variant="ghost" className="text-orange-500 font-black uppercase tracking-widest text-xs" onClick={() => console.log('Edit Desc')}>
-                            Редактировать описание
-                        </Button>
-                    </div>
+                    </VenueInfoCard>
                 </div>
             </main>
         </div>
