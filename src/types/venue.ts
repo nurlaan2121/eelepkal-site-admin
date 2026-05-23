@@ -148,3 +148,15 @@ export interface VenueConditionsData {
     editAllowed: boolean;
     editingDeadline: string;
 }
+
+export interface VenueFeedback {
+    id: number;
+    client: {
+        id: number;
+        image: string | null;
+        fullName: string;
+    };
+    text: string;
+    rating: number;
+    createdAt: string;
+}

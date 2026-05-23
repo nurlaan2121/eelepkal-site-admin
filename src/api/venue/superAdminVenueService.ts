@@ -153,18 +153,18 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueHours: async (venueId: number): Promise<any> => {
-        const response = await apiClient.get<any>(`/api/super-admin-venue/get-hours/${venueId}`);
+    getVenueHours: async (venueId: number): Promise<VenueWorkingHours> => {
+        const response = await apiClient.get<VenueWorkingHours>(`/api/super-admin-venue/get-hours/${venueId}`);
         return response.data;
     },
 
-    getVenueAmenities: async (venueId: number): Promise<any> => {
-        const response = await apiClient.get<any>(`/api/super-admin-venue/get-amenities/${venueId}`);
+    getVenueAmenities: async (venueId: number): Promise<number[]> => {
+        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-amenities/${venueId}`);
         return response.data;
     },
 
-    getVenueContacts: async (venueId: number): Promise<any> => {
-        const response = await apiClient.get<any>(`/api/super-admin-venue/get-contacts/${venueId}`);
+    getVenueContacts: async (venueId: number): Promise<VenueContactData> => {
+        const response = await apiClient.get<VenueContactData>(`/api/super-admin-venue/get-contacts/${venueId}`);
         return response.data;
     },
 
@@ -173,8 +173,15 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueDescription: async (venueId: number): Promise<any> => {
-        const response = await apiClient.get<any>(`/api/super-admin-venue/get-description/${venueId}`);
+    getVenueDescription: async (venueId: number): Promise<{ description: string }> => {
+        const response = await apiClient.get<{ description: string }>(`/api/super-admin-venue/get-description/${venueId}`);
+        return response.data;
+    },
+
+    getVenueFeedbacks: async (venueId: number, offset = 0, limit = 100): Promise<any[]> => {
+        const response = await apiClient.get<any[]>(`/api/super-admin-venue/feedbacks/${venueId}`, {
+            params: { offset, limit }
+        });
         return response.data;
     },
 };

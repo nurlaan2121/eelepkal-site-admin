@@ -36,13 +36,14 @@ export const VenueDetailPage: React.FC = () => {
             { queryKey: ['venue-contacts', id], queryFn: () => superAdminVenueService.getVenueContacts(id) },
             { queryKey: ['venue-public-admin', id], queryFn: () => superAdminVenueService.getVenuePublicAdmin(id) },
             { queryKey: ['venue-description', id], queryFn: () => superAdminVenueService.getVenueDescription(id) },
+            { queryKey: ['venue-feedbacks', id], queryFn: () => superAdminVenueService.getVenueFeedbacks(id) },
             { queryKey: ['all-amenities'], queryFn: () => superAdminVenueService.getAllAmenities() },
             { queryKey: ['all-cities'], queryFn: () => superAdminVenueService.getAllCities() },
         ],
     });
 
     const [
-        basic, details, hours, amenities, contacts, publicAdmin, description, allAmenities, allCities
+        basic, details, hours, amenities, contacts, publicAdmin, description, feedbacks, allAmenities, allCities
     ] = results;
 
     const isLoading = results.some(r => r.isLoading);
@@ -74,16 +75,17 @@ export const VenueDetailPage: React.FC = () => {
     const contactsRaw = contacts.data as any;
     const publicAdminData = publicAdmin.data as any;
     const descriptionRaw = description.data as any;
+    const feedbacksData = feedbacks.data as any[];
 
     // Parse description - API might return string or object
-    const descriptionText = typeof descriptionRaw === 'string' 
-        ? descriptionRaw 
+    const descriptionText = typeof descriptionRaw === 'string'
+        ? descriptionRaw
         : descriptionRaw?.description || '';
 
     // Parse working hours from API format {"MONDAY": "08:00 - 00:00"} to {mondayOpen: "08:00", mondayClose: "00:00"}
     const parseWorkingHours = (rawData: any): any => {
         if (!rawData || typeof rawData !== 'object') return {};
-        
+
         const dayMapping: any = {
             'MONDAY': 'monday',
             'TUESDAY': 'tuesday',
@@ -95,7 +97,7 @@ export const VenueDetailPage: React.FC = () => {
         };
 
         const result: any = {};
-        
+
         Object.entries(rawData).forEach(([key, value]) => {
             const dayKey = dayMapping[key.toUpperCase()];
             if (dayKey && typeof value === 'string') {
@@ -107,7 +109,7 @@ export const VenueDetailPage: React.FC = () => {
                 }
             }
         });
-        
+
         return result;
     };
 
@@ -117,7 +119,7 @@ export const VenueDetailPage: React.FC = () => {
     const parseAmenities = (rawData: any): number[] => {
         if (!rawData || typeof rawData !== 'object') return [];
         if (Array.isArray(rawData)) return rawData;
-        
+
         // Extract keys (IDs) from the object and convert to numbers
         return Object.keys(rawData)
             .map(key => parseInt(key, 10))
@@ -135,15 +137,15 @@ export const VenueDetailPage: React.FC = () => {
         // Map API keys to frontend keys
         const phoneNumber = rawData['phone number'] || rawData['phoneNumber'] || rawData['phone'] || '';
         const email = rawData['email'] || '';
-        
+
         // Extract social links
         const linksSocial: any = {};
-        
+
         Object.entries(rawData).forEach(([key, value]) => {
             if (typeof value !== 'string' || !value || value.trim() === '') return;
-            
+
             const keyLower = key.toLowerCase();
-            
+
             if (keyLower.includes('instagram')) {
                 linksSocial.instagram = value;
             } else if (keyLower.includes('whatsapp') || keyLower.includes('whatsup') || keyLower === 'wa') {
@@ -447,6 +449,64 @@ export const VenueDetailPage: React.FC = () => {
                             </p>
                         </div>
                     </VenueInfoCard>
+
+                    {/* 10. Feedbacks Section */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h3 className="text-lg font-black text-slate-900">Отзывы ({feedbacksData?.length || 0})</h3>
+                            {feedbacksData?.length > 0 && (
+                                <div className="flex items-center gap-1 text-orange-500 font-bold text-sm">
+                                    <Star size={14} className="fill-orange-500" />
+                                    {(feedbacksData.reduce((acc, f) => acc + f.rating, 0) / feedbacksData.length).toFixed(1)}
+                                </div>
+                            )}
+                        </div>
+
+                        {feedbacksData && feedbacksData.length > 0 ? (
+                            <div className="space-y-4">
+                                {feedbacksData.slice(0, 5).map((feedback: any) => (
+                                    <VenueInfoCard key={feedback.id} noPadding className="overflow-visible">
+                                        <div className="p-5 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                                                        {feedback.client?.image ? (
+                                                            <img src={feedback.client.image} className="w-full h-full object-cover" alt="" />
+                                                        ) : (
+                                                            <span className="text-sm font-black text-slate-400">
+                                                                {(feedback.client?.fullName || 'U').charAt(0).toUpperCase()}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-800">{feedback.client?.fullName || 'Аноним'}</p>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{feedback.createdAt}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-1 px-2.5 py-1 bg-orange-50 text-orange-600 rounded-lg text-xs font-black">
+                                                    {feedback.rating} <Star size={10} className="fill-orange-500" />
+                                                </div>
+                                            </div>
+                                            <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                                {feedback.text}
+                                            </p>
+                                        </div>
+                                    </VenueInfoCard>
+                                ))}
+
+                                {feedbacksData.length > 5 && (
+                                    <Button variant="ghost" className="w-full h-14 rounded-[24px] border border-slate-100 font-black text-slate-500 hover:text-orange-500 uppercase tracking-widest text-xs">
+                                        Смотреть все отзывы
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            <VenueInfoCard className="text-center py-10 opacity-60">
+                                <MessageCircle size={32} className="mx-auto text-slate-300 mb-3" />
+                                <p className="text-sm text-slate-400 font-medium italic">Отзывов пока нет</p>
+                            </VenueInfoCard>
+                        )}
+                    </div>
                 </div>
             </main>
         </div>
