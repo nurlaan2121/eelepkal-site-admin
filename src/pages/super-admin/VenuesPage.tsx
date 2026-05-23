@@ -12,7 +12,7 @@ import { Input } from '../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { VenueListItem, VenueCondition } from '../../types/venue';
+import { VenueListItem, VenueCondition, PaymentDetail } from '../../types/venue';
 
 // ─────────── Replace Admin Modal ───────────
 const ReplaceAdminModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({ venue, onClose }) => {
@@ -244,6 +244,7 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
 const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({ venue, onClose }) => {
     const queryClient = useQueryClient();
     const [showAddForm, setShowAddForm] = React.useState(false);
+    const [editingPayment, setEditingPayment] = React.useState<PaymentDetail | null>(null);
     const [formData, setFormData] = React.useState({
         venueTitle: venue.name,
         taxIdentificationNumber: '',
@@ -267,6 +268,25 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             handleClose();
         },
         onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка сохранения'),
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (paymentId: number) => superAdminVenueService.updatePaymentDetail(paymentId, formData),
+        onSuccess: () => {
+            toast.success('Реквизиты успешно обновлены!');
+            queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+            handleClose();
+        },
+        onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка обновления'),
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (paymentId: number) => superAdminVenueService.deletePaymentDetail(paymentId),
+        onSuccess: () => {
+            toast.success('Реквизиты удалены');
+            queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+        },
+        onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка удаления'),
     });
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,11 +345,15 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
         }
 
         try {
-            // Submit payment details with the QR URL that's already in formData
-            await superAdminVenueService.addPaymentDetail(venue.venueId, formData);
-            
-            toast.success('Реквизиты успешно добавлены!');
-            queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+            if (editingPayment) {
+                // Update existing payment
+                await updateMutation.mutateAsync(editingPayment.id);
+            } else {
+                // Add new payment
+                await superAdminVenueService.addPaymentDetail(venue.venueId, formData);
+                toast.success('Реквизиты успешно добавлены!');
+                queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+            }
             handleClose();
         } catch (error: any) {
             console.error('Submit error:', error);
@@ -338,8 +362,28 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
         }
     };
 
+    const handleEditPayment = (payment: PaymentDetail) => {
+        setEditingPayment(payment);
+        setFormData({
+            venueTitle: payment.venueTitle,
+            taxIdentificationNumber: payment.taxIdentificationNumber,
+            bankAccountNumber: payment.bankAccountNumber,
+            bankName: payment.bankName,
+            qrCodeUrl: payment.qrcodeUrl || '',
+        });
+        setQrPreview(payment.qrcodeUrl || null);
+        setShowAddForm(true);
+    };
+
+    const handleDeletePayment = (paymentId: number) => {
+        if (confirm('Удалить эти реквизиты?')) {
+            deleteMutation.mutate(paymentId);
+        }
+    };
+
     const handleClose = () => {
         setShowAddForm(false);
+        setEditingPayment(null);
         setFormData({
             venueTitle: venue.name,
             taxIdentificationNumber: '',
@@ -364,7 +408,7 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                 <div className="flex items-center justify-between p-5 border-b border-slate-100">
                     <div>
                         <h2 className="text-lg font-black text-slate-900">
-                            {showAddForm ? 'Добавить реквизиты' : 'Реквизиты для оплаты'}
+                            {editingPayment ? 'Изменить реквизиты' : showAddForm ? 'Добавить реквизиты' : 'Реквизиты для оплаты'}
                         </h2>
                         <p className="text-xs text-slate-400 font-medium mt-0.5 truncate max-w-[220px]">{venue.name}</p>
                     </div>
@@ -482,8 +526,18 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                             </div>
                         ) : (
                             payments.map((p) => (
-                                <div key={p.id} className="bg-gradient-to-br from-brand-950 to-brand-700 rounded-2xl p-5 text-white space-y-4">
-                                    <div className="flex items-center justify-between">
+                                <div key={p.id} className="relative bg-gradient-to-br from-brand-950 to-brand-700 rounded-2xl p-5 text-white space-y-4">
+                                    {/* Action Menu */}
+                                    <div className="absolute top-4 right-4">
+                                        <PaymentActionMenu
+                                            payment={p}
+                                            onEdit={handleEditPayment}
+                                            onDelete={handleDeletePayment}
+                                            isDeleting={deleteMutation.isPending}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between pr-10">
                                         <p className="text-xs font-black uppercase tracking-widest text-white/60">Реквизиты банка</p>
                                         <CreditCard size={20} className="text-white/60" />
                                     </div>
@@ -517,13 +571,16 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                         <>
                             <Button
                                 onClick={handleUploadAndSubmit}
-                                disabled={isUploading}
+                                disabled={isUploading || updateMutation.isPending}
                                 className="w-full h-12 font-black text-sm"
                             >
-                                {isUploading ? 'Загрузка QR кода...' : 'Добавить реквизиты'}
+                                {isUploading ? 'Загрузка QR кода...' : editingPayment ? 'Сохранить изменения' : 'Добавить реквизиты'}
                             </Button>
                             <button
-                                onClick={() => setShowAddForm(false)}
+                                onClick={() => {
+                                    setEditingPayment(null);
+                                    setShowAddForm(false);
+                                }}
                                 disabled={isUploading}
                                 className="w-full h-12 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -541,6 +598,65 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                     )}
                 </div>
             </motion.div>
+        </div>
+    );
+};
+
+// ─────────── Payment Action Menu ───────────
+const PaymentActionMenu: React.FC<{
+    payment: PaymentDetail;
+    onEdit: (payment: PaymentDetail) => void;
+    onDelete: (paymentId: number) => void;
+    isDeleting: boolean;
+}> = ({ payment, onEdit, onDelete, isDeleting }) => {
+    const [open, setOpen] = React.useState(false);
+    const menuRef = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={menuRef} className="relative">
+            <button
+                onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                className="w-8 h-8 flex items-center justify-center rounded-xl text-white/60 hover:bg-white/10 active:bg-white/20 transition-colors"
+            >
+                <MoreVertical size={16} />
+            </button>
+            <AnimatePresence>
+                {open && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                        transition={{ duration: 0.12 }}
+                        className="absolute right-0 top-8 z-40 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                    >
+                        <div className="p-1.5 space-y-0.5">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(payment); }}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                            >
+                                <Settings2 size={16} className="text-amber-600" />
+                                <span className="text-sm font-bold text-slate-700">Изменить</span>
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(payment.id); }}
+                                disabled={isDeleting}
+                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left disabled:opacity-50"
+                            >
+                                <Trash2 size={16} className="text-red-500" />
+                                <span className="text-sm font-bold text-red-500">Удалить</span>
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

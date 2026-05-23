@@ -51,4 +51,18 @@ export const superAdminVenueService = {
         
         return response.data.data;
     },
+
+    updatePaymentDetail: async (paymentId: number, data: {
+        venueTitle: string;
+        taxIdentificationNumber: string;
+        bankAccountNumber: string;
+        bankName: string;
+        qrCodeUrl: string;
+    }): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/payment/update-payment-detail/${paymentId}`, data);
+    },
+
+    deletePaymentDetail: async (paymentId: number): Promise<void> => {
+        await apiClient.delete(`/api/super-admin-venue/payment/delete-payment-detail/${paymentId}`);
+    },
 };
