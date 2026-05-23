@@ -180,14 +180,14 @@ const Step2Details: React.FC = () => {
     const capacities = details.capacities || [];
 
     const addCapacity = () => {
-        setDetails({ capacities: [...capacities, { type: '', count: 0 }] });
+        setDetails({ ...details, capacities: [...capacities, { title: '', value: 0 }] });
     };
 
     const removeCapacity = (index: number) => {
-        setDetails({ capacities: capacities.filter((_, i) => i !== index) });
+        setDetails({ ...details, capacities: capacities.filter((_, i) => i !== index) });
     };
 
-    const updateCapacity = (index: number, field: 'type' | 'count', value: string | number) => {
+    const updateCapacity = (index: number, field: 'title' | 'value', value: string | number) => {
         const newCapacities = [...capacities];
         newCapacities[index] = { ...newCapacities[index], [field]: value };
         setDetails({ ...details, capacities: newCapacities });
@@ -244,15 +244,15 @@ const Step2Details: React.FC = () => {
                     {capacities.map((cap, idx) => (
                         <div key={idx} className="flex gap-3">
                             <Input
-                                value={cap.type}
-                                onChange={(e) => updateCapacity(idx, 'type', e.target.value)}
+                                value={cap.title}
+                                onChange={(e) => updateCapacity(idx, 'title', e.target.value)}
                                 placeholder="Тип (напр: Банкетный зал)"
                                 className="flex-1"
                             />
                             <Input
                                 type="number"
-                                value={cap.count}
-                                onChange={(e) => updateCapacity(idx, 'count', Number(e.target.value))}
+                                value={cap.value}
+                                onChange={(e) => updateCapacity(idx, 'value', Number(e.target.value))}
                                 placeholder="Кол-во"
                                 className="w-32"
                             />
@@ -271,13 +271,20 @@ const Step2Details: React.FC = () => {
 const Step3Hours: React.FC = () => {
     const { hours, setHours } = useVenueCreationStore();
     const defaultWorkingHours: VenueWorkingHours = {
-        monday: { open: '09:00', close: '23:00' },
-        tuesday: { open: '09:00', close: '23:00' },
-        wednesday: { open: '09:00', close: '23:00' },
-        thursday: { open: '09:00', close: '23:00' },
-        friday: { open: '09:00', close: '23:00' },
-        saturday: { open: '09:00', close: '23:00' },
-        sunday: { open: '09:00', close: '23:00' },
+        MondayOpen: '09:00',
+        MondayClose: '23:00',
+        TuesdayOpen: '09:00',
+        TuesdayClose: '23:00',
+        WednesdayOpen: '09:00',
+        WednesdayClose: '23:00',
+        ThursdayOpen: '09:00',
+        ThursdayClose: '23:00',
+        FridayOpen: '09:00',
+        FridayClose: '23:00',
+        SaturdayOpen: '09:00',
+        SaturdayClose: '23:00',
+        SundayOpen: '09:00',
+        SundayClose: '23:00',
     };
     const hoursData = hours.hours || defaultWorkingHours;
     const isDayOff = hours.isDayOff || {
@@ -290,36 +297,47 @@ const Step3Hours: React.FC = () => {
         sunday: false,
     };
 
-    const days: { key: DayOfWeek; label: string }[] = [
-        { key: 'monday', label: 'Понедельник' },
-        { key: 'tuesday', label: 'Вторник' },
-        { key: 'wednesday', label: 'Среда' },
-        { key: 'thursday', label: 'Четверг' },
-        { key: 'friday', label: 'Пятница' },
-        { key: 'saturday', label: 'Суббота' },
-        { key: 'sunday', label: 'Воскресенье' },
+    const days: { key: DayOfWeek; label: string; openField: keyof VenueWorkingHours; closeField: keyof VenueWorkingHours }[] = [
+        { key: 'monday', label: 'Понедельник', openField: 'MondayOpen', closeField: 'MondayClose' },
+        { key: 'tuesday', label: 'Вторник', openField: 'TuesdayOpen', closeField: 'TuesdayClose' },
+        { key: 'wednesday', label: 'Среда', openField: 'WednesdayOpen', closeField: 'WednesdayClose' },
+        { key: 'thursday', label: 'Четверг', openField: 'ThursdayOpen', closeField: 'ThursdayClose' },
+        { key: 'friday', label: 'Пятница', openField: 'FridayOpen', closeField: 'FridayClose' },
+        { key: 'saturday', label: 'Суббота', openField: 'SaturdayOpen', closeField: 'SaturdayClose' },
+        { key: 'sunday', label: 'Воскресенье', openField: 'SundayOpen', closeField: 'SundayClose' },
     ];
 
     const toggleDayOff = (day: DayOfWeek) => {
         const newIsDayOff = { ...isDayOff, [day]: !isDayOff[day] };
         setHours({ isDayOff: newIsDayOff });
         
+        const dayConfig = days.find(d => d.key === day)!;
         if (!newIsDayOff[day]) {
-            const currentHours = hoursData[day] || { open: '09:00', close: '23:00' };
-            setHours({ hours: { ...hoursData, [day]: currentHours } });
+            setHours({ 
+                hours: { 
+                    ...hoursData, 
+                    [dayConfig.openField]: '09:00',
+                    [dayConfig.closeField]: '23:00'
+                } 
+            });
         } else {
-            setHours({ hours: { ...hoursData, [day]: { open: '00:00', close: '00:00' } } });
+            setHours({ 
+                hours: { 
+                    ...hoursData, 
+                    [dayConfig.openField]: '00:00',
+                    [dayConfig.closeField]: '00:00'
+                } 
+            });
         }
     };
 
-    const updateHour = (day: DayOfWeek, field: 'open' | 'close', value: string) => {
-        const currentDay = hoursData[day] || { open: '09:00', close: '23:00' };
-        setHours({ hours: { ...hoursData, [day]: { ...currentDay, [field]: value } } });
+    const updateHour = (field: keyof VenueWorkingHours, value: string) => {
+        setHours({ hours: { ...hoursData, [field]: value } });
     };
 
     return (
         <div className="space-y-4">
-            {days.map(({ key, label }) => (
+            {days.map(({ key, label, openField, closeField }) => (
                 <div key={key} className="bg-slate-50 rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-slate-700">{label}</span>
@@ -336,8 +354,8 @@ const Step3Hours: React.FC = () => {
                                 <label className="text-xs text-slate-500 mb-1 block">Открытие</label>
                                 <input
                                     type="time"
-                                    value={hoursData[key]?.open || '09:00'}
-                                    onChange={(e) => updateHour(key, 'open', e.target.value)}
+                                    value={hoursData[openField] || '09:00'}
+                                    onChange={(e) => updateHour(openField, e.target.value)}
                                     className="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
                                 />
                             </div>
@@ -345,8 +363,8 @@ const Step3Hours: React.FC = () => {
                                 <label className="text-xs text-slate-500 mb-1 block">Закрытие</label>
                                 <input
                                     type="time"
-                                    value={hoursData[key]?.close || '23:00'}
-                                    onChange={(e) => updateHour(key, 'close', e.target.value)}
+                                    value={hoursData[closeField] || '23:00'}
+                                    onChange={(e) => updateHour(closeField, e.target.value)}
                                     className="w-full h-11 border border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
                                 />
                             </div>

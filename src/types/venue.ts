@@ -65,8 +65,8 @@ export interface Amenity {
 }
 
 export interface Capacity {
-    type: string;
-    count: number;
+    title: string;
+    value: number;
 }
 
 export interface SocialLinks {
@@ -83,13 +83,20 @@ export interface WorkingHour {
 }
 
 export interface VenueWorkingHours {
-    monday: WorkingHour;
-    tuesday: WorkingHour;
-    wednesday: WorkingHour;
-    thursday: WorkingHour;
-    friday: WorkingHour;
-    saturday: WorkingHour;
-    sunday: WorkingHour;
+    MondayOpen: string;
+    MondayClose: string;
+    TuesdayOpen: string;
+    TuesdayClose: string;
+    WednesdayOpen: string;
+    WednesdayClose: string;
+    ThursdayOpen: string;
+    ThursdayClose: string;
+    FridayOpen: string;
+    FridayClose: string;
+    SaturdayOpen: string;
+    SaturdayClose: string;
+    SundayOpen: string;
+    SundayClose: string;
 }
 
 // Step 1: Basic Info
