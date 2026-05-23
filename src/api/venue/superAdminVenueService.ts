@@ -1,5 +1,20 @@
 import { apiClient } from '../client';
-import { VenueListItem, AdminForReplace, VenueCondition, PaymentDetail } from '../../types/venue';
+import { 
+    VenueListItem, 
+    AdminForReplace, 
+    VenueCondition, 
+    PaymentDetail,
+    City,
+    Cuisine,
+    Amenity,
+    BasicInfoData,
+    VenueDetailsData,
+    VenueWorkingHours,
+    VenueCuisinesData,
+    VenueAmenitiesData,
+    VenueContactData,
+    VenueConditionsData,
+} from '../../types/venue';
 
 export const superAdminVenueService = {
     getAllVenues: async (offset = 0, limit = 10): Promise<VenueListItem[]> => {
@@ -64,5 +79,63 @@ export const superAdminVenueService = {
 
     deletePaymentDetail: async (paymentId: number): Promise<void> => {
         await apiClient.delete(`/api/super-admin-venue/payment/delete-payment-detail/${paymentId}`);
+    },
+
+    // ─────────── Venue Creation API Methods ───────────
+
+    // Step 1: Add Basic Info
+    addBasicInfo: async (data: BasicInfoData): Promise<{ id: number }> => {
+        const response = await apiClient.post<{ id: number }>('/api/super-admin-venue/add-basic', data);
+        return response.data;
+    },
+
+    // Step 2: Add Venue Details
+    addVenueDetails: async (venueId: number, data: VenueDetailsData): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-venue-details/${venueId}`, data);
+    },
+
+    // Step 3: Add Working Hours
+    addVenueHours: async (venueId: number, hours: VenueWorkingHours): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-hour/${venueId}`, hours);
+    },
+
+    // Step 4: Add Cuisines
+    addVenueCuisines: async (venueId: number, data: VenueCuisinesData): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-cuisines/${venueId}`, data);
+    },
+
+    // Step 5: Add Amenities
+    addVenueAmenities: async (venueId: number, data: VenueAmenitiesData): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-amenities/${venueId}`, data);
+    },
+
+    // Step 6: Add Contacts
+    addVenueContacts: async (venueId: number, data: VenueContactData): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-contact/${venueId}`, data);
+    },
+
+    // Step 7: Add Conditions
+    addVenueConditions: async (venueId: number, data: VenueConditionsData): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-condition/${venueId}`, data);
+    },
+
+    // Helper: Get all cities
+    getAllCities: async (): Promise<City[]> => {
+        const response = await apiClient.get<City[]>('/api/dev/city/all');
+        return response.data;
+    },
+
+    // Helper: Get all cuisines with pagination
+    getAllCuisines: async (offset = 0, limit = 100): Promise<Cuisine[]> => {
+        const response = await apiClient.get<Cuisine[]>('/api/dev/cuisine/all', {
+            params: { offset, limit },
+        });
+        return response.data;
+    },
+
+    // Helper: Get all amenities
+    getAllAmenities: async (): Promise<Amenity[]> => {
+        const response = await apiClient.get<Amenity[]>('/api/dev/amenities/allForUpdate');
+        return response.data;
     },
 };

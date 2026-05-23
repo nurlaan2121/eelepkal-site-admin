@@ -43,3 +43,99 @@ export interface PaymentDetail {
     bankName: string;
     qrcodeUrl: string;
 }
+
+// ─────────── Venue Creation Types ───────────
+
+export interface City {
+    id: number;
+    name: string;
+}
+
+export interface Cuisine {
+    id: number;
+    name: string;
+}
+
+export interface Amenity {
+    id: number;
+    name: string;
+    icon?: string;
+}
+
+export interface Capacity {
+    type: string;
+    count: number;
+}
+
+export interface SocialLinks {
+    instagram?: string;
+    whatsapp?: string;
+    telegram?: string;
+    facebook?: string;
+    website?: string;
+}
+
+export interface WorkingHour {
+    open: string;
+    close: string;
+}
+
+export interface VenueWorkingHours {
+    monday: WorkingHour;
+    tuesday: WorkingHour;
+    wednesday: WorkingHour;
+    thursday: WorkingHour;
+    friday: WorkingHour;
+    saturday: WorkingHour;
+    sunday: WorkingHour;
+}
+
+// Step 1: Basic Info
+export interface BasicInfoData {
+    imageUrls: string[];
+    schemaImageUrls: string[];
+    nameVenue: string;
+    description: string;
+}
+
+// Step 2: Details
+export interface VenueDetailsData {
+    cityId: number;
+    address: string;
+    averageCheck: number;
+    capacities: Capacity[];
+}
+
+// Step 3: Working Hours
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+export interface VenueHoursData {
+    hours: VenueWorkingHours;
+    isDayOff: Record<DayOfWeek, boolean>;
+}
+
+// Step 4: Cuisines
+export interface VenueCuisinesData {
+    cuisinesIds: number[];
+}
+
+// Step 5: Amenities
+export interface VenueAmenitiesData {
+    amenitiesId: number[];
+}
+
+// Step 6: Contacts
+export interface VenueContactData {
+    phoneNumber: string;
+    email: string;
+    linksSocial: SocialLinks;
+}
+
+// Step 7: Conditions
+export interface VenueConditionsData {
+    deposit: number;
+    cancelAllowed: boolean;
+    cancellationDeadline: string;
+    editAllowed: boolean;
+    editingDeadline: string;
+}
