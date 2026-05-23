@@ -2,11 +2,11 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueries } from '@tanstack/react-query';
 import {
-    ChevronLeft, Edit3, MapPin, Phone, Mail,
+    ChevronLeft, MapPin, Phone, Mail,
     Globe, Instagram, MessageCircle, Send, Facebook,
-    Clock, UtensilsCrossed, ConciergeBell, FileText,
-    UserCog, CreditCard, Star, Users, Wallet,
-    Calendar, CheckCircle2, AlertCircle, Info
+    Clock, ConciergeBell, FileText,
+    UserCog, Star, Users, Wallet,
+    CheckCircle2, AlertCircle, Info, Layers, Sofa, LayoutGrid, Utensils
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
@@ -20,7 +20,7 @@ import {
 import { VenueHero } from './components/VenueHero';
 import { VenueInfoCard } from './components/VenueInfoCard';
 import { VenueSkeleton } from './components/VenueSkeletons';
-import { VenueAmenityChip } from './components/VenueAmenityChip';
+import { VenueAmenityGrid } from './components/VenueAmenityGrid';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
@@ -48,19 +48,19 @@ export const VenueDetailPage: React.FC = () => {
     const isLoading = results.some(r => r.isLoading);
     const isError = results.some(r => r.isError);
 
-    if (isLoading) return <VenueSkeleton />;
+    if (isLoading) return <div className="max-w-md mx-auto sm:max-w-7xl px-4 py-8"><VenueSkeleton /></div>;
 
     if (isError) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
-                <div className="w-24 h-24 bg-red-50 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-xl shadow-red-500/10">
-                    <AlertCircle size={40} />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 px-6">
+                <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center text-red-500 shadow-xl shadow-red-500/10">
+                    <AlertCircle size={32} />
                 </div>
                 <div className="space-y-2">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Ошибка загрузки</h2>
-                    <p className="text-slate-400 font-medium">Не удалось получить данные о заведении</p>
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">Ошибка загрузки</h2>
+                    <p className="text-slate-500 font-medium">Не удалось получить данные о заведении</p>
                 </div>
-                <Button onClick={() => navigate('/super-admin/venues')} variant="ghost" className="h-14 px-8 rounded-2xl font-black">
+                <Button onClick={() => navigate('/super-admin/venues')} variant="ghost" className="h-12 px-6 rounded-2xl font-black border border-slate-100">
                     Вернуться к списку
                 </Button>
             </div>
@@ -86,298 +86,255 @@ export const VenueDetailPage: React.FC = () => {
 
     const today = getTodayStatus();
 
-    // Image transformation helper
     const getImageUrls = (data: any): string[] => {
         if (!data) return [];
         if (Array.isArray(data.imageUrls)) return data.imageUrls;
-        if (data.images && typeof data.images === 'object') {
-            return Object.values(data.images);
-        }
+        if (data.images && typeof data.images === 'object') return Object.values(data.images);
         return [];
     };
 
     const imageUrls = getImageUrls(basicData);
 
     return (
-        <div className="pb-20 max-w-7xl mx-auto">
-            {/* Premium Sticky Header */}
-            <header className="fixed top-0 inset-x-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-8 py-4">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => navigate('/super-admin/venues')}
-                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all active:scale-95 border border-slate-200/50"
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <div className="hidden sm:block">
-                            <h2 className="text-xl font-black text-slate-900 leading-tight">
-                                {(basicData as any)?.name || basicData?.nameVenue || 'Заведение'}
-                            </h2>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
-                                Панель управления
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
-                            <CheckCircle2 size={16} className="text-emerald-500" />
-                            <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Активно</span>
-                        </div>
-                        <Button className="h-12 px-6 rounded-2xl font-black text-sm bg-slate-900 border-0 shadow-lg shadow-slate-900/10">
-                            Действия
-                        </Button>
-                    </div>
+        <div className="pb-20 max-w-2xl mx-auto sm:px-4">
+            {/* Minimal Mobile Header */}
+            <header className="fixed top-0 inset-x-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-slate-50 px-4 py-3 sm:hidden">
+                <div className="flex items-center justify-between">
+                    <button onClick={() => navigate('/super-admin/venues')} className="p-2 -ml-2 text-slate-600">
+                        <ChevronLeft size={24} />
+                    </button>
+                    <h1 className="text-sm font-black text-slate-900 truncate px-4">
+                        {(basicData as any)?.name || basicData?.nameVenue || 'Заведение'}
+                    </h1>
+                    <div className="w-10" />
                 </div>
             </header>
 
-            <main className="pt-28 space-y-10">
-                {/* Hero Section with Bento Gallery */}
+            <main className="space-y-6 pt-14 sm:pt-8 overflow-x-hidden">
+                {/* 1. Hero Gallery Section */}
                 <VenueHero
                     images={imageUrls}
-                    name={(basicData as any)?.name || basicData?.nameVenue}
-                    address={`${(allCities.data as any[])?.find(c => c.id === detailsData?.cityId)?.title || ''} ${(basicData as any)?.address || detailsData?.address || ''}`.trim()}
-                    avgCheck={(basicData as any)?.averageCheck || detailsData?.averageCheck}
-                    isTodayOpen={!today.isOff}
-                    todayHours={(basicData as any)?.todayWorkingHours || today.hours}
+                    onEdit={() => console.log('Edit Hero')}
                 />
 
-                {/* Active Promos Badge Row */}
-                {Array.isArray((basicData as any)?.promosRes) && (basicData as any).promosRes.length > 0 && (
-                    <div className="flex flex-wrap gap-3">
-                        {(basicData as any).promosRes.map((promo: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600">
-                                <Star size={14} className="fill-rose-500" />
-                                <span className="text-xs font-black uppercase tracking-wider">Акция: {promo.title || 'Активная скидка'}</span>
+                <div className="px-4 sm:px-0 space-y-6">
+                    {/* 2. Main Basic Information Card */}
+                    <VenueInfoCard onEdit={() => console.log('Edit Basic')} className="!p-0">
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                    {(basicData as any)?.name || basicData?.nameVenue || 'Без названия'}
+                                </h1>
                             </div>
-                        ))}
-                    </div>
-                )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-                    {/* Left Column: Primary Content */}
-                    <div className="lg:col-span-2 space-y-10">
-
-                        {/* Description Section */}
-                        <VenueInfoCard
-                            title="Описание заведения"
-                            icon={<FileText className="text-blue-500" />}
-                            onEdit={() => console.log('Edit description')}
-                        >
-                            <div className="relative">
-                                <p className="text-slate-600 text-lg leading-[1.8] font-medium whitespace-pre-wrap">
-                                    {descriptionData?.description || basicData?.description || (
-                                        <span className="text-slate-300 italic">Описание пока не заполнено владельцем</span>
-                                    )}
-                                </p>
-                            </div>
-                        </VenueInfoCard>
-
-                        {/* Amenities Grid */}
-                        <VenueInfoCard
-                            title="Удобства и сервисы"
-                            icon={<ConciergeBell className="text-brand-500" />}
-                            onEdit={() => console.log('Edit amenities')}
-                            description="Особенности вашего заведения"
-                        >
-                            <div className="flex flex-wrap gap-3">
-                                {Array.isArray(amenitiesData) && amenitiesData.length > 0 ? (
-                                    amenitiesData.map((aId) => {
-                                        const found = (allAmenities.data as any[])?.find(a => a.id === aId);
-                                        return <VenueAmenityChip key={aId} id={aId} name={found?.name || `Услуга ${aId}`} />;
-                                    })
-                                ) : (
-                                    <div className="w-full p-8 rounded-3xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
-                                        <Info size={24} className="mx-auto text-slate-300" />
-                                        <p className="text-sm font-medium text-slate-400">Список услуг пуст</p>
-                                    </div>
-                                )}
-                            </div>
-                        </VenueInfoCard>
-
-                        {/* Capacity Grid */}
-                        <VenueInfoCard
-                            title="Вместимость и залы"
-                            icon={<Users className="text-purple-500" />}
-                            onEdit={() => console.log('Edit capacity')}
-                        >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {Array.isArray(detailsData?.capacities) && detailsData.capacities.length > 0 ? (
-                                    detailsData.capacities.map((cap, i) => (
-                                        <motion.div
-                                            key={i}
-                                            whileHover={{ y: -5 }}
-                                            className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
-                                                    <Users size={20} />
-                                                </div>
-                                                <span className="font-black text-slate-700 uppercase text-[10px] tracking-widest">{cap.title}</span>
-                                            </div>
-                                            <span className="text-2xl font-black text-brand-600">{cap.value}</span>
-                                        </motion.div>
-                                    ))
-                                ) : (
-                                    <p className="text-slate-300 italic p-4 text-center col-span-2">Данные о вместимости не указаны</p>
-                                )}
-                            </div>
-                        </VenueInfoCard>
-                    </div>
-
-                    {/* Right Column: Sidebar */}
-                    <div className="space-y-10">
-
-                        {/* Working Hours Sidebar */}
-                        <VenueInfoCard
-                            title="График работы"
-                            icon={<Clock className="text-orange-500" />}
-                            onEdit={() => console.log('Edit hours')}
-                        >
-                            <div className="space-y-1">
-                                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                                    const open = (hoursData as any)?.[`${day}Open`];
-                                    const close = (hoursData as any)?.[`${day}Close`];
-                                    const labels: any = {
-                                        monday: 'Понедельник', tuesday: 'Вторник', wednesday: 'Среда',
-                                        thursday: 'Четверг', friday: 'Пятница', saturday: 'Суббота', sunday: 'Воскресенье'
-                                    };
-                                    const isDayOff = open === '00:00' && close === '00:00';
-                                    const isToday = day === today.dayName;
-
-                                    return (
-                                        <div
-                                            key={day}
-                                            className={`flex items-center justify-between p-4 rounded-2xl transition-all ${isToday ? 'bg-orange-50/50 border border-orange-100/50 scale-[1.02]' : 'hover:bg-slate-50'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <span className={`text-sm font-bold ${isToday ? 'text-orange-600' : 'text-slate-500'}`}>
-                                                    {labels[day]}
-                                                </span>
-                                                {isToday && (
-                                                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[8px] font-black uppercase rounded-md">
-                                                        Сегодня
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            {isDayOff ? (
-                                                <span className="text-xs font-black text-rose-500 uppercase tracking-widest bg-rose-50 px-2 py-1 rounded-lg">Выходной</span>
-                                            ) : (
-                                                <span className={`text-sm font-black ${isToday ? 'text-slate-900' : 'text-slate-700'}`}>
-                                                    {open} — {close}
-                                                </span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </VenueInfoCard>
-
-                        {/* Contacts Sidebar */}
-                        <VenueInfoCard
-                            title="Контакты"
-                            icon={<Phone className="text-emerald-500" />}
-                            onEdit={() => console.log('Edit contacts')}
-                        >
-                            <div className="space-y-6">
-                                {contactsData?.phoneNumber && (
-                                    <div className="flex items-center gap-4 group cursor-pointer">
-                                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                                            <Phone size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Телефон</p>
-                                            <p className="font-black text-slate-900 text-lg group-hover:text-emerald-600 transition-colors">{contactsData.phoneNumber}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {contactsData?.email && contactsData.email.trim() !== "" && (
-                                    <div className="flex items-center gap-4 group cursor-pointer">
-                                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-110">
-                                            <Mail size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</p>
-                                            <p className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{contactsData.email}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Premium Social Grid */}
-                                <div className="grid grid-cols-4 gap-3 pt-4 border-t border-slate-50">
-                                    {Object.entries(contactsData?.linksSocial || {}).map(([key, val]) => {
-                                        if (!val || val.trim() === "") return null;
-                                        const icons: any = {
-                                            instagram: <Instagram size={20} />,
-                                            whatsapp: <MessageCircle size={20} />,
-                                            telegram: <Send size={20} />,
-                                            facebook: <Facebook size={20} />,
-                                            website: <Globe size={20} />
-                                        };
-                                        return (
-                                            <a
-                                                key={key}
-                                                href={val.startsWith('http') ? val : `https://${val}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="w-full aspect-square rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all border border-slate-100 hover:shadow-lg hover:-translate-y-1"
-                                                title={key}
-                                            >
-                                                {icons[key] || <Globe size={20} />}
-                                            </a>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </VenueInfoCard>
-
-                        {/* Administrator Sidebar Card - High Contrast */}
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 blur-[60px] rounded-full -mr-16 -mt-16" />
-
-                            <div className="relative z-10 space-y-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-16 h-16 rounded-3xl bg-white/10 flex items-center justify-center text-brand-400 border border-white/10 group-hover:rotate-6 transition-transform">
-                                        <UserCog size={32} />
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-4 text-slate-600">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
+                                        <Clock size={18} />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-black">Администратор</h3>
-                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Персональный доступ</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">График:</p>
+                                        <p className="font-bold text-sm tracking-tight">{today.isOff ? 'Выходной' : today.hours}</p>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4">
-                                    {publicAdminData ? (
-                                        <div className="p-5 bg-white/5 rounded-[1.5rem] border border-white/5 space-y-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-black font-black text-sm shadow-lg shadow-brand-primary/20">
-                                                    {(publicAdminData.fullName || 'A').charAt(0)}
-                                                </div>
-                                                <span className="font-bold text-slate-100">{publicAdminData.fullName || 'Имя не указано'}</span>
-                                            </div>
-                                            <p className="text-sm text-slate-400 pl-1">{publicAdminData.email}</p>
-                                        </div>
-                                    ) : (
-                                        <div className="p-6 text-center border-2 border-dashed border-white/10 rounded-[1.5rem]">
-                                            <p className="text-sm text-slate-500 font-medium italic">Администратор пока не назначен</p>
-                                        </div>
-                                    )}
+                                <div className="flex items-center gap-4 text-slate-600">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
+                                        <MapPin size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Адрес:</p>
+                                        <p className="font-bold text-sm tracking-tight">
+                                            {`${(allCities.data as any[])?.find(c => c.id === detailsData?.cityId)?.title || ''} ${(basicData as any)?.address || detailsData?.address || ''}`.trim() || 'Адрес не указан'}
+                                        </p>
+                                    </div>
+                                </div>
 
-                                    <Button className="w-full h-14 bg-brand-primary hover:bg-brand-400 text-black border-0 font-black rounded-2xl transition-all shadow-xl shadow-brand-primary/10">
-                                        Назначить ответственного
-                                    </Button>
+                                <div className="flex items-center gap-4 text-slate-600">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
+                                        <Wallet size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Средний чек:</p>
+                                        <p className="font-bold text-sm tracking-tight">{(basicData as any)?.averageCheck || detailsData?.averageCheck || 0} сом</p>
+                                    </div>
+                                </div>
 
-                                    <button className="w-full h-12 text-rose-400 hover:text-rose-300 text-sm font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
-                                        Удалить заведение
-                                    </button>
+                                <div className="flex items-center gap-4 text-slate-600">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
+                                        <Star size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Рейтинг:</p>
+                                        <div className="flex items-center gap-1.5 font-bold text-sm">
+                                            {(basicData as any)?.rating || 5.0} <Star size={14} className="fill-orange-500 text-orange-500" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    </VenueInfoCard>
+
+                    {/* 3. Promos Section (If any) */}
+                    {Array.isArray((basicData as any)?.promosRes) && (basicData as any).promosRes.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-black text-slate-900 px-2">Акции и скидки</h3>
+                            {(basicData as any).promosRes.map((promo: any, idx: number) => (
+                                <VenueInfoCard key={idx} onEdit={() => console.log('Edit Promo')} noPadding className="border-orange-100 bg-orange-50/20">
+                                    <div className="flex h-32">
+                                        <div className="w-32 bg-slate-100 relative overflow-hidden">
+                                            <img src={(basicData as any).images?.['1'] || imageUrls[0]} className="w-full h-full object-cover" alt="" />
+                                            <div className="absolute top-2 left-2 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-lg">-{promo.discount || 20}%</div>
+                                        </div>
+                                        <div className="flex-1 p-4 flex flex-col justify-center">
+                                            <h4 className="font-black text-slate-900 leading-tight mb-1">{promo.title || 'Специальное предложение'}</h4>
+                                            <p className="text-xs text-slate-500 line-clamp-2">{promo.description || 'Успейте воспользоваться выгодным предложением от нашего заведения'}</p>
+                                        </div>
+                                    </div>
+                                </VenueInfoCard>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* 4. Details Section (Floor, Cabins, Kitchen, etc.) */}
+                    <VenueInfoCard title="Детали заведения" icon={<LayoutGrid size={20} />} onEdit={() => console.log('Edit Details')}>
+                        <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Layers size={20} /></div>
+                                <div>
+                                    <p className="text-[9px] font-black uppercase text-slate-400">Этаж</p>
+                                    <p className="font-bold text-sm">1 этаж</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Sofa size={20} /></div>
+                                <div>
+                                    <p className="text-[9px] font-black uppercase text-slate-400">Кабины</p>
+                                    <p className="font-bold text-sm">Есть VIP</p>
+                                </div>
+                            </div>
+                            {Array.isArray(detailsData?.capacities) && detailsData.capacities.map((cap, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Users size={20} /></div>
+                                    <div>
+                                        <p className="text-[9px] font-black uppercase text-slate-400">{cap.title}</p>
+                                        <p className="font-bold text-sm">{cap.value} чел.</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </VenueInfoCard>
+
+                    {/* 5. Working Hours List */}
+                    <VenueInfoCard title="График работы" icon={<Clock size={20} />} onEdit={() => console.log('Edit Hours')}>
+                        <div className="space-y-4">
+                            {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                                const open = (hoursData as any)?.[`${day}Open`];
+                                const close = (hoursData as any)?.[`${day}Close`];
+                                const labels: any = {
+                                    monday: 'Понедельник', tuesday: 'Вторник', wednesday: 'Среда',
+                                    thursday: 'Четверг', friday: 'Пятница', saturday: 'Суббота', sunday: 'Воскресенье'
+                                };
+                                const isDayOff = open === '00:00' && close === '00:00';
+                                const isToday = day === today.dayName;
+
+                                return (
+                                    <div key={day} className={`flex items-center justify-between transition-all ${isToday ? 'text-orange-600' : 'text-slate-600'}`}>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-sm font-bold ${isToday ? 'font-black' : ''}`}>{labels[day]}</span>
+                                            {isToday && <div className="w-1.5 h-1.5 rounded-full bg-orange-500 ml-1" />}
+                                        </div>
+                                        <span className={`text-sm font-bold ${isDayOff ? 'text-rose-500' : ''}`}>
+                                            {isDayOff ? 'Выходной' : `${open} — ${close}`}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </VenueInfoCard>
+
+                    {/* 6. Amenities Section */}
+                    <VenueInfoCard title="Удобства" icon={<ConciergeBell size={20} />} onEdit={() => console.log('Edit Amenities')}>
+                        <VenueAmenityGrid
+                            amenities={amenitiesData}
+                            allAmenities={allAmenities.data as any[]}
+                        />
+                    </VenueInfoCard>
+
+                    {/* 7. Contacts Section */}
+                    <VenueInfoCard title="Контакты" icon={<Phone size={20} />} onEdit={() => console.log('Edit Contacts')}>
+                        <div className="space-y-4">
+                            {contactsData?.phoneNumber && (
+                                <a href={`tel:${contactsData.phoneNumber}`} className="flex items-center gap-4 group">
+                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                                        <Phone size={20} />
+                                    </div>
+                                    <span className="font-black text-slate-800 tracking-tight">{contactsData.phoneNumber}</span>
+                                </a>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+                                {Object.entries(contactsData?.linksSocial || {}).map(([key, val]) => {
+                                    if (!val || val.trim() === "") return null;
+                                    const icons: any = {
+                                        instagram: <Instagram size={18} />,
+                                        whatsapp: <MessageCircle size={18} />,
+                                        telegram: <Send size={18} />,
+                                        facebook: <Facebook size={18} />,
+                                        website: <Globe size={18} />
+                                    };
+                                    const labels: any = {
+                                        instagram: 'Instagram',
+                                        whatsapp: 'WhatsApp',
+                                        telegram: 'Telegram',
+                                        facebook: 'Facebook',
+                                        website: 'Сайт'
+                                    };
+                                    return (
+                                        <a key={key} href={val.startsWith('http') ? val : `https://${val}`} target="_blank" rel="noreferrer"
+                                            className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 hover:bg-slate-900 hover:text-white transition-all group"
+                                        >
+                                            <div className="text-slate-400 group-hover:text-white">{icons[key] || <Globe size={18} />}</div>
+                                            <span className="text-xs font-black uppercase tracking-wider">{labels[key]}</span>
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </VenueInfoCard>
+
+                    {/* 8. Administrator Section */}
+                    <VenueInfoCard title="Администратор" icon={<UserCog size={20} />} onEdit={() => console.log('Edit Admin')}>
+                        {publicAdminData ? (
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-brand-primary flex items-center justify-center text-black font-black text-xl shadow-lg shadow-brand-primary/20">
+                                    {(publicAdminData.fullName || 'A').charAt(0)}
+                                </div>
+                                <div>
+                                    <h4 className="font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</h4>
+                                    <p className="text-xs text-slate-500 font-medium">{publicAdminData.email}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="p-4 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                                <p className="text-sm text-slate-400 font-medium italic">Администратор не назначен</p>
+                            </div>
+                        )}
+                    </VenueInfoCard>
+
+                    {/* 9. Description (Typography focused) */}
+                    <div className="py-10 space-y-6 text-center">
+                        <div className="flex items-center justify-center gap-4 mb-4">
+                            <div className="h-px w-12 bg-slate-100" />
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Описание</h3>
+                            <div className="h-px w-12 bg-slate-100" />
+                        </div>
+                        <p className="text-slate-600 text-lg leading-[1.8] font-medium whitespace-pre-wrap max-w-xl mx-auto px-4">
+                            {descriptionData?.description || basicData?.description || 'Описание пока не заполнено владельцем заведения'}
+                        </p>
+                        <Button variant="ghost" className="text-orange-500 font-black uppercase tracking-widest text-xs" onClick={() => console.log('Edit Desc')}>
+                            Редактировать описание
+                        </Button>
                     </div>
                 </div>
             </main>
