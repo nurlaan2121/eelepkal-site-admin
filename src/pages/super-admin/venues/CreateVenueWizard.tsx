@@ -13,7 +13,7 @@ import { Input } from '../../../components/ui/Input';
 import { superAdminVenueService } from '../../../api/venue/superAdminVenueService';
 import { useVenueCreationStore } from '../../../store/venueCreationStore';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { City, Cuisine, Amenity, DayOfWeek } from '../../../types/venue';
+import { City, Cuisine, Amenity, DayOfWeek, VenueWorkingHours } from '../../../types/venue';
 
 const STEPS = [
     { id: 1, title: 'Основная информация', icon: Store },
@@ -243,8 +243,25 @@ const Step2Details: React.FC = () => {
 // ─────────── Step 3: Working Hours ───────────
 const Step3Hours: React.FC = () => {
     const { hours, setHours } = useVenueCreationStore();
-    const hoursData = hours.hours || {};
-    const isDayOff = hours.isDayOff || {};
+    const defaultWorkingHours: VenueWorkingHours = {
+        monday: { open: '09:00', close: '23:00' },
+        tuesday: { open: '09:00', close: '23:00' },
+        wednesday: { open: '09:00', close: '23:00' },
+        thursday: { open: '09:00', close: '23:00' },
+        friday: { open: '09:00', close: '23:00' },
+        saturday: { open: '09:00', close: '23:00' },
+        sunday: { open: '09:00', close: '23:00' },
+    };
+    const hoursData = hours.hours || defaultWorkingHours;
+    const isDayOff = hours.isDayOff || {
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: false,
+        saturday: false,
+        sunday: false,
+    };
 
     const days: { key: DayOfWeek; label: string }[] = [
         { key: 'monday', label: 'Понедельник' },
