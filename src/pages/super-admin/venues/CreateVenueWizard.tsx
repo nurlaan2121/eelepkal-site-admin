@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    Check, ChevronRight, ChevronLeft, Store, Info, Clock, 
+import {
+    Check, ChevronRight, ChevronLeft, Store, Info, Clock,
     UtensilsCrossed, ConciergeBell, Phone, FileText, PartyPopper,
     Upload, X, Plus, Trash2, Loader2
 } from 'lucide-react';
@@ -65,13 +65,13 @@ const Step1BasicInfo: React.FC = () => {
         // Only update if values actually changed to prevent infinite loop
         const currentImages = basicInfo.imageUrls || [];
         const currentSchemaImages = basicInfo.schemaImageUrls || [];
-        
+
         if (JSON.stringify(currentImages) !== JSON.stringify(images) ||
             JSON.stringify(currentSchemaImages) !== JSON.stringify(schemaImages)) {
             setBasicInfo({
                 nameVenue: basicInfo.nameVenue || '',
                 description: basicInfo.description || '',
-                imageUrls: images, 
+                imageUrls: images,
                 schemaImageUrls: schemaImages
             });
         }
@@ -171,7 +171,7 @@ const Step1BasicInfo: React.FC = () => {
 // ─────────── Step 2: Details ───────────
 const Step2Details: React.FC = () => {
     const { details, setDetails } = useVenueCreationStore();
-    
+
     const { data: cities = [], isLoading } = useQuery({
         queryKey: ['cities'],
         queryFn: superAdminVenueService.getAllCities,
@@ -310,23 +310,23 @@ const Step3Hours: React.FC = () => {
     const toggleDayOff = (day: DayOfWeek) => {
         const newIsDayOff = { ...isDayOff, [day]: !isDayOff[day] };
         setHours({ isDayOff: newIsDayOff });
-        
+
         const dayConfig = days.find(d => d.key === day)!;
         if (!newIsDayOff[day]) {
-            setHours({ 
-                hours: { 
-                    ...hoursData, 
+            setHours({
+                hours: {
+                    ...hoursData,
                     [dayConfig.openField]: '09:00',
                     [dayConfig.closeField]: '23:00'
-                } 
+                }
             });
         } else {
-            setHours({ 
-                hours: { 
-                    ...hoursData, 
+            setHours({
+                hours: {
+                    ...hoursData,
                     [dayConfig.openField]: '00:00',
                     [dayConfig.closeField]: '00:00'
-                } 
+                }
             });
         }
     };
@@ -404,16 +404,14 @@ const Step4Cuisines: React.FC = () => {
                     <button
                         key={cuisine.id}
                         onClick={() => toggleCuisine(cuisine.id)}
-                        className={`p-4 rounded-xl border-2 transition-all text-left ${
-                            selectedIds.includes(cuisine.id)
-                                ? 'border-brand-primary bg-brand-50'
-                                : 'border-slate-200 hover:border-slate-300'
-                        }`}
+                        className={`p-4 rounded-xl border-2 transition-all text-left ${selectedIds.includes(cuisine.id)
+                            ? 'border-brand-primary bg-brand-50'
+                            : 'border-slate-200 hover:border-slate-300'
+                            }`}
                     >
                         <div className="flex items-center gap-3">
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${
-                                selectedIds.includes(cuisine.id) ? 'border-brand-primary bg-brand-primary' : 'border-slate-300'
-                            }`}>
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${selectedIds.includes(cuisine.id) ? 'border-brand-primary bg-brand-primary' : 'border-slate-300'
+                                }`}>
                                 {selectedIds.includes(cuisine.id) && <Check size={14} className="text-white" />}
                             </div>
                             <span className="text-sm font-bold text-slate-700">{cuisine.name}</span>
@@ -451,11 +449,10 @@ const Step5Amenities: React.FC = () => {
                     <button
                         key={amenity.id}
                         onClick={() => toggleAmenity(amenity.id)}
-                        className={`px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${
-                            selectedIds.includes(amenity.id)
-                                ? 'border-brand-primary bg-brand-50 text-brand-700'
-                                : 'border-slate-200 text-slate-600 hover:border-slate-300'
-                        }`}
+                        className={`px-5 py-3 rounded-xl border-2 transition-all text-sm font-bold ${selectedIds.includes(amenity.id)
+                            ? 'border-brand-primary bg-brand-50 text-brand-700'
+                            : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                            }`}
                     >
                         {amenity.name}
                     </button>
@@ -494,7 +491,7 @@ const Step6Contacts: React.FC = () => {
 
             <div className="space-y-4">
                 <label className="block text-sm font-bold text-slate-700">Социальные сети</label>
-                
+
                 <div>
                     <label className="text-xs text-slate-500 mb-1 block">Instagram</label>
                     <Input
@@ -557,11 +554,10 @@ const Step7Conditions: React.FC = () => {
                         <button
                             key={amt}
                             onClick={() => setConditions({ deposit: amt })}
-                            className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${
-                                conditions.deposit === amt
-                                    ? 'bg-brand-primary text-white border-brand-primary'
-                                    : 'bg-white text-slate-600 border-slate-200'
-                            }`}
+                            className={`flex-1 py-3 rounded-xl text-xs font-black border-2 transition-all ${conditions.deposit === amt
+                                ? 'bg-brand-primary text-white border-brand-primary'
+                                : 'bg-white text-slate-600 border-slate-200'
+                                }`}
                         >
                             {amt === 0 ? 'Без депозита' : `${amt}`}
                         </button>
@@ -579,7 +575,7 @@ const Step7Conditions: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-slate-700">Можно отменить?</span>
                     <button
-                        onClick={() => setConditions({ 
+                        onClick={() => setConditions({
                             cancelAllowed: !conditions.cancelAllowed,
                             cancellationDeadline: !conditions.cancelAllowed ? '03:00' : '00:00'
                         })}
@@ -605,7 +601,7 @@ const Step7Conditions: React.FC = () => {
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-bold text-slate-700">Можно редактировать?</span>
                     <button
-                        onClick={() => setConditions({ 
+                        onClick={() => setConditions({
                             editAllowed: !conditions.editAllowed,
                             editingDeadline: !conditions.editAllowed ? '05:00' : '00:00'
                         })}
@@ -631,7 +627,11 @@ const Step7Conditions: React.FC = () => {
 };
 
 // ─────────── Success Screen ───────────
-const SuccessScreen: React.FC = () => {
+interface SuccessScreenProps {
+    onReset: () => void;
+}
+
+const SuccessScreen: React.FC<SuccessScreenProps> = ({ onReset }) => {
     const navigate = useNavigate();
     const { resetCreation } = useVenueCreationStore();
 
@@ -644,22 +644,25 @@ const SuccessScreen: React.FC = () => {
             >
                 <PartyPopper size={48} className="text-white" />
             </motion.div>
-            
+
             <div>
                 <h2 className="text-2xl font-black text-slate-900 mb-2">Заведение успешно добавлено!</h2>
                 <p className="text-slate-500">Все данные сохранены</p>
             </div>
 
             <div className="flex flex-col gap-3 w-full max-w-sm">
-                <Button onClick={() => navigate('/super-admin/venues')} className="w-full h-12">
+                <Button
+                    onClick={() => {
+                        onReset();
+                        navigate('/super-admin/venues');
+                    }}
+                    className="w-full h-12"
+                >
                     Перейти к списку
                 </Button>
                 <Button
                     variant="ghost"
-                    onClick={() => {
-                        resetCreation();
-                        window.location.reload();
-                    }}
+                    onClick={onReset}
                     className="w-full h-12"
                 >
                     Добавить ещё
@@ -680,7 +683,7 @@ export const CreateVenueWizard: React.FC = () => {
     const [localVenueId, setLocalVenueId] = useState<number | null>(null);
 
     // Check if form has any data
-    const hasFormData = 
+    const hasFormData =
         (basicInfo.nameVenue && basicInfo.nameVenue.trim() !== '') ||
         (basicInfo.description && basicInfo.description.trim() !== '') ||
         (basicInfo.imageUrls && basicInfo.imageUrls.length > 0) ||
@@ -791,8 +794,9 @@ export const CreateVenueWizard: React.FC = () => {
         }),
         onSuccess: () => {
             toast.success('Заведение успешно создано!');
-            setIsComplete(true);
             queryClient.invalidateQueries({ queryKey: ['super-admin-venues'] });
+            resetCreation(); // Reset state but keep isComplete=true locally if needed
+            setIsComplete(true);
         },
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
@@ -879,7 +883,11 @@ export const CreateVenueWizard: React.FC = () => {
     };
 
     if (isComplete) {
-        return <SuccessScreen />;
+        return <SuccessScreen onReset={() => {
+            resetCreation();
+            setIsComplete(false);
+            setLocalVenueId(null);
+        }} />;
     }
 
     return (
@@ -897,9 +905,8 @@ export const CreateVenueWizard: React.FC = () => {
                         {STEPS.map((step, i) => (
                             <React.Fragment key={step.id}>
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
-                                        currentStep >= step.id ? 'bg-brand-primary text-white' : 'bg-slate-100 text-slate-400'
-                                    }`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${currentStep >= step.id ? 'bg-brand-primary text-white' : 'bg-slate-100 text-slate-400'
+                                        }`}>
                                         {currentStep > step.id ? <Check size={20} /> : <step.icon size={20} />}
                                     </div>
                                     <div className="hidden lg:block">
