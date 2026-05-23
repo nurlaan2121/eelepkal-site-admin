@@ -35,7 +35,10 @@ const ReplaceAdminModal: React.FC<{ venue: VenueListItem; onClose: () => void }>
     });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
+        >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
             <motion.div
                 initial={{ y: '100%', opacity: 0 }}
@@ -123,7 +126,10 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
     });
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
+        >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
             <motion.div
                 initial={{ y: '100%', opacity: 0 }}
@@ -396,7 +402,10 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
+        <div
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
+        >
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
             <motion.div
                 initial={{ y: '100%', opacity: 0 }}
