@@ -1,42 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, Maximize2, ChevronLeft, ChevronRight, X, Camera } from 'lucide-react';
+import { Maximize2, ChevronLeft, ChevronRight, X, Camera, Trash2, Plus, Loader2 } from 'lucide-react';
 
 interface VenueHeroProps {
-    images: string[];
-    onEdit?: () => void;
+    images: { id: number; url: string }[];
+    onDeleteImage?: (id: number) => void;
+    onAddImage?: (file: File) => void;
+    isProcessing?: boolean;
 }
 
-export const VenueHero: React.FC<VenueHeroProps> = ({ images, onEdit }) => {
+export const VenueHero: React.FC<VenueHeroProps> = ({
+    images,
+    onDeleteImage,
+    onAddImage,
+    isProcessing = false
+}) => {
     const [viewerOpen, setViewerOpen] = useState(false);
-    const [currentImage, setCurrentImage] = useState(0);
+    const [currentImageIdx, setCurrentImageIdx] = useState(0);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const safeImages = Array.isArray(images) && images.length > 0
         ? images
-        : ['https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop'];
+        : [{ id: 0, url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop' }];
+
+    const currentImage = safeImages[currentImageIdx] || safeImages[0];
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file && onAddImage) {
+            onAddImage(file);
+        }
+    };
 
     return (
         <section className="relative w-full overflow-hidden sm:rounded-[32px]">
             {/* Main Hero Image */}
-            <div className="relative aspect-[4/3] sm:aspect-video w-full group cursor-zoom-in overflow-hidden">
-                <motion.img
-                    key={currentImage}
-                    initial={{ opacity: 0.8 }}
-                    animate={{ opacity: 1 }}
-                    src={safeImages[currentImage]}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
-                    alt="Hero"
-                    onClick={() => setViewerOpen(true)}
-                />
+            <div className="relative aspect-[4/3] sm:aspect-video w-full group cursor-zoom-in overflow-hidden bg-slate-100">
+                <AnimatePresence mode="wait">
+                    <motion.img
+                        key={currentImage.url}
+                        initial={{ opacity: 0.8 }}
+                        animate={{ opacity: 1 }}
+                        src={currentImage.url}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
+                        alt="Hero"
+                        onClick={() => setViewerOpen(true)}
+                    />
+                </AnimatePresence>
 
-                {/* Floating Edit Button */}
-                {onEdit && (
+                {/* Delete Button for current image */}
+                {onDeleteImage && currentImage.id !== 0 && !isProcessing && (
                     <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-md text-slate-800 shadow-xl hover:bg-white hover:scale-110 active:scale-95 transition-all z-10 border border-white/50"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('Удалить эту фотографию?')) {
+                                onDeleteImage(currentImage.id);
+                                if (currentImageIdx > 0) setCurrentImageIdx(prev => prev - 1);
+                            }
+                        }}
+                        className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-rose-500 text-white shadow-xl hover:bg-rose-600 hover:scale-110 active:scale-95 transition-all z-10 border border-white/20"
+                        title="Удалить это фото"
                     >
-                        <Edit3 size={18} />
+                        <Trash2 size={18} />
                     </button>
+                )}
+
+                {isProcessing && (
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-20">
+                        <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
+                    </div>
                 )}
 
                 {/* Bottom Overlay Info */}
@@ -53,23 +85,37 @@ export const VenueHero: React.FC<VenueHeroProps> = ({ images, onEdit }) => {
 
             {/* Thumbnail Gallery (Horizontal Scroll) */}
             <div className="bg-white p-4 sm:p-6 overflow-x-auto no-scrollbar flex items-center gap-4">
+                {/* Add Photo Button */}
+                {onAddImage && (
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isProcessing}
+                        className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center gap-1 text-slate-400 hover:border-orange-500 hover:text-orange-500 hover:bg-orange-50/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <Plus size={24} />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Добавить</span>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept="image/*"
+                            className="hidden"
+                        />
+                    </button>
+                )}
+
                 {safeImages.map((img, i) => (
                     <button
-                        key={i}
-                        onClick={() => setCurrentImage(i)}
-                        className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 transition-all ${currentImage === i ? 'border-orange-500 scale-95 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
+                        key={img.id || i}
+                        onClick={() => setCurrentImageIdx(i)}
+                        className={`relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 transition-all ${currentImageIdx === i ? 'border-orange-500 scale-95 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
                             }`}
                     >
-                        <img src={img} className="w-full h-full object-cover" alt="" />
-                        {i === 3 && safeImages.length > 4 && currentImage !== 3 && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs font-black">
-                                +{safeImages.length - 4}
-                            </div>
-                        )}
+                        <img src={img.url} className="w-full h-full object-cover" alt="" />
                     </button>
                 ))}
 
-                {safeImages.length < 4 && Array.from({ length: 4 - safeImages.length }).map((_, i) => (
+                {safeImages.length === 0 && Array.from({ length: 3 }).map((_, i) => (
                     <div key={`empty-${i}`} className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-slate-100 bg-slate-50 flex items-center justify-center text-slate-200">
                         <Camera size={24} />
                     </div>
@@ -94,17 +140,17 @@ export const VenueHero: React.FC<VenueHeroProps> = ({ images, onEdit }) => {
 
                         <div className="relative max-w-6xl w-full aspect-[4/3] md:aspect-video rounded-[3rem] overflow-hidden shadow-2xl flex items-center justify-center">
                             <motion.img
-                                key={currentImage}
+                                key={currentImage.url}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
-                                src={safeImages[currentImage]}
+                                src={currentImage.url}
                                 className="max-w-full max-h-full object-contain"
                                 alt=""
                             />
 
                             <div className="absolute inset-y-0 left-6 flex items-center">
                                 <button
-                                    onClick={() => setCurrentImage(prev => (prev > 0 ? prev - 1 : safeImages.length - 1))}
+                                    onClick={() => setCurrentImageIdx(prev => (prev > 0 ? prev - 1 : safeImages.length - 1))}
                                     className="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center backdrop-blur-xl"
                                 >
                                     <ChevronLeft size={28} />
@@ -113,7 +159,7 @@ export const VenueHero: React.FC<VenueHeroProps> = ({ images, onEdit }) => {
 
                             <div className="absolute inset-y-0 right-6 flex items-center">
                                 <button
-                                    onClick={() => setCurrentImage(prev => (prev < safeImages.length - 1 ? prev + 1 : 0))}
+                                    onClick={() => setCurrentImageIdx(prev => (prev < safeImages.length - 1 ? prev + 1 : 0))}
                                     className="w-14 h-14 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex items-center justify-center backdrop-blur-xl"
                                 >
                                     <ChevronRight size={28} />
@@ -121,7 +167,7 @@ export const VenueHero: React.FC<VenueHeroProps> = ({ images, onEdit }) => {
                             </div>
 
                             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/10 backdrop-blur-xl rounded-full text-white font-black text-xs uppercase tracking-widest border border-white/10">
-                                {currentImage + 1} / {safeImages.length}
+                                {currentImageIdx + 1} / {safeImages.length}
                             </div>
                         </div>
                     </motion.div>

@@ -188,4 +188,16 @@ export const superAdminVenueService = {
     deleteFeedback: async (venueId: number, feedbackId: number): Promise<void> => {
         await apiClient.delete(`/api/super-admin-feedback/delete/${venueId}/${feedbackId}`);
     },
+
+    // ─────────── Venue Image Management ───────────
+
+    deleteVenueImage: async (venueId: number, imageId: number): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/delete-image-in-venue/${venueId}/${imageId}`);
+    },
+
+    addVenueImage: async (venueId: number, url: string): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/add-image-in-venue/${venueId}`, null, {
+            params: { url }
+        });
+    },
 };
