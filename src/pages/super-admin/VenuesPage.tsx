@@ -242,10 +242,94 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
 
 // ─────────── Payment Details Modal ───────────
 const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({ venue, onClose }) => {
+    const queryClient = useQueryClient();
+    const [showAddForm, setShowAddForm] = React.useState(false);
+    const [formData, setFormData] = React.useState({
+        venueTitle: venue.name,
+        taxIdentificationNumber: '',
+        bankAccountNumber: '',
+        bankName: '',
+        qrCodeUrl: '',
+    });
+    const [qrFile, setQrFile] = React.useState<File | null>(null);
+    const [qrPreview, setQrPreview] = React.useState<string | null>(null);
+    const [isUploading, setIsUploading] = React.useState(false);
+
     const { data: payments = [], isLoading } = useQuery({
         queryKey: ['payment-details', venue.venueId],
         queryFn: () => superAdminVenueService.getPaymentDetails(venue.venueId),
     });
+
+    const addMutation = useMutation({
+        mutationFn: () => superAdminVenueService.addPaymentDetail(venue.venueId, formData),
+        onSuccess: () => {
+            toast.success('Реквизиты успешно добавлены!');
+            queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
+            handleClose();
+        },
+        onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка сохранения'),
+    });
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Пожалуйста, выберите изображение');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Размер файла не должен превышать 5MB');
+            return;
+        }
+
+        setQrFile(file);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setQrPreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleUploadAndSubmit = async () => {
+        if (!formData.bankName || !formData.bankAccountNumber || !formData.taxIdentificationNumber) {
+            toast.error('Заполните все обязательные поля');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            // Upload QR code if file selected
+            if (qrFile) {
+                const qrUrl = await superAdminVenueService.uploadFileToS3(qrFile);
+                setFormData(prev => ({ ...prev, qrCodeUrl: qrUrl }));
+            }
+
+            // Submit payment details
+            addMutation.mutate();
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || 'Ошибка загрузки файла');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleClose = () => {
+        setShowAddForm(false);
+        setFormData({
+            venueTitle: venue.name,
+            taxIdentificationNumber: '',
+            bankAccountNumber: '',
+            bankName: '',
+            qrCodeUrl: '',
+        });
+        setQrFile(null);
+        setQrPreview(null);
+        onClose();
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4">
@@ -259,52 +343,161 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             >
                 <div className="flex items-center justify-between p-5 border-b border-slate-100">
                     <div>
-                        <h2 className="text-lg font-black text-slate-900">Реквизиты для оплаты</h2>
+                        <h2 className="text-lg font-black text-slate-900">
+                            {showAddForm ? 'Добавить реквизиты' : 'Реквизиты для оплаты'}
+                        </h2>
                         <p className="text-xs text-slate-400 font-medium mt-0.5 truncate max-w-[220px]">{venue.name}</p>
                     </div>
-                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                    <button onClick={handleClose} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
                         <X size={18} />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                    {isLoading ? (
-                        Array.from({ length: 2 }).map((_, i) => (
-                            <div key={i} className="h-32 bg-slate-100 rounded-2xl animate-pulse" />
-                        ))
-                    ) : payments.length === 0 ? (
-                        <div className="text-center py-10">
-                            <CreditCard size={40} className="text-slate-200 mx-auto mb-3" />
-                            <p className="text-slate-400 font-medium text-sm">Реквизиты не добавлены</p>
+                {showAddForm ? (
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                        {/* Bank Name */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Название банка <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.bankName}
+                                onChange={(e) => setFormData(prev => ({ ...prev, bankName: e.target.value }))}
+                                placeholder="Например: ОТП Банк"
+                                className="w-full h-12 px-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                                required
+                            />
                         </div>
-                    ) : (
-                        payments.map((p) => (
-                            <div key={p.id} className="bg-gradient-to-br from-brand-950 to-brand-700 rounded-2xl p-5 text-white space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-xs font-black uppercase tracking-widest text-white/60">Реквизиты банка</p>
-                                    <CreditCard size={20} className="text-white/60" />
-                                </div>
-                                <div className="space-y-2">
-                                    <div>
-                                        <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Банк</p>
-                                        <p className="font-black text-white">{p.bankName || '—'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Счёт</p>
-                                        <p className="font-black text-white tracking-widest">{p.bankAccountNumber || '—'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">ИНН</p>
-                                        <p className="font-black text-white">{p.taxIdentificationNumber || '—'}</p>
-                                    </div>
-                                </div>
-                                {p.qrcodeUrl && (
-                                    <div className="bg-white rounded-xl p-3 flex justify-center">
-                                        <img src={p.qrcodeUrl} alt="QR Code" className="w-32 h-32 object-contain" />
-                                    </div>
-                                )}
+
+                        {/* Account Number */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                Номер счёта <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.bankAccountNumber}
+                                onChange={(e) => setFormData(prev => ({ ...prev, bankAccountNumber: e.target.value }))}
+                                placeholder="0000 0000 0000 0000"
+                                className="w-full h-12 px-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                                required
+                            />
+                        </div>
+
+                        {/* TIN */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                ИНН <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.taxIdentificationNumber}
+                                onChange={(e) => setFormData(prev => ({ ...prev, taxIdentificationNumber: e.target.value }))}
+                                placeholder="0000000000"
+                                className="w-full h-12 px-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                                required
+                            />
+                        </div>
+
+                        {/* QR Code Upload */}
+                        <div>
+                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                QR код для оплаты
+                            </label>
+                            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-brand-primary/50 transition-colors">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    id="qr-upload"
+                                />
+                                <label htmlFor="qr-upload" className="cursor-pointer">
+                                    {qrPreview ? (
+                                        <div className="space-y-3">
+                                            <img src={qrPreview} alt="QR Preview" className="w-32 h-32 mx-auto object-contain rounded-lg" />
+                                            <p className="text-xs text-slate-500 font-medium">Нажмите для изменения</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <CreditCard size={32} className="mx-auto text-slate-300" />
+                                            <p className="text-sm font-bold text-slate-600">Загрузить QR код</p>
+                                            <p className="text-xs text-slate-400">PNG, JPG до 5MB</p>
+                                        </div>
+                                    )}
+                                </label>
                             </div>
-                        ))
+                        </div>
+                    </div>
+                ) : (
+                    <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                        {isLoading ? (
+                            Array.from({ length: 2 }).map((_, i) => (
+                                <div key={i} className="h-32 bg-slate-100 rounded-2xl animate-pulse" />
+                            ))
+                        ) : payments.length === 0 ? (
+                            <div className="text-center py-10">
+                                <CreditCard size={40} className="text-slate-200 mx-auto mb-3" />
+                                <p className="text-slate-400 font-medium text-sm">Реквизиты не добавлены</p>
+                            </div>
+                        ) : (
+                            payments.map((p) => (
+                                <div key={p.id} className="bg-gradient-to-br from-brand-950 to-brand-700 rounded-2xl p-5 text-white space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-black uppercase tracking-widest text-white/60">Реквизиты банка</p>
+                                        <CreditCard size={20} className="text-white/60" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div>
+                                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Банк</p>
+                                            <p className="font-black text-white">{p.bankName || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">Счёт</p>
+                                            <p className="font-black text-white tracking-widest">{p.bankAccountNumber || '—'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest">ИНН</p>
+                                            <p className="font-black text-white">{p.taxIdentificationNumber || '—'}</p>
+                                        </div>
+                                    </div>
+                                    {p.qrcodeUrl && (
+                                        <div className="bg-white rounded-xl p-3 flex justify-center">
+                                            <img src={p.qrcodeUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+
+                <div className="p-5 border-t border-slate-100 space-y-3">
+                    {showAddForm ? (
+                        <>
+                            <Button
+                                onClick={handleUploadAndSubmit}
+                                disabled={addMutation.isPending || isUploading}
+                                className="w-full h-12 font-black text-sm"
+                            >
+                                {isUploading || addMutation.isPending ? 'Сохранение...' : 'Добавить реквизиты'}
+                            </Button>
+                            <button
+                                onClick={() => setShowAddForm(false)}
+                                className="w-full h-12 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all"
+                            >
+                                Отмена
+                            </button>
+                        </>
+                    ) : (
+                        <Button
+                            onClick={() => setShowAddForm(true)}
+                            className="w-full h-12 font-black text-sm"
+                        >
+                            <Plus size={18} className="mr-2" />
+                            Добавить реквизиты
+                        </Button>
                     )}
                 </div>
             </motion.div>

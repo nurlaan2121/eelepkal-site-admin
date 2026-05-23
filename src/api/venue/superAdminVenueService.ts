@@ -30,4 +30,25 @@ export const superAdminVenueService = {
         const response = await apiClient.get<PaymentDetail[]>(`/api/super-admin-venue/payment/get-all-payment-details/${venueId}`);
         return response.data;
     },
+
+    addPaymentDetail: async (venueId: number, data: {
+        venueTitle: string;
+        taxIdentificationNumber: string;
+        bankAccountNumber: string;
+        bankName: string;
+        qrCodeUrl: string;
+    }): Promise<void> => {
+        await apiClient.post(`/api/super-admin-venue/payment/add-payment-detail/${venueId}`, data);
+    },
+
+    uploadFileToS3: async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await apiClient.post('/api/s3', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data.data;
+    },
 };

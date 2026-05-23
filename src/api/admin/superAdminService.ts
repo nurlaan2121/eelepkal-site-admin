@@ -27,8 +27,8 @@ export const superAdminService = {
         return response.data;
     },
 
-    deleteAdmin: async (id: number): Promise<void> => {
-        await apiClient.delete(`/api/super-admin/delete/${id}`);
+    deleteAdmin: async (adminId: number): Promise<void> => {
+        await apiClient.delete(`/api/super-admin/delete-personal/${adminId}`);
     },
 
     addPersonal: async (data: AddPersonalRequest): Promise<{ httpStatus: string; message: string }> => {
