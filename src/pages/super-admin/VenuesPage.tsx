@@ -116,6 +116,30 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
         editingDeadline: '05:00',
     });
 
+    const { isLoading: isFetching } = useQuery({
+        queryKey: ['venue-conditions', venue.venueId],
+        queryFn: async () => {
+            const data = await superAdminVenueService.getVenueConditions(venue.venueId);
+
+            const formatTimeArray = (arr: number[]) => {
+                if (!arr || arr.length < 2) return '00:00';
+                return `${String(arr[0]).padStart(2, '0')}:${String(arr[1]).padStart(2, '0')}`;
+            };
+
+            const mapped: VenueCondition = {
+                venueId: venue.venueId,
+                deposit: data.deposit || 0,
+                cancelAllowed: data.cancellationAllowed,
+                cancellationDeadline: formatTimeArray(data.cancellationDeadline),
+                editAllowed: data.editingAllowed,
+                editingDeadline: formatTimeArray(data.editingDeadline),
+            };
+
+            setForm(mapped);
+            return data;
+        },
+    });
+
     const mutation = useMutation({
         mutationFn: () => superAdminVenueService.updateVenueCondition(form),
         onSuccess: () => {
@@ -149,93 +173,103 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-5 space-y-5">
-                    {/* Deposit */}
-                    <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center gap-2">
-                            <Wallet size={16} className="text-brand-600" />
-                            <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Депозит</p>
+                    {isFetching ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-3">
+                            <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm font-bold text-slate-400">Загрузка условий...</p>
                         </div>
-                        <div className="flex gap-2">
-                            {[0, 500, 1000, 2000].map((amt) => (
-                                <button
-                                    key={amt}
-                                    onClick={() => setForm(f => ({ ...f, deposit: amt }))}
-                                    className={`flex-1 py-2 rounded-xl text-xs font-black border-2 transition-all ${form.deposit === amt
-                                        ? 'bg-brand-primary text-white border-brand-primary'
-                                        : 'bg-white text-slate-600 border-slate-200'
-                                        }`}
-                                >
-                                    {amt === 0 ? 'Без депозита' : `${amt} сом`}
-                                </button>
-                            ))}
-                        </div>
-                        <input
-                            type="number"
-                            min="0"
-                            value={form.deposit}
-                            onChange={(e) => setForm(f => ({ ...f, deposit: Number(e.target.value) }))}
-                            className="w-full h-11 border-2 border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
-                            placeholder="Или введите сумму"
-                        />
-                    </div>
-
-                    {/* Cancellation */}
-                    <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Отмена бронирования</p>
-                            </div>
-                            <button
-                                onClick={() => setForm(f => ({ ...f, cancelAllowed: !f.cancelAllowed, cancellationDeadline: f.cancelAllowed ? '00:00' : '03:00' }))}
-                                className={`relative w-12 h-6 rounded-full transition-colors ${form.cancelAllowed ? 'bg-brand-primary' : 'bg-slate-300'}`}
-                            >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${form.cancelAllowed ? 'left-7' : 'left-1'}`} />
-                            </button>
-                        </div>
-                        {form.cancelAllowed && (
-                            <div>
-                                <p className="text-xs text-slate-500 font-medium mb-2">За сколько часов до визита</p>
+                    ) : (
+                        <>
+                            {/* Deposit */}
+                            <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <Wallet size={16} className="text-brand-600" />
+                                    <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Депозит</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    {[0, 500, 1000, 2000].map((amt) => (
+                                        <button
+                                            key={amt}
+                                            onClick={() => setForm(f => ({ ...f, deposit: amt }))}
+                                            className={`flex-1 py-2 rounded-xl text-xs font-black border-2 transition-all ${form.deposit === amt
+                                                ? 'bg-brand-primary text-white border-brand-primary'
+                                                : 'bg-white text-slate-600 border-slate-200'
+                                                }`}
+                                        >
+                                            {amt === 0 ? 'Без депозита' : `${amt} сом`}
+                                        </button>
+                                    ))}
+                                </div>
                                 <input
-                                    type="time"
-                                    value={form.cancellationDeadline}
-                                    onChange={(e) => setForm(f => ({ ...f, cancellationDeadline: e.target.value }))}
+                                    type="number"
+                                    min="0"
+                                    value={form.deposit}
+                                    onChange={(e) => setForm(f => ({ ...f, deposit: Number(e.target.value) }))}
                                     className="w-full h-11 border-2 border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                                    placeholder="Или введите сумму"
                                 />
                             </div>
-                        )}
-                        {!form.cancelAllowed && <p className="text-xs text-slate-400 font-medium">Отмена не допускается (00:00)</p>}
-                    </div>
 
-                    {/* Editing */}
-                    <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Изменение бронирования</p>
-                            <button
-                                onClick={() => setForm(f => ({ ...f, editAllowed: !f.editAllowed, editingDeadline: f.editAllowed ? '00:00' : '05:00' }))}
-                                className={`relative w-12 h-6 rounded-full transition-colors ${form.editAllowed ? 'bg-brand-primary' : 'bg-slate-300'}`}
-                            >
-                                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${form.editAllowed ? 'left-7' : 'left-1'}`} />
-                            </button>
-                        </div>
-                        {form.editAllowed && (
-                            <div>
-                                <p className="text-xs text-slate-500 font-medium mb-2">За сколько часов до визита</p>
-                                <input
-                                    type="time"
-                                    value={form.editingDeadline}
-                                    onChange={(e) => setForm(f => ({ ...f, editingDeadline: e.target.value }))}
-                                    className="w-full h-11 border-2 border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
-                                />
+                            {/* Cancellation */}
+                            <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Отмена бронирования</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setForm(f => ({ ...f, cancelAllowed: !f.cancelAllowed, cancellationDeadline: f.cancelAllowed ? '00:00' : '03:00' }))}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${form.cancelAllowed ? 'bg-brand-primary' : 'bg-slate-300'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${form.cancelAllowed ? 'left-7' : 'left-1'}`} />
+                                    </button>
+                                </div>
+                                {form.cancelAllowed && (
+                                    <div>
+                                        <p className="text-xs text-slate-500 font-medium mb-2">За сколько часов до визита</p>
+                                        <input
+                                            type="time"
+                                            value={form.cancellationDeadline}
+                                            onChange={(e) => setForm(f => ({ ...f, cancellationDeadline: e.target.value }))}
+                                            className="w-full h-11 border-2 border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                                        />
+                                    </div>
+                                )}
+                                {!form.cancelAllowed && <p className="text-xs text-slate-400 font-medium">Отмена не допускается (00:00)</p>}
                             </div>
-                        )}
-                        {!form.editAllowed && <p className="text-xs text-slate-400 font-medium">Изменение не допускается (00:00)</p>}
-                    </div>
+
+                            {/* Editing */}
+                            <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <p className="font-black text-slate-800 text-sm uppercase tracking-widest">Изменение бронирования</p>
+                                    <button
+                                        onClick={() => setForm(f => ({ ...f, editAllowed: !f.editAllowed, editingDeadline: f.editAllowed ? '00:00' : '05:00' }))}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${form.editAllowed ? 'bg-brand-primary' : 'bg-slate-300'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${form.editAllowed ? 'left-7' : 'left-1'}`} />
+                                    </button>
+                                </div>
+                                {form.editAllowed && (
+                                    <div>
+                                        <p className="text-xs text-slate-500 font-medium mb-2">За сколько часов до визита</p>
+                                        <input
+                                            type="time"
+                                            value={form.editingDeadline}
+                                            onChange={(e) => setForm(f => ({ ...f, editingDeadline: e.target.value }))}
+                                            className="w-full h-11 border-2 border-slate-200 rounded-xl px-3 text-sm font-bold focus:outline-none focus:border-brand-primary transition-colors"
+                                        />
+                                    </div>
+                                )}
+                                {!form.editAllowed && <p className="text-xs text-slate-400 font-medium">Изменение не допускается (00:00)</p>}
+                                {/* End of Editing */}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="p-5 border-t border-slate-100">
                     <Button
                         onClick={() => mutation.mutate()}
-                        disabled={mutation.isPending}
+                        disabled={mutation.isPending || isFetching}
                         className="w-full h-12 font-black text-sm"
                     >
                         {mutation.isPending ? 'Сохранение...' : 'Сохранить условия'}
@@ -673,85 +707,85 @@ const PaymentActionMenu: React.FC<{
 // ─────────── Venue Action Menu ───────────
 type ModalType = 'replace-admin' | 'conditions' | 'payment' | null;
 
-const VenueActionMenu: React.FC<{ 
-    venue: VenueListItem; 
-    onDelete: (id: number) => void; 
+const VenueActionMenu: React.FC<{
+    venue: VenueListItem;
+    onDelete: (id: number) => void;
     isDeleting: boolean;
     activeModal: ModalType;
     setActiveModal: (modal: ModalType) => void;
 }> = ({
     venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
-    const [open, setOpen] = React.useState(false);
-    const menuRef = React.useRef<HTMLDivElement>(null);
+        const [open, setOpen] = React.useState(false);
+        const menuRef = React.useRef<HTMLDivElement>(null);
 
-    React.useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
-        };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
-    }, []);
+        React.useEffect(() => {
+            const handler = (e: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+            };
+            document.addEventListener('mousedown', handler);
+            return () => document.removeEventListener('mousedown', handler);
+        }, []);
 
-    const actions = [
-        { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
-        { icon: Settings2, label: 'Условия бронирования', modal: 'conditions' as ModalType, color: 'text-amber-600' },
-        { icon: CreditCard, label: 'Реквизиты оплаты', modal: 'payment' as ModalType, color: 'text-emerald-600' },
-    ];
+        const actions = [
+            { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
+            { icon: Settings2, label: 'Условия бронирования', modal: 'conditions' as ModalType, color: 'text-amber-600' },
+            { icon: CreditCard, label: 'Реквизиты оплаты', modal: 'payment' as ModalType, color: 'text-emerald-600' },
+        ];
 
-    return (
-        <>
-            <div 
-                onClick={(e) => e.stopPropagation()} 
-                onMouseDown={(e) => e.stopPropagation()}
-                className="flex-shrink-0"
-            >
-                <div ref={menuRef} className="relative">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                    >
-                        <MoreVertical size={18} />
-                    </button>
+        return (
+            <>
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="flex-shrink-0"
+                >
+                    <div ref={menuRef} className="relative">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                        >
+                            <MoreVertical size={18} />
+                        </button>
 
-                    <AnimatePresence>
-                        {open && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                                transition={{ duration: 0.12 }}
-                                className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
-                            >
-                                <div className="p-1.5 space-y-0.5">
-                                    {actions.map((action) => (
+                        <AnimatePresence>
+                            {open && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    transition={{ duration: 0.12 }}
+                                    className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                >
+                                    <div className="p-1.5 space-y-0.5">
+                                        {actions.map((action) => (
+                                            <button
+                                                key={action.modal}
+                                                onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            >
+                                                <action.icon size={16} className={action.color} />
+                                                <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            </button>
+                                        ))}
+                                        <div className="border-t border-slate-100 my-1" />
                                         <button
-                                            key={action.modal}
-                                            onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                            disabled={isDeleting}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
                                         >
-                                            <action.icon size={16} className={action.color} />
-                                            <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            <Trash2 size={16} className="text-red-500" />
+                                            <span className="text-sm font-bold text-red-500">Удалить заведение</span>
                                         </button>
-                                    ))}
-                                    <div className="border-t border-slate-100 my-1" />
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
-                                        disabled={isDeleting}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
-                                    >
-                                        <Trash2 size={16} className="text-red-500" />
-                                        <span className="text-sm font-bold text-red-500">Удалить заведение</span>
-                                    </button>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
-            </div>
-        </>
-    );
-};
+            </>
+        );
+    };
 
 // ─────────── Venue Card (Mobile) ───────────
 const VenueCard: React.FC<{
@@ -762,69 +796,69 @@ const VenueCard: React.FC<{
 }> = ({
     venue, onDelete, isDeleting, onClick
 }) => {
-    const [activeModal, setActiveModal] = React.useState<ModalType>(null);
+        const [activeModal, setActiveModal] = React.useState<ModalType>(null);
 
-    return (
-        <>
-            <div
-                onClick={onClick}
-                className="p-4 bg-white hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99] active:bg-slate-100"
-            >
-                <div className="flex items-start gap-3">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
-                        {venue.firstImageUrl ? (
-                            <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-brand-400">
-                                <Store size={26} />
+        return (
+            <>
+                <div
+                    onClick={onClick}
+                    className="p-4 bg-white hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99] active:bg-slate-100"
+                >
+                    <div className="flex items-start gap-3">
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
+                            {venue.firstImageUrl ? (
+                                <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-brand-400">
+                                    <Store size={26} />
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                                <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
+                                <VenueActionMenu
+                                    venue={venue}
+                                    onDelete={onDelete}
+                                    isDeleting={isDeleting}
+                                    activeModal={activeModal}
+                                    setActiveModal={setActiveModal}
+                                />
                             </div>
-                        )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
-                            <VenueActionMenu 
-                                venue={venue} 
-                                onDelete={onDelete} 
-                                isDeleting={isDeleting}
-                                activeModal={activeModal}
-                                setActiveModal={setActiveModal}
-                            />
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
+                                    <Star size={10} fill="currentColor" /> {venue.rating}
+                                </span>
+                                <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                    ≈ {venue.averageCheck} сом
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2 mt-1.5">
-                            <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                                <Star size={10} fill="currentColor" /> {venue.rating}
-                            </span>
-                            <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
-                                ≈ {venue.averageCheck} сом
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                        <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                            <MapPin size={13} className="flex-shrink-0 text-brand-500" />
+                            <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-1">
+                            <User size={12} className="text-slate-300 flex-shrink-0" />
+                            <span className="text-xs text-slate-400">
+                                Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                        <MapPin size={13} className="flex-shrink-0 text-brand-500" />
-                        <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-1">
-                        <User size={12} className="text-slate-300 flex-shrink-0" />
-                        <span className="text-xs text-slate-400">
-                            Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Render modals OUTSIDE the clickable card */}
-            <AnimatePresence>
-                {activeModal === 'replace-admin' && <ReplaceAdminModal venue={venue} onClose={() => setActiveModal(null)} />}
-                {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
-                {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
-            </AnimatePresence>
-        </>
-    );
-};
+                {/* Render modals OUTSIDE the clickable card */}
+                <AnimatePresence>
+                    {activeModal === 'replace-admin' && <ReplaceAdminModal venue={venue} onClose={() => setActiveModal(null)} />}
+                    {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
+                    {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
+                </AnimatePresence>
+            </>
+        );
+    };
 
 // ─────────── Main Page ───────────
 export const SuperAdminVenuesPage: React.FC = () => {

@@ -41,6 +41,18 @@ export const superAdminVenueService = {
         await apiClient.put('/api/super-admin-venue/add-or-update-venue-condition', condition);
     },
 
+    getVenueConditions: async (venueId: number): Promise<{
+        cancellationDeadline: number[];
+        editingDeadline: number[];
+        cancellationAllowed: boolean;
+        editingAllowed: boolean;
+        withADeposit: boolean;
+        deposit: number;
+    }> => {
+        const response = await apiClient.get(`/api/guest-conditions/get/${venueId}`);
+        return response.data;
+    },
+
     getPaymentDetails: async (venueId: number): Promise<PaymentDetail[]> => {
         const response = await apiClient.get<PaymentDetail[]>(`/api/super-admin-venue/payment/get-all-payment-details/${venueId}`);
         return response.data;
