@@ -171,7 +171,7 @@ export const VenueDetailPage: React.FC = () => {
                             onEdit={() => console.log('Edit details')}
                         >
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {detailsData?.capacities?.map((cap, i) => (
+                                {Array.isArray(detailsData?.capacities) && detailsData?.capacities.map((cap, i) => (
                                     <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-500">
@@ -182,6 +182,9 @@ export const VenueDetailPage: React.FC = () => {
                                         <span className="text-lg font-black text-brand-600">{cap.value}</span>
                                     </div>
                                 ))}
+                                {(!Array.isArray(detailsData?.capacities) || detailsData?.capacities.length === 0) && (
+                                    <p className="text-slate-400 text-sm italic col-span-2">Вместимость не указана</p>
+                                )}
                             </div>
                         </VenueInfoCard>
 
