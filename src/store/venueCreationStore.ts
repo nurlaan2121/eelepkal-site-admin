@@ -9,6 +9,7 @@ import {
     VenueContactData,
     VenueConditionsData,
     DayOfWeek,
+    VenueWorkingHours,
 } from '../types/venue';
 
 interface VenueCreationState {
@@ -40,14 +41,21 @@ interface VenueCreationState {
     resetCreation: () => void;
 }
 
-const defaultHours: VenueHoursData['hours'] = {
-    monday: { open: '09:00', close: '23:00' },
-    tuesday: { open: '09:00', close: '23:00' },
-    wednesday: { open: '09:00', close: '23:00' },
-    thursday: { open: '09:00', close: '23:00' },
-    friday: { open: '09:00', close: '23:00' },
-    saturday: { open: '09:00', close: '23:00' },
-    sunday: { open: '09:00', close: '23:00' },
+const defaultHours: VenueWorkingHours = {
+    MondayOpen: '09:00',
+    MondayClose: '23:00',
+    TuesdayOpen: '09:00',
+    TuesdayClose: '23:00',
+    WednesdayOpen: '09:00',
+    WednesdayClose: '23:00',
+    ThursdayOpen: '09:00',
+    ThursdayClose: '23:00',
+    FridayOpen: '09:00',
+    FridayClose: '23:00',
+    SaturdayOpen: '09:00',
+    SaturdayClose: '23:00',
+    SundayOpen: '09:00',
+    SundayClose: '23:00',
 };
 
 const defaultIsDayOff: Record<DayOfWeek, boolean> = {
