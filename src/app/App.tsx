@@ -13,6 +13,7 @@ import { AdminTablesPage } from '../pages/admin/tables/TablesPage';
 import { AdminMenuPage } from '../pages/admin/menu/MenuPage';
 import { AdminBookingsPage } from '../pages/admin/bookings/BookingsPage';
 import { CreateVenueWizard } from '../pages/super-admin/venues/CreateVenueWizard';
+import { VenueDetailPage } from '../pages/super-admin/VenueDetailPage';
 
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'SUPER_ADMIN' | 'ADMIN' }) => {
     const { user } = useAuthStore();
@@ -44,6 +45,7 @@ export const App = () => {
                     <Route path="venues">
                         <Route index element={<SuperAdminVenuesPage />} />
                         <Route path="create" element={<CreateVenueWizard />} />
+                        <Route path=":venueId" element={<VenueDetailPage />} />
                     </Route>
                     <Route path="admins" element={<SuperAdminAdminsPage />} />
                     <Route path="bookings" element={<div>Все бронирования</div>} />

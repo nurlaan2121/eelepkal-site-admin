@@ -316,10 +316,10 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             toast.info('Загрузка QR кода...');
             const qrUrl = await superAdminVenueService.uploadFileToS3(file);
             console.log('QR code uploaded:', qrUrl);
-            
+
             // Update formData with the uploaded URL
             setFormData(prev => ({ ...prev, qrCodeUrl: qrUrl }));
-            
+
             toast.success('QR код загружен');
         } catch (error: any) {
             console.error('Upload error:', error);
@@ -740,50 +740,58 @@ const VenueActionMenu: React.FC<{ venue: VenueListItem; onDelete: (id: number) =
 };
 
 // ─────────── Venue Card (Mobile) ───────────
-const VenueCard: React.FC<{ venue: VenueListItem; onDelete: (id: number) => void; isDeleting: boolean }> = ({
-    venue, onDelete, isDeleting
+const VenueCard: React.FC<{
+    venue: VenueListItem;
+    onDelete: (id: number) => void;
+    isDeleting: boolean;
+    onClick: () => void;
+}> = ({
+    venue, onDelete, isDeleting, onClick
 }) => (
-    <div className="p-4 bg-white">
-        <div className="flex items-start gap-3">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
-                {venue.firstImageUrl ? (
-                    <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-brand-400">
-                        <Store size={26} />
+        <div
+            onClick={onClick}
+            className="p-4 bg-white hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99] active:bg-slate-100"
+        >
+            <div className="flex items-start gap-3">
+                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
+                    {venue.firstImageUrl ? (
+                        <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-brand-400">
+                            <Store size={26} />
+                        </div>
+                    )}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
+                        <VenueActionMenu venue={venue} onDelete={onDelete} isDeleting={isDeleting} />
                     </div>
-                )}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
-                    <VenueActionMenu venue={venue} onDelete={onDelete} isDeleting={isDeleting} />
-                </div>
-                <div className="flex items-center gap-2 mt-1.5">
-                    <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                        <Star size={10} fill="currentColor" /> {venue.rating}
-                    </span>
-                    <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
-                        ≈ {venue.averageCheck} сом
-                    </span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                        <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
+                            <Star size={10} fill="currentColor" /> {venue.rating}
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                            ≈ {venue.averageCheck} сом
+                        </span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                <MapPin size={13} className="flex-shrink-0 text-brand-500" />
-                <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
-            </div>
-            <div className="flex items-center gap-2 px-1">
-                <User size={12} className="text-slate-300 flex-shrink-0" />
-                <span className="text-xs text-slate-400">
-                    Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
-                </span>
+            <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                    <MapPin size={13} className="flex-shrink-0 text-brand-500" />
+                    <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
+                </div>
+                <div className="flex items-center gap-2 px-1">
+                    <User size={12} className="text-slate-300 flex-shrink-0" />
+                    <span className="text-xs text-slate-400">
+                        Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
+                    </span>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
 
 // ─────────── Main Page ───────────
 export const SuperAdminVenuesPage: React.FC = () => {
@@ -886,6 +894,7 @@ export const SuperAdminVenuesPage: React.FC = () => {
                                 venue={venue}
                                 onDelete={(id) => deleteMutation.mutate(id)}
                                 isDeleting={deleteMutation.isPending}
+                                onClick={() => navigate(`/super-admin/venues/${venue.venueId}`)}
                             />
                         ))}
                     </div>

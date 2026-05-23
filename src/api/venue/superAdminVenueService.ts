@@ -1,8 +1,8 @@
 import { apiClient } from '../client';
-import { 
-    VenueListItem, 
-    AdminForReplace, 
-    VenueCondition, 
+import {
+    VenueListItem,
+    AdminForReplace,
+    VenueCondition,
     PaymentDetail,
     City,
     Cuisine,
@@ -59,11 +59,11 @@ export const superAdminVenueService = {
     uploadFileToS3: async (file: File): Promise<string> => {
         const formData = new FormData();
         formData.append('file', file);
-        
+
         // Use apiClient which goes through the proxy
         // The interceptor will automatically remove Content-Type for FormData
         const response = await apiClient.post('/api/s3', formData);
-        
+
         return response.data.data;
     },
 
@@ -136,6 +136,43 @@ export const superAdminVenueService = {
     // Helper: Get all amenities
     getAllAmenities: async (): Promise<Amenity[]> => {
         const response = await apiClient.get<Amenity[]>('/api/dev/amenities/allForUpdate');
+        return response.data;
+    },
+
+    // ─────────── Venue Detail GET Methods ───────────
+
+    getBasicInfo: async (venueId: number): Promise<BasicInfoData & { venueId: number }> => {
+        const response = await apiClient.get<BasicInfoData & { venueId: number }>(`/api/super-admin-venue/get-basic/${venueId}`);
+        return response.data;
+    },
+
+    getVenueDetails: async (venueId: number): Promise<VenueDetailsData> => {
+        const response = await apiClient.get<VenueDetailsData>(`/api/super-admin-venue/get-details/${venueId}`);
+        return response.data;
+    },
+
+    getVenueHours: async (venueId: number): Promise<VenueWorkingHours> => {
+        const response = await apiClient.get<VenueWorkingHours>(`/api/super-admin-venue/get-hours/${venueId}`);
+        return response.data;
+    },
+
+    getVenueCuisines: async (venueId: number): Promise<number[]> => {
+        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-cuisines/${venueId}`);
+        return response.data;
+    },
+
+    getVenueAmenities: async (venueId: number): Promise<number[]> => {
+        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-amenities/${venueId}`);
+        return response.data;
+    },
+
+    getVenueContacts: async (venueId: number): Promise<VenueContactData> => {
+        const response = await apiClient.get<VenueContactData>(`/api/super-admin-venue/get-contacts/${venueId}`);
+        return response.data;
+    },
+
+    getVenueConditions: async (venueId: number): Promise<VenueConditionsData> => {
+        const response = await apiClient.get<VenueConditionsData>(`/api/super-admin-venue/get-conditions/${venueId}`);
         return response.data;
     },
 };
