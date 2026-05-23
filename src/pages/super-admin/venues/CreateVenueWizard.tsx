@@ -60,14 +60,22 @@ const Step1BasicInfo: React.FC = () => {
         }
     };
 
+    // Update store when images or form data change
     React.useEffect(() => {
-        setBasicInfo({ 
-            nameVenue: basicInfo.nameVenue || '',
-            description: basicInfo.description || '',
-            imageUrls: images, 
-            schemaImageUrls: schemaImages 
-        });
-    }, [images, schemaImages, basicInfo.nameVenue, basicInfo.description, setBasicInfo]);
+        // Only update if values actually changed to prevent infinite loop
+        const currentImages = basicInfo.imageUrls || [];
+        const currentSchemaImages = basicInfo.schemaImageUrls || [];
+        
+        if (JSON.stringify(currentImages) !== JSON.stringify(images) ||
+            JSON.stringify(currentSchemaImages) !== JSON.stringify(schemaImages)) {
+            setBasicInfo({
+                nameVenue: basicInfo.nameVenue || '',
+                description: basicInfo.description || '',
+                imageUrls: images, 
+                schemaImageUrls: schemaImages
+            });
+        }
+    }, [images, schemaImages]);
 
     return (
         <div className="space-y-6">
@@ -141,7 +149,7 @@ const Step1BasicInfo: React.FC = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-2">Название заведения *</label>
                 <Input
                     value={basicInfo.nameVenue || ''}
-                    onChange={(e) => setBasicInfo({ nameVenue: e.target.value })}
+                    onChange={(e) => setBasicInfo({ ...basicInfo, nameVenue: e.target.value })}
                     placeholder="Например: Bellagio Restaurant"
                 />
             </div>
@@ -151,7 +159,7 @@ const Step1BasicInfo: React.FC = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-2">Описание</label>
                 <textarea
                     value={basicInfo.description || ''}
-                    onChange={(e) => setBasicInfo({ description: e.target.value })}
+                    onChange={(e) => setBasicInfo({ ...basicInfo, description: e.target.value })}
                     className="w-full min-h-[120px] p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                     placeholder="Опишите заведение, атмосферу, кухню..."
                 />
@@ -182,12 +190,10 @@ const Step2Details: React.FC = () => {
     const updateCapacity = (index: number, field: 'type' | 'count', value: string | number) => {
         const newCapacities = [...capacities];
         newCapacities[index] = { ...newCapacities[index], [field]: value };
-        setDetails({ capacities: newCapacities });
+        setDetails({ ...details, capacities: newCapacities });
     };
 
-    React.useEffect(() => {
-        setDetails(details);
-    }, [details, setDetails]);
+
 
     return (
         <div className="space-y-6">
@@ -195,7 +201,7 @@ const Step2Details: React.FC = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-2">Город *</label>
                 <select
                     value={details.cityId || ''}
-                    onChange={(e) => setDetails({ cityId: Number(e.target.value) })}
+                    onChange={(e) => setDetails({ ...details, cityId: Number(e.target.value) })}
                     className="w-full h-12 px-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                     disabled={isLoading}
                 >
@@ -211,7 +217,7 @@ const Step2Details: React.FC = () => {
                 <label className="block text-sm font-bold text-slate-700 mb-2">Адрес *</label>
                 <Input
                     value={details.address || ''}
-                    onChange={(e) => setDetails({ address: e.target.value })}
+                    onChange={(e) => setDetails({ ...details, address: e.target.value })}
                     placeholder="г. Бишкек, ул. Ибраимова 115"
                 />
             </div>
@@ -221,7 +227,7 @@ const Step2Details: React.FC = () => {
                 <Input
                     type="number"
                     value={details.averageCheck || ''}
-                    onChange={(e) => setDetails({ averageCheck: Number(e.target.value) })}
+                    onChange={(e) => setDetails({ ...details, averageCheck: Number(e.target.value) })}
                     placeholder="1500"
                 />
             </div>
