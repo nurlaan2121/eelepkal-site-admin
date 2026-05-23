@@ -44,7 +44,7 @@ export const App = () => {
                         <Route index element={<SuperAdminVenuesPage />} />
                         <Route path="create" element={<CreateVenuePage />} />
                     </Route>
-                    <Route path="admins" element={<div>Управление администраторами</div>} />
+                    <Route path="admins" element={<SuperAdminAdminsPage />} />
                     <Route path="bookings" element={<div>Все бронирования</div>} />
                     <Route path="statistics" element={<div>Общая статистика</div>} />
                     <Route path="settings" element={<div>Настройки системы</div>} />
