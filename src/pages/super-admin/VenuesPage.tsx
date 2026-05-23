@@ -673,11 +673,16 @@ const PaymentActionMenu: React.FC<{
 // ─────────── Venue Action Menu ───────────
 type ModalType = 'replace-admin' | 'conditions' | 'payment' | null;
 
-const VenueActionMenu: React.FC<{ venue: VenueListItem; onDelete: (id: number) => void; isDeleting: boolean }> = ({
-    venue, onDelete, isDeleting
+const VenueActionMenu: React.FC<{ 
+    venue: VenueListItem; 
+    onDelete: (id: number) => void; 
+    isDeleting: boolean;
+    activeModal: ModalType;
+    setActiveModal: (modal: ModalType) => void;
+}> = ({
+    venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
     const [open, setOpen] = React.useState(false);
-    const [activeModal, setActiveModal] = React.useState<ModalType>(null);
     const menuRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -695,56 +700,56 @@ const VenueActionMenu: React.FC<{ venue: VenueListItem; onDelete: (id: number) =
     ];
 
     return (
-        <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
-            <div ref={menuRef} className="relative">
-                <button
-                    onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                >
-                    <MoreVertical size={18} />
-                </button>
+        <>
+            <div 
+                onClick={(e) => e.stopPropagation()} 
+                onMouseDown={(e) => e.stopPropagation()}
+                className="flex-shrink-0"
+            >
+                <div ref={menuRef} className="relative">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                    >
+                        <MoreVertical size={18} />
+                    </button>
 
-                <AnimatePresence>
-                    {open && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                            transition={{ duration: 0.12 }}
-                            className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
-                        >
-                            <div className="p-1.5 space-y-0.5">
-                                {actions.map((action) => (
+                    <AnimatePresence>
+                        {open && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                transition={{ duration: 0.12 }}
+                                className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                            >
+                                <div className="p-1.5 space-y-0.5">
+                                    {actions.map((action) => (
+                                        <button
+                                            key={action.modal}
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                        >
+                                            <action.icon size={16} className={action.color} />
+                                            <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                        </button>
+                                    ))}
+                                    <div className="border-t border-slate-100 my-1" />
                                     <button
-                                        key={action.modal}
-                                        onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                        onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                        disabled={isDeleting}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
                                     >
-                                        <action.icon size={16} className={action.color} />
-                                        <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                        <Trash2 size={16} className="text-red-500" />
+                                        <span className="text-sm font-bold text-red-500">Удалить заведение</span>
                                     </button>
-                                ))}
-                                <div className="border-t border-slate-100 my-1" />
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
-                                    disabled={isDeleting}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
-                                >
-                                    <Trash2 size={16} className="text-red-500" />
-                                    <span className="text-sm font-bold text-red-500">Удалить заведение</span>
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
-
-            <AnimatePresence>
-                {activeModal === 'replace-admin' && <ReplaceAdminModal venue={venue} onClose={() => setActiveModal(null)} />}
-                {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
-                {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
-            </AnimatePresence>
-        </div>
+        </>
     );
 };
 
@@ -756,51 +761,70 @@ const VenueCard: React.FC<{
     onClick: () => void;
 }> = ({
     venue, onDelete, isDeleting, onClick
-}) => (
-        <div
-            onClick={onClick}
-            className="p-4 bg-white hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99] active:bg-slate-100"
-        >
-            <div className="flex items-start gap-3">
-                <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
-                    {venue.firstImageUrl ? (
-                        <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-brand-400">
-                            <Store size={26} />
-                        </div>
-                    )}
-                </div>
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
-                        <VenueActionMenu venue={venue} onDelete={onDelete} isDeleting={isDeleting} />
+}) => {
+    const [activeModal, setActiveModal] = React.useState<ModalType>(null);
+
+    return (
+        <>
+            <div
+                onClick={onClick}
+                className="p-4 bg-white hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99] active:bg-slate-100"
+            >
+                <div className="flex items-start gap-3">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 flex-shrink-0 shadow-sm">
+                        {venue.firstImageUrl ? (
+                            <img src={venue.firstImageUrl} alt={venue.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-brand-400">
+                                <Store size={26} />
+                            </div>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2 mt-1.5">
-                        <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
-                            <Star size={10} fill="currentColor" /> {venue.rating}
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
-                            ≈ {venue.averageCheck} сом
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-black text-slate-900 text-base leading-tight truncate">{venue.name}</h3>
+                            <VenueActionMenu 
+                                venue={venue} 
+                                onDelete={onDelete} 
+                                isDeleting={isDeleting}
+                                activeModal={activeModal}
+                                setActiveModal={setActiveModal}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 mt-1.5">
+                            <span className="flex items-center gap-1 text-[11px] font-black text-amber-500 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-100">
+                                <Star size={10} fill="currentColor" /> {venue.rating}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-100">
+                                ≈ {venue.averageCheck} сом
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-3 space-y-2">
+                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                        <MapPin size={13} className="flex-shrink-0 text-brand-500" />
+                        <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
+                    </div>
+                    <div className="flex items-center gap-2 px-1">
+                        <User size={12} className="text-slate-300 flex-shrink-0" />
+                        <span className="text-xs text-slate-400">
+                            Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                    <MapPin size={13} className="flex-shrink-0 text-brand-500" />
-                    <span className="text-xs font-semibold text-slate-600 line-clamp-1">{venue.address}</span>
-                </div>
-                <div className="flex items-center gap-2 px-1">
-                    <User size={12} className="text-slate-300 flex-shrink-0" />
-                    <span className="text-xs text-slate-400">
-                        Администратор: <span className="text-slate-700 font-black">{venue.adminFullName}</span>
-                    </span>
-                </div>
-            </div>
-        </div>
+            {/* Render modals OUTSIDE the clickable card */}
+            <AnimatePresence>
+                {activeModal === 'replace-admin' && <ReplaceAdminModal venue={venue} onClose={() => setActiveModal(null)} />}
+                {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
+                {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
+            </AnimatePresence>
+        </>
     );
+};
 
 // ─────────── Main Page ───────────
 export const SuperAdminVenuesPage: React.FC = () => {
