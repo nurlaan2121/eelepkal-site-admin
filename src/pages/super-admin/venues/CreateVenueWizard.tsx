@@ -711,8 +711,8 @@ export const CreateVenueWizard: React.FC = () => {
             description: basicInfo.description || '',
         }),
         onSuccess: (data) => {
-            setVenueId(data.id);
-            setLocalVenueId(data.id); // Save to local state immediately
+            setVenueId(data.idVenue);
+            setLocalVenueId(data.idVenue); // Save to local state immediately
             toast.success('Основная информация сохранена');
         },
         onError: (error: any) => {

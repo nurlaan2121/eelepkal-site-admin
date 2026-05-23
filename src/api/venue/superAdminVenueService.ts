@@ -84,8 +84,8 @@ export const superAdminVenueService = {
     // ─────────── Venue Creation API Methods ───────────
 
     // Step 1: Add Basic Info
-    addBasicInfo: async (data: BasicInfoData): Promise<{ id: number }> => {
-        const response = await apiClient.post<{ id: number }>('/api/super-admin-venue/add-basic', data);
+    addBasicInfo: async (data: BasicInfoData): Promise<{ idVenue: number }> => {
+        const response = await apiClient.post<{ idVenue: number }>('/api/super-admin-venue/add-basic', data);
         return response.data;
     },
 
