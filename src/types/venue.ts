@@ -83,20 +83,20 @@ export interface WorkingHour {
 }
 
 export interface VenueWorkingHours {
-    MondayOpen: string;
-    MondayClose: string;
-    TuesdayOpen: string;
-    TuesdayClose: string;
-    WednesdayOpen: string;
-    WednesdayClose: string;
-    ThursdayOpen: string;
-    ThursdayClose: string;
-    FridayOpen: string;
-    FridayClose: string;
-    SaturdayOpen: string;
-    SaturdayClose: string;
-    SundayOpen: string;
-    SundayClose: string;
+    mondayOpen: string;
+    mondayClose: string;
+    tuesdayOpen: string;
+    tuesdayClose: string;
+    wednesdayOpen: string;
+    wednesdayClose: string;
+    thursdayOpen: string;
+    thursdayClose: string;
+    fridayOpen: string;
+    fridayClose: string;
+    saturdayOpen: string;
+    saturdayClose: string;
+    sundayOpen: string;
+    sundayClose: string;
 }
 
 // Step 1: Basic Info

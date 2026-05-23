@@ -42,20 +42,20 @@ interface VenueCreationState {
 }
 
 const defaultHours: VenueWorkingHours = {
-    MondayOpen: '09:00',
-    MondayClose: '23:00',
-    TuesdayOpen: '09:00',
-    TuesdayClose: '23:00',
-    WednesdayOpen: '09:00',
-    WednesdayClose: '23:00',
-    ThursdayOpen: '09:00',
-    ThursdayClose: '23:00',
-    FridayOpen: '09:00',
-    FridayClose: '23:00',
-    SaturdayOpen: '09:00',
-    SaturdayClose: '23:00',
-    SundayOpen: '09:00',
-    SundayClose: '23:00',
+    mondayOpen: '09:00',
+    mondayClose: '23:00',
+    tuesdayOpen: '09:00',
+    tuesdayClose: '23:00',
+    wednesdayOpen: '09:00',
+    wednesdayClose: '23:00',
+    thursdayOpen: '09:00',
+    thursdayClose: '23:00',
+    fridayOpen: '09:00',
+    fridayClose: '23:00',
+    saturdayOpen: '09:00',
+    saturdayClose: '23:00',
+    sundayOpen: '09:00',
+    sundayClose: '23:00',
 };
 
 const defaultIsDayOff: Record<DayOfWeek, boolean> = {
