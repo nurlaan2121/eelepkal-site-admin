@@ -657,6 +657,31 @@ export const CreateVenueWizard: React.FC = () => {
     const queryClient = useQueryClient();
     const { currentStep, setCurrentStep, venueId, setVenueId, resetCreation, basicInfo, details, hours, cuisines, amenities, contacts, conditions } = useVenueCreationStore();
     const [isComplete, setIsComplete] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+    // Check if form has any data
+    const hasFormData = 
+        (basicInfo.nameVenue && basicInfo.nameVenue.trim() !== '') ||
+        (basicInfo.description && basicInfo.description.trim() !== '') ||
+        (basicInfo.imageUrls && basicInfo.imageUrls.length > 0) ||
+        details.cityId ||
+        (details.address && details.address.trim() !== '') ||
+        venueId;
+
+    // Handle browser back/forward buttons and page refresh
+    React.useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasFormData && !isComplete) {
+                e.preventDefault();
+                e.returnValue = 'У вас есть несохраненные данные. Вы уверены, что хотите выйти?';
+                return e.returnValue;
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [hasFormData, isComplete]);
 
     // Mutations for each step
     const step1Mutation = useMutation({
@@ -887,7 +912,7 @@ export const CreateVenueWizard: React.FC = () => {
                 <div className="px-6 md:px-8 py-5 bg-white border-t border-slate-100 flex justify-between sticky bottom-0 z-10">
                     <Button
                         variant="ghost"
-                        onClick={currentStep === 1 ? () => navigate('/super-admin/venues') : handlePrev}
+                        onClick={currentStep === 1 ? handleCancel : handlePrev}
                         className="gap-2"
                         disabled={isStepLoading}
                     >
@@ -919,6 +944,56 @@ export const CreateVenueWizard: React.FC = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            <AnimatePresence>
+                {showConfirmDialog && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                            onClick={() => setShowConfirmDialog(false)}
+                        />
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="relative bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl"
+                        >
+                            <div className="flex items-start gap-4 mb-6">
+                                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                                    <X size={24} className="text-red-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-black text-slate-900 mb-1">Выйти из создания?</h3>
+                                    <p className="text-sm text-slate-500">
+                                        У вас есть несохраненные данные. Все введенные данные будут потеряны.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => setShowConfirmDialog(false)}
+                                    className="flex-1 h-12"
+                                >
+                                    Продолжить создание
+                                </Button>
+                                <Button
+                                    onClick={resetAndNavigate}
+                                    className="flex-1 h-12 bg-red-500 hover:bg-red-600"
+                                >
+                                    Выйти и сбросить
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
