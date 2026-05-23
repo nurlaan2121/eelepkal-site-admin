@@ -163,8 +163,8 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueContacts: async (venueId: number): Promise<VenueContactData> => {
-        const response = await apiClient.get<VenueContactData>(`/api/super-admin-venue/get-contacts/${venueId}`);
+    getVenueContacts: async (venueId: number): Promise<any> => {
+        const response = await apiClient.get<any>(`/api/super-admin-venue/get-contacts/${venueId}`);
         return response.data;
     },
 

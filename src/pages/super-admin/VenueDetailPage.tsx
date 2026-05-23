@@ -71,7 +71,7 @@ export const VenueDetailPage: React.FC = () => {
     const detailsData = details.data as VenueDetailsData;
     const hoursDataRaw = hours.data as any;
     const amenitiesDataRaw = amenities.data as any;
-    const contactsData = contacts.data as VenueContactData;
+    const contactsRaw = contacts.data as any;
     const publicAdminData = publicAdmin.data as any;
     const descriptionData = description.data as { description: string };
 
@@ -120,6 +120,48 @@ export const VenueDetailPage: React.FC = () => {
     };
 
     const amenitiesData = parseAmenities(amenitiesDataRaw);
+
+    // Parse contacts from API format to frontend format
+    const parseContacts = (rawData: any): VenueContactData => {
+        if (!rawData || typeof rawData !== 'object') {
+            return { phoneNumber: '', email: '', linksSocial: {} };
+        }
+
+        // Map API keys to frontend keys
+        const phoneNumber = rawData['phone number'] || rawData['phoneNumber'] || rawData['phone'] || '';
+        const email = rawData['email'] || '';
+        
+        // Extract social links
+        const linksSocial: any = {};
+        
+        Object.entries(rawData).forEach(([key, value]) => {
+            if (typeof value !== 'string' || !value || value.trim() === '') return;
+            
+            const keyLower = key.toLowerCase();
+            
+            if (keyLower.includes('instagram')) {
+                linksSocial.instagram = value;
+            } else if (keyLower.includes('whatsapp') || keyLower.includes('whatsup') || keyLower === 'wa') {
+                linksSocial.whatsapp = value;
+            } else if (keyLower.includes('telegram') || keyLower === 'tg') {
+                linksSocial.telegram = value;
+            } else if (keyLower.includes('facebook') || keyLower === 'fb') {
+                linksSocial.facebook = value;
+            } else if (keyLower.includes('2gis') || keyLower.includes('2гис')) {
+                linksSocial.website = value; // Map 2GIS to website
+            } else if (keyLower.includes('website') || keyLower.includes('сайт') || keyLower.includes('site')) {
+                linksSocial.website = value;
+            }
+        });
+
+        return {
+            phoneNumber: typeof phoneNumber === 'string' ? phoneNumber.trim() : '',
+            email: typeof email === 'string' ? email.trim() : '',
+            linksSocial
+        };
+    };
+
+    const contactsData = parseContacts(contactsRaw);
 
     const getTodayStatus = () => {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
