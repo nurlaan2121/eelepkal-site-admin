@@ -20,6 +20,11 @@ apiClient.interceptors.request.use((config) => {
         config.headers['authorization'] = authValue;
     }
 
+    // For FormData (file uploads), remove default Content-Type to let browser set it with boundary
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
     // Transform /some/path into ?path=some/path
     if (config.url && config.url !== PROXY_URL) {
         const path = config.url.startsWith('/') ? config.url.substring(1) : config.url;

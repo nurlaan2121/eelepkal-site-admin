@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         // Filter out headers that could trigger CORS or cause issues
-        const safeHeaders = { ...req.headers };
+        const safeHeaders: Record<string, string> = { ...req.headers } as any;
         delete safeHeaders.origin;
         delete safeHeaders.referer;
         delete safeHeaders.host;
@@ -26,6 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             safeHeaders['authorization'] = authHeader;
         }
 
+        // Check if this is a multipart/form-data request (file upload)
+        const contentType = req.headers['content-type'] || '';
+        const isMultipart = contentType.includes('multipart/form-data');
+
         const config = {
             method: req.method,
             url: targetUrl,
@@ -36,6 +40,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             data: req.body,
             params: { ...req.query },
         };
+
+        // For multipart uploads, preserve the original content-type with boundary
+        if (isMultipart) {
+            config.headers['content-type'] = contentType;
+            // Don't parse the body, send it as-is
+            config.data = req.body;
+        }
 
         // Remove path from params to avoid sending it to backend
         delete config.params.path;
