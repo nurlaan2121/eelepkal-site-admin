@@ -1,33 +1,32 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQueries, useQueryClient } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import {
     ChevronLeft, Edit3, MapPin, Phone, Mail,
     Globe, Instagram, MessageCircle, Send, Facebook,
     Clock, UtensilsCrossed, ConciergeBell, FileText,
     UserCog, CreditCard, Star, Users, Wallet,
-    Calendar, CheckCircle2, AlertCircle
+    Calendar, CheckCircle2, AlertCircle, Info
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
 import { Button } from '../../components/ui/Button';
 import {
     BasicInfoData,
     VenueDetailsData,
     VenueWorkingHours,
-    VenueContactData,
-    VenueConditionsData
+    VenueContactData
 } from '../../types/venue';
 import { VenueHero } from './components/VenueHero';
 import { VenueInfoCard } from './components/VenueInfoCard';
 import { VenueSkeleton } from './components/VenueSkeletons';
+import { VenueAmenityChip } from './components/VenueAmenityChip';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
     const navigate = useNavigate();
     const id = Number(venueId);
 
-    // Parallel fetch for all 7 stages
     const results = useQueries({
         queries: [
             { queryKey: ['venue-basic', id], queryFn: () => superAdminVenueService.getBasicInfo(id) },
@@ -52,15 +51,15 @@ export const VenueDetailPage: React.FC = () => {
 
     if (isError) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
-                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center text-red-500">
-                    <AlertCircle size={32} />
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6">
+                <div className="w-24 h-24 bg-red-50 rounded-[2.5rem] flex items-center justify-center text-red-500 shadow-xl shadow-red-500/10">
+                    <AlertCircle size={40} />
                 </div>
-                <div>
-                    <h2 className="text-xl font-black text-slate-900">Ошибка при загрузке</h2>
-                    <p className="text-slate-500">Не удалось загрузить данные заведения</p>
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-black text-slate-900 tracking-tight">Ошибка загрузки</h2>
+                    <p className="text-slate-400 font-medium">Не удалось получить данные о заведении</p>
                 </div>
-                <Button onClick={() => navigate('/super-admin/venues')} variant="ghost">
+                <Button onClick={() => navigate('/super-admin/venues')} variant="ghost" className="h-14 px-8 rounded-2xl font-black">
                     Вернуться к списку
                 </Button>
             </div>
@@ -75,197 +74,225 @@ export const VenueDetailPage: React.FC = () => {
     const publicAdminData = publicAdmin.data as any;
     const descriptionData = description.data as { description: string };
 
+    const getTodayStatus = () => {
+        const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        const dayName = days[new Date().getDay()];
+        const open = (hoursData as any)?.[`${dayName}Open`];
+        const close = (hoursData as any)?.[`${dayName}Close`];
+        const isOff = open === '00:00' && close === '00:00';
+        return { isOff, hours: `${open} - ${close}`, dayName };
+    };
+
+    const today = getTodayStatus();
+
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="pb-20"
-        >
-            {/* Sticky Header */}
-            <div className="sticky top-0 z-30 bg-slate-50/80 backdrop-blur-md border-b border-slate-200 -mx-4 px-4 py-3 mb-6">
-                <div className="flex items-center justify-between max-w-7xl mx-auto">
-                    <div className="flex items-center gap-4">
+        <div className="pb-20 max-w-7xl mx-auto">
+            {/* Premium Sticky Header */}
+            <header className="fixed top-0 inset-x-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-8 py-4">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-6">
                         <button
                             onClick={() => navigate('/super-admin/venues')}
-                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                            className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-all active:scale-95 border border-slate-200/50"
                         >
-                            <ChevronLeft size={20} />
+                            <ChevronLeft size={24} />
                         </button>
-                        <div>
-                            <h1 className="text-lg font-black text-slate-900 leading-tight truncate max-w-[200px] md:max-w-md">
-                                {basicData?.nameVenue || 'Детали заведения'}
-                            </h1>
-                            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                                <span>ID: {id}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                <span className="text-brand-600">Super Admin View</span>
-                            </div>
+                        <div className="hidden sm:block">
+                            <h2 className="text-xl font-black text-slate-900 leading-tight">
+                                {basicData?.nameVenue || 'Заведение'}
+                            </h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
+                                Панель управления
+                            </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="ghost" className="h-10 px-4 hidden md:flex items-center gap-2 text-slate-600">
-                            <CreditCard size={18} />
-                            <span>Реквизиты</span>
-                        </Button>
-                        <Button className="h-10 px-4 flex items-center gap-2">
-                            <CheckCircle2 size={18} />
-                            <span>Активно</span>
+                    <div className="flex items-center gap-3">
+                        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
+                            <CheckCircle2 size={16} className="text-emerald-500" />
+                            <span className="text-xs font-black text-slate-600 uppercase tracking-wider">Активно</span>
+                        </div>
+                        <Button className="h-12 px-6 rounded-2xl font-black text-sm bg-slate-900 border-0 shadow-lg shadow-slate-900/10">
+                            Действия
                         </Button>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div className="max-w-7xl mx-auto space-y-6">
-                {/* Hero Section */}
+            <main className="pt-28 space-y-10">
+                {/* Hero Section with Bento Gallery */}
                 <VenueHero
                     images={Array.isArray(basicData?.imageUrls) ? basicData.imageUrls : []}
                     name={basicData?.nameVenue}
                     address={detailsData?.address}
                     avgCheck={detailsData?.averageCheck}
+                    isTodayOpen={!today.isOff}
+                    todayHours={today.hours}
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column: Info Cards */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Basic Info & Description */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+                    {/* Left Column: Primary Content */}
+                    <div className="lg:col-span-2 space-y-10">
+
+                        {/* Description Section */}
                         <VenueInfoCard
-                            title="Описание и основная информация"
+                            title="Описание заведения"
                             icon={<FileText className="text-blue-500" />}
-                            onEdit={() => console.log('Edit basic')}
+                            onEdit={() => console.log('Edit description')}
                         >
-                            <div className="prose prose-slate max-w-none">
-                                <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
-                                    {descriptionData?.description || basicData?.description || 'Описание отсутствует'}
+                            <div className="relative">
+                                <p className="text-slate-600 text-lg leading-[1.8] font-medium whitespace-pre-wrap">
+                                    {descriptionData?.description || basicData?.description || (
+                                        <span className="text-slate-300 italic">Описание пока не заполнено владельцем</span>
+                                    )}
                                 </p>
                             </div>
                         </VenueInfoCard>
 
-                        {/* Amenities */}
-                        <div className="grid grid-cols-1 gap-6">
-                            <VenueInfoCard
-                                title="Удобства"
-                                icon={<ConciergeBell className="text-blue-500" />}
-                                onEdit={() => console.log('Edit amenities')}
-                            >
-                                <div className="flex flex-wrap gap-2">
-                                    {Array.isArray(amenitiesData) ? (
-                                        amenitiesData.map((aId, i) => {
-                                            const name = (allAmenities.data as any[])?.find(a => a.id === aId)?.name || `Удобство #${aId}`;
-                                            return (
-                                                <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-black border border-blue-100 uppercase tracking-wider">
-                                                    {name}
-                                                </span>
-                                            );
-                                        })
-                                    ) : (
-                                        <p className="text-slate-400 text-sm italic">Удобства не указаны</p>
-                                    )}
-                                    {Array.isArray(amenitiesData) && amenitiesData.length === 0 && (
-                                        <p className="text-slate-400 text-sm italic">Удобства не указаны</p>
-                                    )}
-                                </div>
-                            </VenueInfoCard>
-                        </div>
-
-                        {/* Details & Capacity */}
+                        {/* Amenities Grid */}
                         <VenueInfoCard
-                            title="Детали и вместимость"
-                            icon={<Users className="text-brand-500" />}
-                            onEdit={() => console.log('Edit details')}
+                            title="Удобства и сервисы"
+                            icon={<ConciergeBell className="text-brand-500" />}
+                            onEdit={() => console.log('Edit amenities')}
+                            description="Особенности вашего заведения"
                         >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {Array.isArray(detailsData?.capacities) && detailsData?.capacities.map((cap, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-500">
-                                                <Users size={18} />
-                                            </div>
-                                            <span className="font-bold text-slate-700">{cap.title}</span>
-                                        </div>
-                                        <span className="text-lg font-black text-brand-600">{cap.value}</span>
+                            <div className="flex flex-wrap gap-3">
+                                {Array.isArray(amenitiesData) && amenitiesData.length > 0 ? (
+                                    amenitiesData.map((aId) => {
+                                        const found = (allAmenities.data as any[])?.find(a => a.id === aId);
+                                        return <VenueAmenityChip key={aId} id={aId} name={found?.name || `Услуга ${aId}`} />;
+                                    })
+                                ) : (
+                                    <div className="w-full p-8 rounded-3xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+                                        <Info size={24} className="mx-auto text-slate-300" />
+                                        <p className="text-sm font-medium text-slate-400">Список услуг пуст</p>
                                     </div>
-                                ))}
-                                {(!Array.isArray(detailsData?.capacities) || detailsData?.capacities.length === 0) && (
-                                    <p className="text-slate-400 text-sm italic col-span-2">Вместимость не указана</p>
                                 )}
                             </div>
                         </VenueInfoCard>
 
-                        {/* Working Hours */}
+                        {/* Capacity Grid */}
+                        <VenueInfoCard
+                            title="Вместимость и залы"
+                            icon={<Users className="text-purple-500" />}
+                            onEdit={() => console.log('Edit capacity')}
+                        >
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {Array.isArray(detailsData?.capacities) && detailsData.capacities.length > 0 ? (
+                                    detailsData.capacities.map((cap, i) => (
+                                        <motion.div
+                                            key={i}
+                                            whileHover={{ y: -5 }}
+                                            className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 shadow-sm">
+                                                    <Users size={20} />
+                                                </div>
+                                                <span className="font-black text-slate-700 uppercase text-[10px] tracking-widest">{cap.title}</span>
+                                            </div>
+                                            <span className="text-2xl font-black text-brand-600">{cap.value}</span>
+                                        </motion.div>
+                                    ))
+                                ) : (
+                                    <p className="text-slate-300 italic p-4 text-center col-span-2">Данные о вместимости не указаны</p>
+                                )}
+                            </div>
+                        </VenueInfoCard>
+                    </div>
+
+                    {/* Right Column: Sidebar */}
+                    <div className="space-y-10">
+
+                        {/* Working Hours Sidebar */}
                         <VenueInfoCard
                             title="График работы"
                             icon={<Clock className="text-orange-500" />}
                             onEdit={() => console.log('Edit hours')}
                         >
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-                                {Object.entries(hoursData || {}).filter(([k]) => k.includes('Open')).map(([key, open]) => {
-                                    const day = key.replace('Open', '');
-                                    const closeKey = `${day}Close`;
-                                    const close = (hoursData as any)[closeKey];
+                            <div className="space-y-1">
+                                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                                    const open = (hoursData as any)?.[`${day}Open`];
+                                    const close = (hoursData as any)?.[`${day}Close`];
                                     const labels: any = {
                                         monday: 'Понедельник', tuesday: 'Вторник', wednesday: 'Среда',
                                         thursday: 'Четверг', friday: 'Пятница', saturday: 'Суббота', sunday: 'Воскресенье'
                                     };
                                     const isDayOff = open === '00:00' && close === '00:00';
+                                    const isToday = day === today.dayName;
 
                                     return (
-                                        <div key={day} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
-                                            <span className="text-sm font-bold text-slate-500">{labels[day]}</span>
+                                        <div
+                                            key={day}
+                                            className={`flex items-center justify-between p-4 rounded-2xl transition-all ${isToday ? 'bg-orange-50/50 border border-orange-100/50 scale-[1.02]' : 'hover:bg-slate-50'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className={`text-sm font-bold ${isToday ? 'text-orange-600' : 'text-slate-500'}`}>
+                                                    {labels[day]}
+                                                </span>
+                                                {isToday && (
+                                                    <span className="px-2 py-0.5 bg-orange-600 text-white text-[8px] font-black uppercase rounded-md">
+                                                        Сегодня
+                                                    </span>
+                                                )}
+                                            </div>
+
                                             {isDayOff ? (
-                                                <span className="text-xs font-black text-slate-300 uppercase">Выходной</span>
+                                                <span className="text-xs font-black text-rose-500 uppercase tracking-widest bg-rose-50 px-2 py-1 rounded-lg">Выходной</span>
                                             ) : (
-                                                <span className="text-sm font-black text-slate-900">{open} — {close}</span>
+                                                <span className={`text-sm font-black ${isToday ? 'text-slate-900' : 'text-slate-700'}`}>
+                                                    {open} — {close}
+                                                </span>
                                             )}
                                         </div>
                                     );
                                 })}
                             </div>
                         </VenueInfoCard>
-                    </div>
 
-                    {/* Right Column: Contacts, Conditions, etc. */}
-                    <div className="space-y-6">
-                        {/* Contacts Card */}
+                        {/* Contacts Sidebar */}
                         <VenueInfoCard
                             title="Контакты"
-                            icon={<Phone className="text-green-500" />}
+                            icon={<Phone className="text-emerald-500" />}
                             onEdit={() => console.log('Edit contacts')}
                         >
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 {contactsData?.phoneNumber && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center">
-                                            <Phone size={18} />
+                                    <div className="flex items-center gap-4 group cursor-pointer">
+                                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                                            <Phone size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Телефон</p>
-                                            <p className="font-black text-slate-900">{contactsData.phoneNumber}</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {contactsData?.email && (
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                            <Mail size={18} />
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
-                                            <p className="font-black text-slate-900">{contactsData.email}</p>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Телефон</p>
+                                            <p className="font-black text-slate-900 text-lg group-hover:text-emerald-600 transition-colors">{contactsData.phoneNumber}</p>
                                         </div>
                                     </div>
                                 )}
 
-                                {/* Social Grid */}
-                                <div className="grid grid-cols-5 gap-2 pt-2">
+                                {contactsData?.email && contactsData.email.trim() !== "" && (
+                                    <div className="flex items-center gap-4 group cursor-pointer">
+                                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center transition-transform group-hover:scale-110">
+                                            <Mail size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email</p>
+                                            <p className="font-black text-slate-900 group-hover:text-blue-600 transition-colors">{contactsData.email}</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Premium Social Grid */}
+                                <div className="grid grid-cols-4 gap-3 pt-4 border-t border-slate-50">
                                     {Object.entries(contactsData?.linksSocial || {}).map(([key, val]) => {
-                                        if (!val) return null;
+                                        if (!val || val.trim() === "") return null;
                                         const icons: any = {
-                                            instagram: <Instagram size={18} />,
-                                            whatsapp: <MessageCircle size={18} />,
-                                            telegram: <Send size={18} />,
-                                            facebook: <Facebook size={18} />,
-                                            website: <Globe size={18} />
+                                            instagram: <Instagram size={20} />,
+                                            whatsapp: <MessageCircle size={20} />,
+                                            telegram: <Send size={20} />,
+                                            facebook: <Facebook size={20} />,
+                                            website: <Globe size={20} />
                                         };
                                         return (
                                             <a
@@ -273,9 +300,10 @@ export const VenueDetailPage: React.FC = () => {
                                                 href={val.startsWith('http') ? val : `https://${val}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-brand-50 hover:text-brand-600 transition-all border border-slate-100"
+                                                className="w-full aspect-square rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all border border-slate-100 hover:shadow-lg hover:-translate-y-1"
+                                                title={key}
                                             >
-                                                {icons[key]}
+                                                {icons[key] || <Globe size={20} />}
                                             </a>
                                         );
                                     })}
@@ -283,52 +311,51 @@ export const VenueDetailPage: React.FC = () => {
                             </div>
                         </VenueInfoCard>
 
-                        {/* Public Admin Info */}
-                        <VenueInfoCard
-                            title="Администратор заведения"
-                            icon={<UserCog className="text-brand-500" />}
-                        >
-                            <div className="space-y-4">
-                                {publicAdminData ? (
-                                    <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                                        <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 font-black">
-                                            {publicAdminData.fullName?.charAt(0) || 'A'}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</p>
-                                            <p className="text-xs text-slate-500">{publicAdminData.email || 'Email не указан'}</p>
-                                        </div>
+                        {/* Administrator Sidebar Card - High Contrast */}
+                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-brand-primary/10 blur-[60px] rounded-full -mr-16 -mt-16" />
+
+                            <div className="relative z-10 space-y-8">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-3xl bg-white/10 flex items-center justify-center text-brand-400 border border-white/10 group-hover:rotate-6 transition-transform">
+                                        <UserCog size={32} />
                                     </div>
-                                ) : (
-                                    <p className="text-slate-400 text-sm italic">Информации об администраторе нет</p>
-                                )}
-                            </div>
-                        </VenueInfoCard>
-
-                        {/* Admin Action Card */}
-                        <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl shadow-slate-900/20">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-brand-400">
-                                    <UserCog size={24} />
+                                    <div>
+                                        <h3 className="text-xl font-black">Администратор</h3>
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Персональный доступ</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-black text-lg">Администрирование</h3>
-                                    <p className="text-slate-400 text-xs">Управление доступом</p>
-                                </div>
-                            </div>
 
-                            <div className="space-y-3">
-                                <Button className="w-full h-11 bg-brand-primary hover:bg-brand-600 text-black border-0 font-black">
-                                    Сменить администратора
-                                </Button>
-                                <Button variant="ghost" className="w-full h-11 text-slate-300 hover:text-white border-slate-700 font-bold">
-                                    Удалить заведение
-                                </Button>
+                                <div className="space-y-4">
+                                    {publicAdminData ? (
+                                        <div className="p-5 bg-white/5 rounded-[1.5rem] border border-white/5 space-y-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-brand-primary flex items-center justify-center text-black font-black text-sm shadow-lg shadow-brand-primary/20">
+                                                    {(publicAdminData.fullName || 'A').charAt(0)}
+                                                </div>
+                                                <span className="font-bold text-slate-100">{publicAdminData.fullName || 'Имя не указано'}</span>
+                                            </div>
+                                            <p className="text-sm text-slate-400 pl-1">{publicAdminData.email}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 text-center border-2 border-dashed border-white/10 rounded-[1.5rem]">
+                                            <p className="text-sm text-slate-500 font-medium italic">Администратор пока не назначен</p>
+                                        </div>
+                                    )}
+
+                                    <Button className="w-full h-14 bg-brand-primary hover:bg-brand-400 text-black border-0 font-black rounded-2xl transition-all shadow-xl shadow-brand-primary/10">
+                                        Назначить ответственного
+                                    </Button>
+
+                                    <button className="w-full h-12 text-rose-400 hover:text-rose-300 text-sm font-black uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                        Удалить заведение
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </motion.div>
+            </main>
+        </div>
     );
 };
