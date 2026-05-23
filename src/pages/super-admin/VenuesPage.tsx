@@ -695,7 +695,7 @@ const VenueActionMenu: React.FC<{ venue: VenueListItem; onDelete: (id: number) =
     ];
 
     return (
-        <>
+        <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0">
             <div ref={menuRef} className="relative">
                 <button
                     onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
@@ -744,7 +744,7 @@ const VenueActionMenu: React.FC<{ venue: VenueListItem; onDelete: (id: number) =
                 {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
                 {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
             </AnimatePresence>
-        </>
+        </div>
     );
 };
 
