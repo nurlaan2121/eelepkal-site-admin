@@ -207,7 +207,7 @@ const Step2Details: React.FC = () => {
                 >
                     <option value="">Выберите город</option>
                     {cities.map(city => (
-                        <option key={city.id} value={city.id}>{city.name}</option>
+                        <option key={city.id} value={city.id}>{city.title}</option>
                     ))}
                 </select>
                 {isLoading && <p className="text-xs text-slate-400 mt-2">Загрузка городов...</p>}

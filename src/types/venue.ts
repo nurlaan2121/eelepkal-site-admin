@@ -48,7 +48,9 @@ export interface PaymentDetail {
 
 export interface City {
     id: number;
-    name: string;
+    title: string;
+    countClients: number;
+    countVenues: number;
 }
 
 export interface Cuisine {
