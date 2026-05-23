@@ -10,11 +10,13 @@ interface VenueAmenityGridProps {
 export const VenueAmenityGrid: React.FC<VenueAmenityGridProps> = ({ amenities, allAmenities }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    if (!amenities || amenities.length === 0) {
+    const safeAmenities = Array.isArray(amenities) ? amenities : [];
+
+    if (safeAmenities.length === 0) {
         return <p className="text-slate-400 text-sm italic">Удобства пока не указаны</p>;
     }
 
-    const displayedAmenities = isExpanded ? amenities : amenities.slice(0, 4);
+    const displayedAmenities = isExpanded ? safeAmenities : safeAmenities.slice(0, 4);
 
     return (
         <div className="space-y-6">
@@ -29,7 +31,7 @@ export const VenueAmenityGrid: React.FC<VenueAmenityGridProps> = ({ amenities, a
                 })}
             </div>
 
-            {amenities.length > 4 && (
+            {safeAmenities.length > 4 && (
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
                     className="w-full h-12 flex items-center justify-center gap-2 text-sm font-black text-slate-500 uppercase tracking-widest hover:text-orange-500 transition-colors"
@@ -37,7 +39,7 @@ export const VenueAmenityGrid: React.FC<VenueAmenityGridProps> = ({ amenities, a
                     {isExpanded ? (
                         <>Скрыть <ChevronUp size={16} /></>
                     ) : (
-                        <>Ещё {amenities.length - 4} <ChevronDown size={16} /></>
+                        <>Ещё {safeAmenities.length - 4} <ChevronDown size={16} /></>
                     )}
                 </button>
             )}
