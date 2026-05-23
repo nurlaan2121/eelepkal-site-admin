@@ -69,19 +69,52 @@ export const VenueDetailPage: React.FC = () => {
 
     const basicData = basic.data as BasicInfoData;
     const detailsData = details.data as VenueDetailsData;
-    const hoursData = hours.data as VenueWorkingHours;
+    const hoursDataRaw = hours.data as any;
     const amenitiesData = amenities.data as number[];
     const contactsData = contacts.data as VenueContactData;
     const publicAdminData = publicAdmin.data as any;
     const descriptionData = description.data as { description: string };
 
+    // Parse working hours from API format {"MONDAY": "08:00 - 00:00"} to {mondayOpen: "08:00", mondayClose: "00:00"}
+    const parseWorkingHours = (rawData: any): any => {
+        if (!rawData || typeof rawData !== 'object') return {};
+        
+        const dayMapping: any = {
+            'MONDAY': 'monday',
+            'TUESDAY': 'tuesday',
+            'WEDNESDAY': 'wednesday',
+            'THURSDAY': 'thursday',
+            'FRIDAY': 'friday',
+            'SATURDAY': 'saturday',
+            'SUNDAY': 'sunday'
+        };
+
+        const result: any = {};
+        
+        Object.entries(rawData).forEach(([key, value]) => {
+            const dayKey = dayMapping[key.toUpperCase()];
+            if (dayKey && typeof value === 'string') {
+                // Parse "08:00 - 00:00" format
+                const parts = value.split(' - ');
+                if (parts.length === 2) {
+                    result[`${dayKey}Open`] = parts[0].trim();
+                    result[`${dayKey}Close`] = parts[1].trim();
+                }
+            }
+        });
+        
+        return result;
+    };
+
+    const hoursData = parseWorkingHours(hoursDataRaw);
+
     const getTodayStatus = () => {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = days[new Date().getDay()];
-        const open = (hoursData as any)?.[`${dayName}Open`];
-        const close = (hoursData as any)?.[`${dayName}Close`];
+        const open = hoursData?.[`${dayName}Open`];
+        const close = hoursData?.[`${dayName}Close`];
         const isOff = open === '00:00' && close === '00:00';
-        return { isOff, hours: `${open} - ${close}`, dayName };
+        return { isOff, hours: `${open || '—'} - ${close || '—'}`, dayName };
     };
 
     const today = getTodayStatus();
@@ -229,14 +262,15 @@ export const VenueDetailPage: React.FC = () => {
                     <VenueInfoCard title="График работы" icon={<Clock size={20} />} onEdit={() => console.log('Edit Hours')}>
                         <div className="space-y-4">
                             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                                const open = (hoursData as any)?.[`${day}Open`];
-                                const close = (hoursData as any)?.[`${day}Close`];
+                                const open = hoursData?.[`${day}Open`];
+                                const close = hoursData?.[`${day}Close`];
                                 const labels: any = {
                                     monday: 'Понедельник', tuesday: 'Вторник', wednesday: 'Среда',
                                     thursday: 'Четверг', friday: 'Пятница', saturday: 'Суббота', sunday: 'Воскресенье'
                                 };
                                 const isDayOff = open === '00:00' && close === '00:00';
                                 const isToday = day === today.dayName;
+                                const hasData = open && close;
 
                                 return (
                                     <div key={day} className={`flex items-center justify-between transition-all ${isToday ? 'text-orange-600' : 'text-slate-600'}`}>
@@ -245,7 +279,7 @@ export const VenueDetailPage: React.FC = () => {
                                             {isToday && <div className="w-1.5 h-1.5 rounded-full bg-orange-500 ml-1" />}
                                         </div>
                                         <span className={`text-sm font-bold ${isDayOff ? 'text-rose-500' : ''}`}>
-                                            {isDayOff ? 'Выходной' : `${open} — ${close}`}
+                                            {!hasData ? 'Нет данных' : isDayOff ? 'Выходной' : `${open} — ${close}`}
                                         </span>
                                     </div>
                                 );
