@@ -251,7 +251,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
         bankName: '',
         qrCodeUrl: '',
     });
-    const [qrFile, setQrFile] = React.useState<File | null>(null);
     const [qrPreview, setQrPreview] = React.useState<string | null>(null);
     const [isUploading, setIsUploading] = React.useState(false);
 
@@ -284,14 +283,33 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             return;
         }
 
-        setQrFile(file);
-        
-        // Create preview
+        // Create preview immediately
         const reader = new FileReader();
         reader.onloadend = () => {
             setQrPreview(reader.result as string);
         };
         reader.readAsDataURL(file);
+
+        // Upload to S3 immediately
+        setIsUploading(true);
+        try {
+            toast.info('Загрузка QR кода...');
+            const qrUrl = await superAdminVenueService.uploadFileToS3(file);
+            console.log('QR code uploaded:', qrUrl);
+            
+            // Update formData with the uploaded URL
+            setFormData(prev => ({ ...prev, qrCodeUrl: qrUrl }));
+            
+            toast.success('QR код загружен');
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка загрузки файла';
+            toast.error(errorMessage);
+            // Clear preview if upload fails
+            setQrPreview(null);
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const handleUploadAndSubmit = async () => {
@@ -300,35 +318,23 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             return;
         }
 
-        setIsUploading(true);
+        // Check if file is still uploading
+        if (isUploading) {
+            toast.info('Дождитесь загрузки QR кода');
+            return;
+        }
+
         try {
-            let qrUrl = formData.qrCodeUrl;
-
-            // Upload QR code if file selected
-            if (qrFile) {
-                toast.info('Загрузка QR кода...');
-                qrUrl = await superAdminVenueService.uploadFileToS3(qrFile);
-                console.log('QR code uploaded:', qrUrl);
-            }
-
-            // Prepare final data with the QR URL
-            const finalData = {
-                ...formData,
-                qrCodeUrl: qrUrl,
-            };
-
-            // Submit payment details with the correct data
-            await superAdminVenueService.addPaymentDetail(venue.venueId, finalData);
+            // Submit payment details with the QR URL that's already in formData
+            await superAdminVenueService.addPaymentDetail(venue.venueId, formData);
             
             toast.success('Реквизиты успешно добавлены!');
             queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
             handleClose();
         } catch (error: any) {
-            console.error('Upload error:', error);
-            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка загрузки файла';
+            console.error('Submit error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка сохранения';
             toast.error(errorMessage);
-        } finally {
-            setIsUploading(false);
         }
     };
 
@@ -341,7 +347,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             bankName: '',
             qrCodeUrl: '',
         });
-        setQrFile(null);
         setQrPreview(null);
         onClose();
     };
@@ -427,18 +432,37 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                                     onChange={handleFileChange}
                                     className="hidden"
                                     id="qr-upload"
+                                    disabled={isUploading}
                                 />
                                 <label htmlFor="qr-upload" className="cursor-pointer">
                                     {qrPreview ? (
                                         <div className="space-y-3">
-                                            <img src={qrPreview} alt="QR Preview" className="w-32 h-32 mx-auto object-contain rounded-lg" />
-                                            <p className="text-xs text-slate-500 font-medium">Нажмите для изменения</p>
+                                            <div className="relative">
+                                                <img src={qrPreview} alt="QR Preview" className="w-32 h-32 mx-auto object-contain rounded-lg" />
+                                                {isUploading && (
+                                                    <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
+                                                        <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 font-medium">
+                                                {isUploading ? 'Загрузка...' : 'Нажмите для изменения'}
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <CreditCard size={32} className="mx-auto text-slate-300" />
-                                            <p className="text-sm font-bold text-slate-600">Загрузить QR код</p>
-                                            <p className="text-xs text-slate-400">PNG, JPG до 5MB</p>
+                                            {isUploading ? (
+                                                <>
+                                                    <div className="w-8 h-8 border-3 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                                                    <p className="text-sm font-bold text-brand-600">Загрузка QR кода...</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CreditCard size={32} className="mx-auto text-slate-300" />
+                                                    <p className="text-sm font-bold text-slate-600">Загрузить QR код</p>
+                                                    <p className="text-xs text-slate-400">PNG, JPG до 5MB</p>
+                                                </>
+                                            )}
                                         </div>
                                     )}
                                 </label>
@@ -493,14 +517,15 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                         <>
                             <Button
                                 onClick={handleUploadAndSubmit}
-                                disabled={addMutation.isPending || isUploading}
+                                disabled={isUploading}
                                 className="w-full h-12 font-black text-sm"
                             >
-                                {isUploading || addMutation.isPending ? 'Сохранение...' : 'Добавить реквизиты'}
+                                {isUploading ? 'Загрузка QR кода...' : 'Добавить реквизиты'}
                             </Button>
                             <button
                                 onClick={() => setShowAddForm(false)}
-                                className="w-full h-12 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all"
+                                disabled={isUploading}
+                                className="w-full h-12 px-6 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-black text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Отмена
                             </button>
