@@ -217,4 +217,10 @@ export const superAdminVenueService = {
             params: { url }
         });
     },
+
+    updateNameAndDescription: async (venueId: number, name: string, description: string): Promise<void> => {
+        await apiClient.put(`/api/super-admin-venue/update-name-and-description/${venueId}`, null, {
+            params: { name, description }
+        });
+    },
 };
