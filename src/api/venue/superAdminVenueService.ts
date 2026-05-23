@@ -184,4 +184,8 @@ export const superAdminVenueService = {
         });
         return response.data;
     },
+
+    deleteFeedback: async (venueId: number, feedbackId: number): Promise<void> => {
+        await apiClient.delete(`/api/super-admin-feedback/delete/${venueId}/${feedbackId}`);
+    },
 };

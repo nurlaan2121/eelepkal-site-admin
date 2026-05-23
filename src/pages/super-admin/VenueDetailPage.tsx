@@ -1,14 +1,16 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
     ChevronLeft, MapPin, Phone, Mail,
     Globe, Instagram, MessageCircle, Send, Facebook,
     Clock, ConciergeBell, FileText,
     UserCog, Star, Users, Wallet,
-    CheckCircle2, AlertCircle, Info, Layers, Sofa, LayoutGrid, Utensils, UtensilsCrossed
+    CheckCircle2, AlertCircle, Info, Layers, Sofa, LayoutGrid, Utensils, UtensilsCrossed,
+    Trash2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
 import { Button } from '../../components/ui/Button';
 import {
@@ -25,7 +27,25 @@ import { VenueAmenityGrid } from './components/VenueAmenityGrid';
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const id = Number(venueId);
+    const [deletedFeedbackIds, setDeletedFeedbackIds] = React.useState<Set<number>>(new Set());
+
+    // Delete feedback mutation
+    const deleteFeedbackMutation = useMutation({
+        mutationFn: ({ feedbackId }: { feedbackId: number }) => 
+            superAdminVenueService.deleteFeedback(id, feedbackId),
+        onSuccess: (_, { feedbackId }) => {
+            toast.success('Отзыв успешно удален');
+            // Add to deleted set to remove from UI immediately
+            setDeletedFeedbackIds(prev => new Set(prev).add(feedbackId));
+            // Invalidate feedbacks query to refetch
+            queryClient.invalidateQueries({ queryKey: ['venue-feedbacks', id] });
+        },
+        onError: () => {
+            toast.error('Ошибка при удалении отзыва');
+        }
+    });
 
     const results = useQueries({
         queries: [
@@ -76,6 +96,9 @@ export const VenueDetailPage: React.FC = () => {
     const publicAdminData = publicAdmin.data as any;
     const descriptionRaw = description.data as any;
     const feedbacksData = feedbacks.data as any[];
+
+    // Filter out deleted feedbacks
+    const visibleFeedbacks = feedbacksData?.filter((f: any) => !deletedFeedbackIds.has(f.id)) || [];
 
     // Parse description - API might return string or object
     const descriptionText = typeof descriptionRaw === 'string'
@@ -169,6 +192,12 @@ export const VenueDetailPage: React.FC = () => {
     };
 
     const contactsData = parseContacts(contactsRaw);
+
+    const handleDeleteFeedback = (feedbackId: number, feedbackAuthor: string) => {
+        if (window.confirm(`Вы уверены, что хотите удалить отзыв от "${feedbackAuthor}"?`)) {
+            deleteFeedbackMutation.mutate({ feedbackId });
+        }
+    };
 
     const getTodayStatus = () => {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -453,48 +482,68 @@ export const VenueDetailPage: React.FC = () => {
                     {/* 10. Feedbacks Section */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
-                            <h3 className="text-lg font-black text-slate-900">Отзывы ({feedbacksData?.length || 0})</h3>
-                            {feedbacksData?.length > 0 && (
+                            <h3 className="text-lg font-black text-slate-900">Отзывы ({visibleFeedbacks?.length || 0})</h3>
+                            {visibleFeedbacks?.length > 0 && (
                                 <div className="flex items-center gap-1 text-orange-500 font-bold text-sm">
                                     <Star size={14} className="fill-orange-500" />
-                                    {(feedbacksData.reduce((acc, f) => acc + f.rating, 0) / feedbacksData.length).toFixed(1)}
+                                    {(visibleFeedbacks.reduce((acc, f) => acc + f.rating, 0) / visibleFeedbacks.length).toFixed(1)}
                                 </div>
                             )}
                         </div>
 
-                        {feedbacksData && feedbacksData.length > 0 ? (
+                        {visibleFeedbacks && visibleFeedbacks.length > 0 ? (
                             <div className="space-y-4">
-                                {feedbacksData.slice(0, 5).map((feedback: any) => (
-                                    <VenueInfoCard key={feedback.id} noPadding className="overflow-visible">
-                                        <div className="p-5 space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
-                                                        {feedback.client?.image ? (
-                                                            <img src={feedback.client.image} className="w-full h-full object-cover" alt="" />
-                                                        ) : (
-                                                            <span className="text-sm font-black text-slate-400">
-                                                                {(feedback.client?.fullName || 'U').charAt(0).toUpperCase()}
-                                                            </span>
-                                                        )}
+                                <AnimatePresence>
+                                {visibleFeedbacks.slice(0, 5).map((feedback: any) => (
+                                    <motion.div
+                                        key={feedback.id}
+                                        layout
+                                        initial={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                    >
+                                        <VenueInfoCard noPadding className="overflow-visible">
+                                            <div className="p-5 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+                                                            {feedback.client?.image ? (
+                                                                <img src={feedback.client.image} className="w-full h-full object-cover" alt="" />
+                                                            ) : (
+                                                                <span className="text-sm font-black text-slate-400">
+                                                                    {(feedback.client?.fullName || 'U').charAt(0).toUpperCase()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-black text-slate-800">{feedback.client?.fullName || 'Аноним'}</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{feedback.createdAt}</p>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-black text-slate-800">{feedback.client?.fullName || 'Аноним'}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{feedback.createdAt}</p>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center gap-1 px-2.5 py-1 bg-orange-50 text-orange-600 rounded-lg text-xs font-black">
+                                                            {feedback.rating} <Star size={10} className="fill-orange-500" />
+                                                        </div>
+                                                        <button
+                                                            onClick={() => handleDeleteFeedback(feedback.id, feedback.client?.fullName || 'Аноним')}
+                                                            disabled={deleteFeedbackMutation.isPending}
+                                                            className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            title="Удалить отзыв"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-1 px-2.5 py-1 bg-orange-50 text-orange-600 rounded-lg text-xs font-black">
-                                                    {feedback.rating} <Star size={10} className="fill-orange-500" />
-                                                </div>
+                                                <p className="text-sm text-slate-600 leading-relaxed font-medium">
+                                                    {feedback.text}
+                                                </p>
                                             </div>
-                                            <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                                                {feedback.text}
-                                            </p>
-                                        </div>
-                                    </VenueInfoCard>
+                                        </VenueInfoCard>
+                                    </motion.div>
                                 ))}
+                                </AnimatePresence>
 
-                                {feedbacksData.length > 5 && (
+                                {visibleFeedbacks.length > 5 && (
                                     <Button variant="ghost" className="w-full h-14 rounded-[24px] border border-slate-100 font-black text-slate-500 hover:text-orange-500 uppercase tracking-widest text-xs">
                                         Смотреть все отзывы
                                     </Button>
