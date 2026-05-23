@@ -46,6 +46,8 @@ export const superAdminVenueService = {
         return response.data;
     },
 
+
+
     addPaymentDetail: async (venueId: number, data: {
         venueTitle: string;
         taxIdentificationNumber: string;
