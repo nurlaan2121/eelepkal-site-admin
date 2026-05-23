@@ -37,11 +37,12 @@ export const VenueDetailPage: React.FC = () => {
             { queryKey: ['venue-public-admin', id], queryFn: () => superAdminVenueService.getVenuePublicAdmin(id) },
             { queryKey: ['venue-description', id], queryFn: () => superAdminVenueService.getVenueDescription(id) },
             { queryKey: ['all-amenities'], queryFn: () => superAdminVenueService.getAllAmenities() },
+            { queryKey: ['all-cities'], queryFn: () => superAdminVenueService.getAllCities() },
         ],
     });
 
     const [
-        basic, details, hours, amenities, contacts, publicAdmin, description, allAmenities
+        basic, details, hours, amenities, contacts, publicAdmin, description, allAmenities, allCities
     ] = results;
 
     const isLoading = results.some(r => r.isLoading);
@@ -85,6 +86,18 @@ export const VenueDetailPage: React.FC = () => {
 
     const today = getTodayStatus();
 
+    // Image transformation helper
+    const getImageUrls = (data: any): string[] => {
+        if (!data) return [];
+        if (Array.isArray(data.imageUrls)) return data.imageUrls;
+        if (data.images && typeof data.images === 'object') {
+            return Object.values(data.images);
+        }
+        return [];
+    };
+
+    const imageUrls = getImageUrls(basicData);
+
     return (
         <div className="pb-20 max-w-7xl mx-auto">
             {/* Premium Sticky Header */}
@@ -99,7 +112,7 @@ export const VenueDetailPage: React.FC = () => {
                         </button>
                         <div className="hidden sm:block">
                             <h2 className="text-xl font-black text-slate-900 leading-tight">
-                                {basicData?.nameVenue || 'Заведение'}
+                                {(basicData as any)?.name || basicData?.nameVenue || 'Заведение'}
                             </h2>
                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 flex items-center gap-2">
                                 <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
@@ -123,13 +136,25 @@ export const VenueDetailPage: React.FC = () => {
             <main className="pt-28 space-y-10">
                 {/* Hero Section with Bento Gallery */}
                 <VenueHero
-                    images={Array.isArray(basicData?.imageUrls) ? basicData.imageUrls : []}
-                    name={basicData?.nameVenue}
-                    address={detailsData?.address}
-                    avgCheck={detailsData?.averageCheck}
+                    images={imageUrls}
+                    name={(basicData as any)?.name || basicData?.nameVenue}
+                    address={`${(allCities.data as any[])?.find(c => c.id === detailsData?.cityId)?.title || ''} ${(basicData as any)?.address || detailsData?.address || ''}`.trim()}
+                    avgCheck={(basicData as any)?.averageCheck || detailsData?.averageCheck}
                     isTodayOpen={!today.isOff}
-                    todayHours={today.hours}
+                    todayHours={(basicData as any)?.todayWorkingHours || today.hours}
                 />
+
+                {/* Active Promos Badge Row */}
+                {Array.isArray((basicData as any)?.promosRes) && (basicData as any).promosRes.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                        {(basicData as any).promosRes.map((promo: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2 px-4 py-2 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600">
+                                <Star size={14} className="fill-rose-500" />
+                                <span className="text-xs font-black uppercase tracking-wider">Акция: {promo.title || 'Активная скидка'}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
                     {/* Left Column: Primary Content */}
