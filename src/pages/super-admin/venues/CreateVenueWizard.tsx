@@ -683,6 +683,24 @@ export const CreateVenueWizard: React.FC = () => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasFormData, isComplete]);
 
+    const resetAndNavigate = () => {
+        resetCreation();
+        setShowConfirmDialog(false);
+        if (pendingNavigation) {
+            navigate(pendingNavigation);
+        } else {
+            navigate('/super-admin/venues');
+        }
+    };
+
+    const handleCancel = () => {
+        if (hasFormData) {
+            setShowConfirmDialog(true);
+        } else {
+            resetAndNavigate();
+        }
+    };
+
     // Mutations for each step
     const step1Mutation = useMutation({
         mutationFn: () => superAdminVenueService.addBasicInfo({
