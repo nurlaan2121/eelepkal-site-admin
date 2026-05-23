@@ -659,6 +659,7 @@ export const CreateVenueWizard: React.FC = () => {
     const [isComplete, setIsComplete] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+    const [localVenueId, setLocalVenueId] = useState<number | null>(null);
 
     // Check if form has any data
     const hasFormData = 
@@ -711,6 +712,7 @@ export const CreateVenueWizard: React.FC = () => {
         }),
         onSuccess: (data) => {
             setVenueId(data.id);
+            setLocalVenueId(data.id); // Save to local state immediately
             toast.success('Основная информация сохранена');
         },
         onError: (error: any) => {
@@ -719,74 +721,56 @@ export const CreateVenueWizard: React.FC = () => {
     });
 
     const step2Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueDetails(venueId, {
-                cityId: details.cityId || 0,
-                address: details.address || '',
-                averageCheck: details.averageCheck || 0,
-                capacities: details.capacities || [],
-            });
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueDetails(vid, {
+            cityId: details.cityId || 0,
+            address: details.address || '',
+            averageCheck: details.averageCheck || 0,
+            capacities: details.capacities || [],
+        }),
         onSuccess: () => toast.success('Детали сохранены'),
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const step3Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueHours(venueId, hours.hours!);
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueHours(vid, hours.hours!),
         onSuccess: () => toast.success('Время работы сохранено'),
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const step4Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueCuisines(venueId, {
-                cuisinesIds: cuisines.cuisinesIds || [],
-            });
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueCuisines(vid, {
+            cuisinesIds: cuisines.cuisinesIds || [],
+        }),
         onSuccess: () => toast.success('Типы кухни сохранены'),
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const step5Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueAmenities(venueId, {
-                amenitiesId: amenities.amenitiesId || [],
-            });
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueAmenities(vid, {
+            amenitiesId: amenities.amenitiesId || [],
+        }),
         onSuccess: () => toast.success('Услуги сохранены'),
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const step6Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueContacts(venueId, {
-                phoneNumber: contacts.phoneNumber || '',
-                email: contacts.email || '',
-                linksSocial: contacts.linksSocial || {},
-            });
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueContacts(vid, {
+            phoneNumber: contacts.phoneNumber || '',
+            email: contacts.email || '',
+            linksSocial: contacts.linksSocial || {},
+        }),
         onSuccess: () => toast.success('Контакты сохранены'),
         onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const step7Mutation = useMutation({
-        mutationFn: () => {
-            if (!venueId) throw new Error('Venue ID not found');
-            return superAdminVenueService.addVenueConditions(venueId, {
-                deposit: conditions.deposit || 0,
-                cancelAllowed: conditions.cancelAllowed || false,
-                cancellationDeadline: conditions.cancellationDeadline || '00:00',
-                editAllowed: conditions.editAllowed || false,
-                editingDeadline: conditions.editingDeadline || '00:00',
-            });
-        },
+        mutationFn: (vid: number) => superAdminVenueService.addVenueConditions(vid, {
+            deposit: conditions.deposit || 0,
+            cancelAllowed: conditions.cancelAllowed || false,
+            cancellationDeadline: conditions.cancellationDeadline || '00:00',
+            editAllowed: conditions.editAllowed || false,
+            editingDeadline: conditions.editingDeadline || '00:00',
+        }),
         onSuccess: () => {
             toast.success('Заведение успешно создано!');
             setIsComplete(true);
@@ -806,6 +790,12 @@ export const CreateVenueWizard: React.FC = () => {
             return;
         }
 
+        // For steps 2-7, we need venueId
+        if (currentStep > 1 && !localVenueId) {
+            toast.error('Ошибка: ID заведения не найден. Начните сначала.');
+            return;
+        }
+
         try {
             // Execute mutation for current step
             switch (currentStep) {
@@ -813,22 +803,22 @@ export const CreateVenueWizard: React.FC = () => {
                     await step1Mutation.mutateAsync();
                     break;
                 case 2:
-                    await step2Mutation.mutateAsync();
+                    await step2Mutation.mutateAsync(localVenueId!);
                     break;
                 case 3:
-                    await step3Mutation.mutateAsync();
+                    await step3Mutation.mutateAsync(localVenueId!);
                     break;
                 case 4:
-                    await step4Mutation.mutateAsync();
+                    await step4Mutation.mutateAsync(localVenueId!);
                     break;
                 case 5:
-                    await step5Mutation.mutateAsync();
+                    await step5Mutation.mutateAsync(localVenueId!);
                     break;
                 case 6:
-                    await step6Mutation.mutateAsync();
+                    await step6Mutation.mutateAsync(localVenueId!);
                     break;
                 case 7:
-                    await step7Mutation.mutateAsync();
+                    await step7Mutation.mutateAsync(localVenueId!);
                     return; // Don't go to next step, stay on success screen
             }
 
