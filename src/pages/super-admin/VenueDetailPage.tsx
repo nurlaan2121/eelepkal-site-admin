@@ -119,7 +119,7 @@ export const VenueDetailPage: React.FC = () => {
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Hero Section */}
                 <VenueHero
-                    images={basicData?.imageUrls || []}
+                    images={Array.isArray(basicData?.imageUrls) ? basicData.imageUrls : []}
                     name={basicData?.nameVenue}
                     address={detailsData?.address}
                     avgCheck={detailsData?.averageCheck}
@@ -149,15 +149,19 @@ export const VenueDetailPage: React.FC = () => {
                                 onEdit={() => console.log('Edit amenities')}
                             >
                                 <div className="flex flex-wrap gap-2">
-                                    {(amenitiesData || []).map((aId, i) => {
-                                        const name = (allAmenities.data as any[])?.find(a => a.id === aId)?.name || `Удобство #${aId}`;
-                                        return (
-                                            <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-black border border-blue-100 uppercase tracking-wider">
-                                                {name}
-                                            </span>
-                                        );
-                                    })}
-                                    {(amenitiesData || []).length === 0 && (
+                                    {Array.isArray(amenitiesData) ? (
+                                        amenitiesData.map((aId, i) => {
+                                            const name = (allAmenities.data as any[])?.find(a => a.id === aId)?.name || `Удобство #${aId}`;
+                                            return (
+                                                <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-black border border-blue-100 uppercase tracking-wider">
+                                                    {name}
+                                                </span>
+                                            );
+                                        })
+                                    ) : (
+                                        <p className="text-slate-400 text-sm italic">Удобства не указаны</p>
+                                    )}
+                                    {Array.isArray(amenitiesData) && amenitiesData.length === 0 && (
                                         <p className="text-slate-400 text-sm italic">Удобства не указаны</p>
                                     )}
                                 </div>
