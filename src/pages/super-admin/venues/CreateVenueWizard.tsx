@@ -298,13 +298,13 @@ const Step3Hours: React.FC = () => {
     };
 
     const days: { key: DayOfWeek; label: string; openField: keyof VenueWorkingHours; closeField: keyof VenueWorkingHours }[] = [
-        { key: 'monday', label: 'Понедельник', openField: 'MondayOpen', closeField: 'MondayClose' },
-        { key: 'tuesday', label: 'Вторник', openField: 'TuesdayOpen', closeField: 'TuesdayClose' },
-        { key: 'wednesday', label: 'Среда', openField: 'WednesdayOpen', closeField: 'WednesdayClose' },
-        { key: 'thursday', label: 'Четверг', openField: 'ThursdayOpen', closeField: 'ThursdayClose' },
-        { key: 'friday', label: 'Пятница', openField: 'FridayOpen', closeField: 'FridayClose' },
-        { key: 'saturday', label: 'Суббота', openField: 'SaturdayOpen', closeField: 'SaturdayClose' },
-        { key: 'sunday', label: 'Воскресенье', openField: 'SundayOpen', closeField: 'SundayClose' },
+        { key: 'monday', label: 'Понедельник', openField: 'mondayOpen', closeField: 'mondayClose' },
+        { key: 'tuesday', label: 'Вторник', openField: 'tuesdayOpen', closeField: 'tuesdayClose' },
+        { key: 'wednesday', label: 'Среда', openField: 'wednesdayOpen', closeField: 'wednesdayClose' },
+        { key: 'thursday', label: 'Четверг', openField: 'thursdayOpen', closeField: 'thursdayClose' },
+        { key: 'friday', label: 'Пятница', openField: 'fridayOpen', closeField: 'fridayClose' },
+        { key: 'saturday', label: 'Суббота', openField: 'saturdayOpen', closeField: 'saturdayClose' },
+        { key: 'sunday', label: 'Воскресенье', openField: 'sundayOpen', closeField: 'sundayClose' },
     ];
 
     const toggleDayOff = (day: DayOfWeek) => {
