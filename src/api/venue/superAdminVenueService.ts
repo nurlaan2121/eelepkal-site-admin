@@ -25,7 +25,7 @@ export const superAdminVenueService = {
     },
 
     deleteVenue: async (id: number): Promise<void> => {
-        await apiClient.delete(`/api/super-admin-venue/delete-venue/${id}`);
+        await apiClient.delete(`/api/super-admin-venue/delete/${id}`);
     },
 
     getAdminsForReplace: async (): Promise<AdminForReplace[]> => {
