@@ -3,6 +3,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const BACKEND_URL = 'https://eelepkal.com';
 
+// Disable body parsing for this route to handle multipart/form-data
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { path } = req.query;
 
@@ -30,6 +37,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const contentType = req.headers['content-type'] || '';
         const isMultipart = contentType.includes('multipart/form-data');
 
+        // For file uploads, we need to pipe the raw request
+        if (isMultipart && req.method === 'POST') {
+            return await handleMultipartUpload(req, res, targetUrl, safeHeaders, contentType);
+        }
+
+        // Regular JSON requests
         const config = {
             method: req.method,
             url: targetUrl,
@@ -40,13 +53,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             data: req.body,
             params: { ...req.query },
         };
-
-        // For multipart uploads, preserve the original content-type with boundary
-        if (isMultipart) {
-            config.headers['content-type'] = contentType;
-            // Don't parse the body, send it as-is
-            config.data = req.body;
-        }
 
         // Remove path from params to avoid sending it to backend
         delete config.params.path;
@@ -76,4 +82,60 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             targetPath: path
         });
     }
+}
+
+// Handle multipart/form-data file uploads
+async function handleMultipartUpload(
+    req: VercelRequest,
+    res: VercelResponse,
+    targetUrl: string,
+    safeHeaders: Record<string, string>,
+    contentType: string
+) {
+    return new Promise<void>((resolve, reject) => {
+        const chunks: Buffer[] = [];
+
+        // Collect raw body chunks
+        req.on('data', (chunk: Buffer) => {
+            chunks.push(chunk);
+        });
+
+        req.on('end', async () => {
+            try {
+                const rawBody = Buffer.concat(chunks);
+                
+                console.log(`File upload to ${targetUrl}, size: ${rawBody.length} bytes`);
+
+                // Forward to backend with exact content-type (including boundary)
+                const response = await axios.post(targetUrl, rawBody, {
+                    headers: {
+                        ...safeHeaders,
+                        'host': 'eelepkal.com',
+                        'content-type': contentType,
+                        'Content-Length': rawBody.length.toString(),
+                    },
+                    responseType: 'json',
+                    maxContentLength: Infinity,
+                    maxBodyLength: Infinity,
+                });
+
+                console.log('Upload successful:', response.data);
+                res.status(response.status).json(response.data);
+                resolve();
+            } catch (error: any) {
+                console.error('File upload proxy error:', error.message);
+                console.error('Error response:', error.response?.data);
+                const status = error.response?.status || 500;
+                const data = error.response?.data || { message: 'Upload failed' };
+                res.status(status).json(data);
+                resolve();
+            }
+        });
+
+        req.on('error', (error) => {
+            console.error('Request error:', error);
+            res.status(500).json({ message: 'Request failed' });
+            resolve();
+        });
+    });
 }
