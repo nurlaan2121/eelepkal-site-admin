@@ -2,9 +2,8 @@ import React from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import {
-    Plus, Search, Store, MapPin, MoreVertical, User,
-    UserCog, Settings2, CreditCard, Trash2, X, ChevronDown,
-    Star, Wallet, Check
+    MoreVertical, UserCog, Settings2, CreditCard, Trash2, X, Plus,
+    Search, Wallet, Star, MapPin, User, Store, Utensils, Check, ChevronDown
 } from 'lucide-react';
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
 import { Button } from '../../components/ui/Button';
@@ -260,7 +259,6 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
                                     </div>
                                 )}
                                 {!form.editAllowed && <p className="text-xs text-slate-400 font-medium">Изменение не допускается (00:00)</p>}
-                                {/* End of Editing */}
                             </div>
                         </>
                     )}
@@ -273,6 +271,125 @@ const ConditionsModal: React.FC<{ venue: VenueListItem; onClose: () => void }> =
                         className="w-full h-12 font-black text-sm"
                     >
                         {mutation.isPending ? 'Сохранение...' : 'Сохранить условия'}
+                    </Button>
+                </div>
+            </motion.div>
+        </div>
+    );
+};
+
+// ─────────── Cuisines Modal ───────────
+const CuisinesModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({ venue, onClose }) => {
+    const [selectedIds, setSelectedIds] = React.useState<number[]>([]);
+    const [search, setSearch] = React.useState('');
+
+    const { data: allCuisines, isLoading: isLoadingAll } = useQuery({
+        queryKey: ['cuisines-all'],
+        queryFn: () => superAdminVenueService.getAllCuisines(),
+    });
+
+    const { isLoading: isFetchingCurrent } = useQuery({
+        queryKey: ['venue-cuisines', venue.venueId],
+        queryFn: async () => {
+            const data = await superAdminVenueService.getVenueCuisines(venue.venueId);
+            setSelectedIds(data || []);
+            return data;
+        },
+    });
+
+    const mutation = useMutation({
+        mutationFn: () => superAdminVenueService.addVenueCuisines(venue.venueId, { cuisinesIds: selectedIds }),
+        onSuccess: () => {
+            toast.success('Типы кухни обновлены!');
+            onClose();
+        },
+        onError: (e: any) => toast.error(e?.response?.data?.message || 'Ошибка сохранения'),
+    });
+
+    const filteredCuisines = allCuisines?.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase())
+    ) || [];
+
+    const toggleCuisine = (id: number) => {
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        );
+    };
+
+    return (
+        <div
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-4"
+        >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+            <motion.div
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: '100%', opacity: 0 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                className="relative bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-md max-h-[90vh] flex flex-col shadow-2xl"
+            >
+                <div className="flex items-center justify-between p-5 border-b border-slate-100">
+                    <div>
+                        <h2 className="text-lg font-black text-slate-900">Типы кухни</h2>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5 truncate max-w-[220px]">{venue.name}</p>
+                    </div>
+                    <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <div className="p-4 border-b border-slate-50">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Поиск кухни..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="w-full h-11 pl-10 pr-4 bg-slate-50 border-2 border-transparent focus:border-brand-primary rounded-xl text-sm font-bold transition-all outline-none"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-5">
+                    {isLoadingAll || isFetchingCurrent ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-3">
+                            <div className="w-10 h-10 border-4 border-brand-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm font-bold text-slate-400">Загрузка данных...</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                            {filteredCuisines.map((cuisine) => {
+                                const isSelected = selectedIds.includes(cuisine.id);
+                                return (
+                                    <button
+                                        key={cuisine.id}
+                                        onClick={() => toggleCuisine(cuisine.id)}
+                                        className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${isSelected
+                                            ? 'bg-brand-50 border-brand-primary text-brand-700'
+                                            : 'bg-white border-slate-100 text-slate-600 hover:border-slate-200'
+                                            }`}
+                                    >
+                                        <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-brand-primary border-brand-primary' : 'border-slate-300 bg-white'
+                                            }`}>
+                                            {isSelected && <Plus className="text-white rotate-45" size={12} />}
+                                        </div>
+                                        <span className="text-xs font-black truncate">{cuisine.name}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-5 border-t border-slate-100">
+                    <Button
+                        onClick={() => mutation.mutate()}
+                        disabled={mutation.isPending || isLoadingAll || isFetchingCurrent}
+                        className="w-full h-12 font-black text-sm"
+                    >
+                        {mutation.isPending ? 'Сохранение...' : `Сохранить (${selectedIds.length})`}
                     </Button>
                 </div>
             </motion.div>
@@ -343,29 +460,22 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             return;
         }
 
-        // Create preview immediately
         const reader = new FileReader();
         reader.onloadend = () => {
             setQrPreview(reader.result as string);
         };
         reader.readAsDataURL(file);
 
-        // Upload to S3 immediately
         setIsUploading(true);
         try {
             toast.info('Загрузка QR кода...');
             const qrUrl = await superAdminVenueService.uploadFileToS3(file);
-            console.log('QR code uploaded:', qrUrl);
-
-            // Update formData with the uploaded URL
             setFormData(prev => ({ ...prev, qrCodeUrl: qrUrl }));
-
             toast.success('QR код загружен');
         } catch (error: any) {
             console.error('Upload error:', error);
             const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка загрузки файла';
             toast.error(errorMessage);
-            // Clear preview if upload fails
             setQrPreview(null);
         } finally {
             setIsUploading(false);
@@ -378,7 +488,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
             return;
         }
 
-        // Check if file is still uploading
         if (isUploading) {
             toast.info('Дождитесь загрузки QR кода');
             return;
@@ -386,10 +495,8 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
 
         try {
             if (editingPayment) {
-                // Update existing payment
                 await updateMutation.mutateAsync(editingPayment.id);
             } else {
-                // Add new payment
                 await superAdminVenueService.addPaymentDetail(venue.venueId, formData);
                 toast.success('Реквизиты успешно добавлены!');
                 queryClient.invalidateQueries({ queryKey: ['payment-details', venue.venueId] });
@@ -462,7 +569,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
 
                 {showAddForm ? (
                     <div className="flex-1 overflow-y-auto p-5 space-y-4">
-                        {/* Bank Name */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">
                                 Название банка <span className="text-red-500">*</span>
@@ -477,7 +583,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                             />
                         </div>
 
-                        {/* Account Number */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">
                                 Номер счёта <span className="text-red-500">*</span>
@@ -492,7 +597,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                             />
                         </div>
 
-                        {/* TIN */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">
                                 ИНН <span className="text-red-500">*</span>
@@ -507,7 +611,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                             />
                         </div>
 
-                        {/* QR Code Upload */}
                         <div>
                             <label className="block text-sm font-bold text-slate-700 mb-2">
                                 QR код для оплаты
@@ -570,7 +673,6 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                         ) : (
                             payments.map((p) => (
                                 <div key={p.id} className="relative bg-gradient-to-br from-brand-950 to-brand-700 rounded-2xl p-5 text-white space-y-4">
-                                    {/* Action Menu */}
                                     <div className="absolute top-4 right-4">
                                         <PaymentActionMenu
                                             payment={p}
@@ -705,7 +807,7 @@ const PaymentActionMenu: React.FC<{
 };
 
 // ─────────── Venue Action Menu ───────────
-type ModalType = 'replace-admin' | 'conditions' | 'payment' | null;
+type ModalType = 'replace-admin' | 'conditions' | 'payment' | 'cuisines' | null;
 
 const VenueActionMenu: React.FC<{
     venue: VenueListItem;
@@ -729,6 +831,7 @@ const VenueActionMenu: React.FC<{
 
         const actions = [
             { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
+            { icon: Utensils, label: 'Тип кухни', modal: 'cuisines' as ModalType, color: 'text-orange-600' },
             { icon: Settings2, label: 'Условия бронирования', modal: 'conditions' as ModalType, color: 'text-amber-600' },
             { icon: CreditCard, label: 'Реквизиты оплаты', modal: 'payment' as ModalType, color: 'text-emerald-600' },
         ];
@@ -850,9 +953,9 @@ const VenueCard: React.FC<{
                     </div>
                 </div>
 
-                {/* Render modals OUTSIDE the clickable card */}
                 <AnimatePresence>
                     {activeModal === 'replace-admin' && <ReplaceAdminModal venue={venue} onClose={() => setActiveModal(null)} />}
+                    {activeModal === 'cuisines' && <CuisinesModal venue={venue} onClose={() => setActiveModal(null)} />}
                     {activeModal === 'conditions' && <ConditionsModal venue={venue} onClose={() => setActiveModal(null)} />}
                     {activeModal === 'payment' && <PaymentModal venue={venue} onClose={() => setActiveModal(null)} />}
                 </AnimatePresence>

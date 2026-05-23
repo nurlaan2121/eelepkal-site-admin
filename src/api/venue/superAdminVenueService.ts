@@ -175,6 +175,11 @@ export const superAdminVenueService = {
         return response.data;
     },
 
+    getVenueCuisines: async (venueId: number): Promise<number[]> => {
+        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-cuisines/${venueId}`);
+        return response.data;
+    },
+
     getVenueContacts: async (venueId: number): Promise<VenueContactData> => {
         const response = await apiClient.get<VenueContactData>(`/api/super-admin-venue/get-contacts/${venueId}`);
         return response.data;
