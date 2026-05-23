@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQueries, useQueryClient, useMutation } from '@tanstack/react-query';
 import {
@@ -23,6 +23,7 @@ import { VenueHero } from './components/VenueHero';
 import { VenueInfoCard } from './components/VenueInfoCard';
 import { VenueSkeleton } from './components/VenueSkeletons';
 import { VenueAmenityGrid } from './components/VenueAmenityGrid';
+import { VenueHoursModal } from './components/VenueHoursModal';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
@@ -30,7 +31,8 @@ export const VenueDetailPage: React.FC = () => {
     const queryClient = useQueryClient();
     const id = Number(venueId);
 
-    const [deletedFeedbackIds, setDeletedFeedbackIds] = React.useState<Set<number>>(new Set());
+    const [deletedFeedbackIds, setDeletedFeedbackIds] = useState<Set<number>>(new Set());
+    const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
 
     // Image mutations
     const addImageMutation = useMutation({
@@ -64,6 +66,17 @@ export const VenueDetailPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['venue-feedbacks', id] });
         },
         onError: () => toast.error('Ошибка при удалении отзыва')
+    });
+
+    // Hours mutation
+    const updateHoursMutation = useMutation({
+        mutationFn: (hours: VenueWorkingHours) => superAdminVenueService.addVenueHours(id, hours),
+        onSuccess: () => {
+            toast.success('График работы обновлен');
+            queryClient.invalidateQueries({ queryKey: ['venue-hours', id] });
+            setIsHoursModalOpen(false);
+        },
+        onError: () => toast.error('Ошибка при обновлении графика')
     });
 
     const results = useQueries({
@@ -122,10 +135,22 @@ export const VenueDetailPage: React.FC = () => {
         ? descriptionRaw
         : descriptionRaw?.description || '';
 
-    const parseWorkingHours = (rawData: any): any => {
-        if (!rawData || typeof rawData !== 'object') return {};
+    const parseWorkingHours = (rawData: any): VenueWorkingHours => {
+        const defaultHours: VenueWorkingHours = {
+            mondayOpen: '09:00', mondayClose: '23:00',
+            tuesdayOpen: '09:00', tuesdayClose: '23:00',
+            wednesdayOpen: '09:00', wednesdayClose: '23:00',
+            thursdayOpen: '09:00', thursdayClose: '23:00',
+            fridayOpen: '09:00', fridayClose: '23:00',
+            saturdayOpen: '09:00', saturdayClose: '23:00',
+            sundayOpen: '09:00', sundayClose: '23:00',
+        };
+
+        if (!rawData || typeof rawData !== 'object') return defaultHours;
+
         const dayMapping: any = { 'MONDAY': 'monday', 'TUESDAY': 'tuesday', 'WEDNESDAY': 'wednesday', 'THURSDAY': 'thursday', 'FRIDAY': 'friday', 'SATURDAY': 'saturday', 'SUNDAY': 'sunday' };
-        const result: any = {};
+
+        const result: any = { ...defaultHours };
         Object.entries(rawData).forEach(([key, value]) => {
             const dayKey = dayMapping[key.toUpperCase()];
             if (dayKey && typeof value === 'string') {
@@ -139,7 +164,7 @@ export const VenueDetailPage: React.FC = () => {
         return result;
     };
 
-    const hoursData = parseWorkingHours(hoursDataRaw);
+    const venueHours = parseWorkingHours(hoursDataRaw);
 
     const parseAmenities = (rawData: any): number[] => {
         if (!rawData || typeof rawData !== 'object') return [];
@@ -178,8 +203,8 @@ export const VenueDetailPage: React.FC = () => {
     const getTodayStatus = () => {
         const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         const dayName = days[new Date().getDay()];
-        const open = hoursData?.[`${dayName}Open`];
-        const close = hoursData?.[`${dayName}Close`];
+        const open = (venueHours as any)[`${dayName}Open`];
+        const close = (venueHours as any)[`${dayName}Close`];
         const isOff = open === '00:00' && close === '00:00';
         return { isOff, hours: `${open || '—'} - ${close || '—'}`, dayName };
     };
@@ -272,11 +297,15 @@ export const VenueDetailPage: React.FC = () => {
                         </VenueInfoCard>
                     )}
 
-                    <VenueInfoCard title="График работы" icon={<Clock size={20} />} onEdit={() => console.log('Edit Hours')}>
+                    <VenueInfoCard
+                        title="График работы"
+                        icon={<Clock size={20} />}
+                        onEdit={() => setIsHoursModalOpen(true)}
+                    >
                         <div className="space-y-4">
                             {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
-                                const open = hoursData?.[`${day}Open`];
-                                const close = hoursData?.[`${day}Close`];
+                                const open = (venueHours as any)?.[`${day}Open`];
+                                const close = (venueHours as any)?.[`${day}Close`];
                                 const labels: any = { monday: 'Понедельник', tuesday: 'Вторник', wednesday: 'Среда', thursday: 'Четверг', friday: 'Пятница', saturday: 'Суббота', sunday: 'Воскресенье' };
                                 const isDayOff = open === '00:00' && close === '00:00';
                                 const isToday = day === today.dayName;
@@ -357,6 +386,14 @@ export const VenueDetailPage: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            <VenueHoursModal
+                isOpen={isHoursModalOpen}
+                onClose={() => setIsHoursModalOpen(false)}
+                initialHours={venueHours}
+                onSave={(hours) => updateHoursMutation.mutate(hours)}
+                isSaving={updateHoursMutation.isPending}
+            />
         </div>
     );
 };
