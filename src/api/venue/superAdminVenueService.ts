@@ -91,32 +91,32 @@ export const superAdminVenueService = {
 
     // Step 2: Add Venue Details
     addVenueDetails: async (venueId: number, data: VenueDetailsData): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-venue-details/${venueId}`, data);
+        await apiClient.put(`/api/super-admin-venue/add-venue-details`, { venueId, ...data });
     },
 
     // Step 3: Add Working Hours
     addVenueHours: async (venueId: number, hours: VenueWorkingHours): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-hour/${venueId}`, hours);
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-hour`, { venueId, ...hours });
     },
 
     // Step 4: Add Cuisines
     addVenueCuisines: async (venueId: number, data: VenueCuisinesData): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-cuisines/${venueId}`, data);
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-cuisines`, { venueId, ...data });
     },
 
     // Step 5: Add Amenities
     addVenueAmenities: async (venueId: number, data: VenueAmenitiesData): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-amenities/${venueId}`, data);
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-amenities`, { venueId, ...data });
     },
 
     // Step 6: Add Contacts
     addVenueContacts: async (venueId: number, data: VenueContactData): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-contact/${venueId}`, data);
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-contact`, { venueId, ...data });
     },
 
     // Step 7: Add Conditions
     addVenueConditions: async (venueId: number, data: VenueConditionsData): Promise<void> => {
-        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-condition/${venueId}`, data);
+        await apiClient.put(`/api/super-admin-venue/add-or-update-venue-condition`, { venueId, ...data });
     },
 
     // Helper: Get all cities
