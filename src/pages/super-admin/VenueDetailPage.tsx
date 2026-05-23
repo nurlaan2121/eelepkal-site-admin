@@ -24,6 +24,9 @@ import { VenueInfoCard } from './components/VenueInfoCard';
 import { VenueSkeleton } from './components/VenueSkeletons';
 import { VenueAmenityGrid } from './components/VenueAmenityGrid';
 import { VenueHoursModal } from './components/VenueHoursModal';
+import { VenueAmenitiesModal } from './components/VenueAmenitiesModal';
+import { VenueContactsModal } from './components/VenueContactsModal';
+import { VenueDescModal } from './components/VenueDescModal';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
@@ -33,6 +36,9 @@ export const VenueDetailPage: React.FC = () => {
 
     const [deletedFeedbackIds, setDeletedFeedbackIds] = useState<Set<number>>(new Set());
     const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
+    const [isAmenitiesModalOpen, setIsAmenitiesModalOpen] = useState(false);
+    const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
+    const [isDescModalOpen, setIsDescModalOpen] = useState(false);
 
     // Image mutations
     const addImageMutation = useMutation({
@@ -77,6 +83,38 @@ export const VenueDetailPage: React.FC = () => {
             setIsHoursModalOpen(false);
         },
         onError: () => toast.error('Ошибка при обновлении графика')
+    });
+
+    const updateAmenitiesMutation = useMutation({
+        mutationFn: (amenitiesId: number[]) => superAdminVenueService.addVenueAmenities(id, { amenitiesId }),
+        onSuccess: () => {
+            toast.success('Удобства обновлены');
+            queryClient.invalidateQueries({ queryKey: ['venue-amenities', id] });
+            setIsAmenitiesModalOpen(false);
+        },
+        onError: () => toast.error('Ошибка при обновлении удобств')
+    });
+
+    const updateContactsMutation = useMutation({
+        mutationFn: (data: VenueContactData) => superAdminVenueService.addVenueContacts(id, data),
+        onSuccess: () => {
+            toast.success('Контакты обновлены');
+            queryClient.invalidateQueries({ queryKey: ['venue-contacts', id] });
+            setIsContactsModalOpen(false);
+        },
+        onError: () => toast.error('Ошибка при обновлении контактов')
+    });
+
+    const updateDescMutation = useMutation({
+        mutationFn: ({ name, description }: { name: string, description: string }) =>
+            superAdminVenueService.updateNameAndDescription(id, name, description),
+        onSuccess: () => {
+            toast.success('Информация обновлена');
+            queryClient.invalidateQueries({ queryKey: ['venue-basic', id] });
+            queryClient.invalidateQueries({ queryKey: ['venue-description', id] });
+            setIsDescModalOpen(false);
+        },
+        onError: () => toast.error('Ошибка при обновлении информации')
     });
 
     const results = useQueries({
@@ -320,11 +358,11 @@ export const VenueDetailPage: React.FC = () => {
                         </div>
                     </VenueInfoCard>
 
-                    <VenueInfoCard title="Удобства" icon={<ConciergeBell size={20} />} onEdit={() => console.log('Edit Amenities')}>
+                    <VenueInfoCard title="Удобства" icon={<ConciergeBell size={20} />} onEdit={() => setIsAmenitiesModalOpen(true)}>
                         <VenueAmenityGrid amenities={amenitiesData} allAmenities={allAmenities.data as any[]} />
                     </VenueInfoCard>
 
-                    <VenueInfoCard title="Контакты" icon={<Phone size={20} />} onEdit={() => console.log('Edit Contacts')}>
+                    <VenueInfoCard title="Контакты" icon={<Phone size={20} />} onEdit={() => setIsContactsModalOpen(true)}>
                         <div className="space-y-4">
                             {contactsData?.phoneNumber && (<a href={`tel:${contactsData.phoneNumber}`} className="flex items-center gap-4 group"><div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center transition-transform group-hover:scale-110"><Phone size={20} /></div><span className="font-black text-slate-800 tracking-tight">{contactsData.phoneNumber}</span></a>)}
                             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
@@ -342,13 +380,13 @@ export const VenueDetailPage: React.FC = () => {
                         </div>
                     </VenueInfoCard>
 
-                    <VenueInfoCard title="Администратор" icon={<UserCog size={20} />} onEdit={() => console.log('Edit Admin')}>
+                    <VenueInfoCard title="Администратор" icon={<UserCog size={20} />} onEdit={() => navigate('/super-admin/venues')}>
                         {publicAdminData ? (
                             <div className="flex items-center gap-4"><div className="w-14 h-14 rounded-2xl bg-brand-primary flex items-center justify-center text-black font-black text-xl shadow-lg shadow-brand-primary/20">{(publicAdminData.fullName || 'A').charAt(0)}</div><div><h4 className="font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</h4><p className="text-xs text-slate-500 font-medium">{publicAdminData.email}</p></div></div>
                         ) : (<div className="p-4 text-center border-2 border-dashed border-slate-100 rounded-2xl"><p className="text-sm text-slate-400 font-medium italic">Администратор не назначен</p></div>)}
                     </VenueInfoCard>
 
-                    <VenueInfoCard title="Описание" icon={<FileText size={20} />} onEdit={() => console.log('Edit Desc')}>
+                    <VenueInfoCard title="Описание" icon={<FileText size={20} />} onEdit={() => setIsDescModalOpen(true)}>
                         <div className="prose prose-slate max-w-none"><p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{descriptionText || basicData?.description || 'Описание пока не заполнено владельцем заведения'}</p></div>
                     </VenueInfoCard>
 
@@ -393,6 +431,32 @@ export const VenueDetailPage: React.FC = () => {
                 initialHours={venueHours}
                 onSave={(hours) => updateHoursMutation.mutate(hours)}
                 isSaving={updateHoursMutation.isPending}
+            />
+
+            <VenueAmenitiesModal
+                isOpen={isAmenitiesModalOpen}
+                onClose={() => setIsAmenitiesModalOpen(false)}
+                initialAmenities={amenitiesData}
+                allAmenities={allAmenities.data || []}
+                onSave={(ids) => updateAmenitiesMutation.mutate(ids)}
+                isSaving={updateAmenitiesMutation.isPending}
+            />
+
+            <VenueContactsModal
+                isOpen={isContactsModalOpen}
+                onClose={() => setIsContactsModalOpen(false)}
+                initialContacts={contactsData}
+                onSave={(data) => updateContactsMutation.mutate(data)}
+                isSaving={updateContactsMutation.isPending}
+            />
+
+            <VenueDescModal
+                isOpen={isDescModalOpen}
+                onClose={() => setIsDescModalOpen(false)}
+                initialName={(basicData as any)?.name || basicData?.nameVenue || ''}
+                initialDescription={descriptionText}
+                onSave={(data) => updateDescMutation.mutate(data)}
+                isSaving={updateDescMutation.isPending}
             />
         </div>
     );
