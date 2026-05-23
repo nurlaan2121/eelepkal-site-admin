@@ -33,17 +33,16 @@ export const VenueDetailPage: React.FC = () => {
             { queryKey: ['venue-basic', id], queryFn: () => superAdminVenueService.getBasicInfo(id) },
             { queryKey: ['venue-details', id], queryFn: () => superAdminVenueService.getVenueDetails(id) },
             { queryKey: ['venue-hours', id], queryFn: () => superAdminVenueService.getVenueHours(id) },
-            { queryKey: ['venue-cuisines', id], queryFn: () => superAdminVenueService.getVenueCuisines(id) },
             { queryKey: ['venue-amenities', id], queryFn: () => superAdminVenueService.getVenueAmenities(id) },
             { queryKey: ['venue-contacts', id], queryFn: () => superAdminVenueService.getVenueContacts(id) },
-            { queryKey: ['venue-conditions', id], queryFn: () => superAdminVenueService.getVenueConditions(id) },
-            { queryKey: ['all-cuisines'], queryFn: () => superAdminVenueService.getAllCuisines() },
+            { queryKey: ['venue-public-admin', id], queryFn: () => superAdminVenueService.getVenuePublicAdmin(id) },
+            { queryKey: ['venue-description', id], queryFn: () => superAdminVenueService.getVenueDescription(id) },
             { queryKey: ['all-amenities'], queryFn: () => superAdminVenueService.getAllAmenities() },
         ],
     });
 
     const [
-        basic, details, hours, cuisines, amenities, contacts, conditions, allCuisines, allAmenities
+        basic, details, hours, amenities, contacts, publicAdmin, description, allAmenities
     ] = results;
 
     const isLoading = results.some(r => r.isLoading);
@@ -71,10 +70,10 @@ export const VenueDetailPage: React.FC = () => {
     const basicData = basic.data as BasicInfoData;
     const detailsData = details.data as VenueDetailsData;
     const hoursData = hours.data as VenueWorkingHours;
-    const cuisinesData = cuisines.data as number[];
     const amenitiesData = amenities.data as number[];
     const contactsData = contacts.data as VenueContactData;
-    const conditionsData = conditions.data as VenueConditionsData;
+    const publicAdminData = publicAdmin.data as any;
+    const descriptionData = description.data as { description: string };
 
     return (
         <motion.div
@@ -137,33 +136,13 @@ export const VenueDetailPage: React.FC = () => {
                         >
                             <div className="prose prose-slate max-w-none">
                                 <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
-                                    {basicData?.description || 'Описание отсутствует'}
+                                    {descriptionData?.description || basicData?.description || 'Описание отсутствует'}
                                 </p>
                             </div>
                         </VenueInfoCard>
 
-                        {/* Amenities & Cuisines */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <VenueInfoCard
-                                title="Кухни"
-                                icon={<UtensilsCrossed className="text-orange-500" />}
-                                onEdit={() => console.log('Edit cuisines')}
-                            >
-                                <div className="flex flex-wrap gap-2">
-                                    {(cuisinesData || []).map((cId, i) => {
-                                        const name = (allCuisines.data as any[])?.find(c => c.id === cId)?.name || `Кухня #${cId}`;
-                                        return (
-                                            <span key={i} className="px-3 py-1.5 bg-orange-50 text-orange-600 rounded-xl text-xs font-black border border-orange-100 uppercase tracking-wider">
-                                                {name}
-                                            </span>
-                                        );
-                                    })}
-                                    {(cuisinesData || []).length === 0 && (
-                                        <p className="text-slate-400 text-sm italic">Кухни не указаны</p>
-                                    )}
-                                </div>
-                            </VenueInfoCard>
-
+                        {/* Amenities */}
+                        <div className="grid grid-cols-1 gap-6">
                             <VenueInfoCard
                                 title="Удобства"
                                 icon={<ConciergeBell className="text-blue-500" />}
@@ -297,36 +276,25 @@ export const VenueDetailPage: React.FC = () => {
                             </div>
                         </VenueInfoCard>
 
-                        {/* Booking Conditions */}
+                        {/* Public Admin Info */}
                         <VenueInfoCard
-                            title="Условия"
-                            icon={<Wallet className="text-purple-500" />}
-                            onEdit={() => console.log('Edit conditions')}
+                            title="Администратор заведения"
+                            icon={<UserCog className="text-brand-500" />}
                         >
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-purple-50 rounded-2xl border border-purple-100">
-                                    <div className="flex items-center gap-3">
-                                        <Wallet size={20} className="text-purple-600" />
-                                        <span className="font-bold text-purple-900">Депозит</span>
+                                {publicAdminData ? (
+                                    <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 font-black">
+                                            {publicAdminData.fullName?.charAt(0) || 'A'}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</p>
+                                            <p className="text-xs text-slate-500">{publicAdminData.email || 'Email не указан'}</p>
+                                        </div>
                                     </div>
-                                    <span className="text-lg font-black text-purple-700">
-                                        {conditionsData?.deposit ? `${conditionsData.deposit} сом` : 'Без депозита'}
-                                    </span>
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="font-medium text-slate-500">Отмена бронирования</span>
-                                        <span className="font-black text-slate-900">
-                                            {conditionsData?.cancelAllowed ? `${conditionsData.cancellationDeadline}` : 'НЕТ'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="font-medium text-slate-500">Изменение бронирования</span>
-                                        <span className="font-black text-slate-900">
-                                            {conditionsData?.editAllowed ? `${conditionsData.editingDeadline}` : 'НЕТ'}
-                                        </span>
-                                    </div>
-                                </div>
+                                ) : (
+                                    <p className="text-slate-400 text-sm italic">Информации об администраторе нет</p>
+                                )}
                             </div>
                         </VenueInfoCard>
 

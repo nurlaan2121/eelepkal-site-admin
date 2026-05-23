@@ -156,11 +156,6 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueCuisines: async (venueId: number): Promise<number[]> => {
-        const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-cuisines/${venueId}`);
-        return response.data;
-    },
-
     getVenueAmenities: async (venueId: number): Promise<number[]> => {
         const response = await apiClient.get<number[]>(`/api/super-admin-venue/get-amenities/${venueId}`);
         return response.data;
@@ -171,8 +166,13 @@ export const superAdminVenueService = {
         return response.data;
     },
 
-    getVenueConditions: async (venueId: number): Promise<VenueConditionsData> => {
-        const response = await apiClient.get<VenueConditionsData>(`/api/super-admin-venue/get-conditions/${venueId}`);
+    getVenuePublicAdmin: async (venueId: number): Promise<any> => {
+        const response = await apiClient.get<any>(`/api/super-admin-venue/get-public-admin/${venueId}`);
+        return response.data;
+    },
+
+    getVenueDescription: async (venueId: number): Promise<{ description: string }> => {
+        const response = await apiClient.get<{ description: string }>(`/api/super-admin-venue/get-description/${venueId}`);
         return response.data;
     },
 };
