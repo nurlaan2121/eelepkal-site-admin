@@ -4,15 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Check, ChevronRight, ChevronLeft, Store, Info, Clock, 
     UtensilsCrossed, ConciergeBell, Phone, FileText, PartyPopper,
-    Upload, X, Plus, Trash2
+    Upload, X, Plus, Trash2, Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { superAdminVenueService } from '../../../api/venue/superAdminVenueService';
 import { useVenueCreationStore } from '../../../store/venueCreationStore';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { City, Cuisine, Amenity, DayOfWeek, VenueWorkingHours } from '../../../types/venue';
 
 const STEPS = [
@@ -30,11 +29,13 @@ const Step1BasicInfo: React.FC = () => {
     const { basicInfo, setBasicInfo } = useVenueCreationStore();
     const [images, setImages] = useState<string[]>(basicInfo.imageUrls || []);
     const [schemaImages, setSchemaImages] = useState<string[]>(basicInfo.schemaImageUrls || []);
+    const [uploading, setUploading] = useState(false);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'main' | 'schema') => {
         const files = e.target.files;
         if (!files) return;
 
+        setUploading(true);
         for (const file of Array.from(files)) {
             try {
                 const url = await superAdminVenueService.uploadFileToS3(file);
@@ -43,10 +44,12 @@ const Step1BasicInfo: React.FC = () => {
                 } else {
                     setSchemaImages(prev => [...prev, url]);
                 }
+                toast.success('Изображение загружено');
             } catch (error) {
                 toast.error('Ошибка загрузки изображения');
             }
         }
+        setUploading(false);
     };
 
     const removeImage = (index: number, type: 'main' | 'schema') => {
@@ -58,8 +61,13 @@ const Step1BasicInfo: React.FC = () => {
     };
 
     React.useEffect(() => {
-        setBasicInfo({ imageUrls: images, schemaImageUrls: schemaImages });
-    }, [images, schemaImages, setBasicInfo]);
+        setBasicInfo({ 
+            nameVenue: basicInfo.nameVenue || '',
+            description: basicInfo.description || '',
+            imageUrls: images, 
+            schemaImageUrls: schemaImages 
+        });
+    }, [images, schemaImages, basicInfo.nameVenue, basicInfo.description, setBasicInfo]);
 
     return (
         <div className="space-y-6">
@@ -79,14 +87,21 @@ const Step1BasicInfo: React.FC = () => {
                         </div>
                     ))}
                     <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-primary transition-colors">
-                        <Upload size={24} className="text-slate-400" />
-                        <span className="text-xs text-slate-500 mt-2">Добавить</span>
+                        {uploading ? (
+                            <Loader2 size={24} className="text-slate-400 animate-spin" />
+                        ) : (
+                            <>
+                                <Upload size={24} className="text-slate-400" />
+                                <span className="text-xs text-slate-500 mt-2">Добавить</span>
+                            </>
+                        )}
                         <input
                             type="file"
                             accept="image/*"
                             multiple
                             onChange={(e) => handleImageUpload(e, 'main')}
                             className="hidden"
+                            disabled={uploading}
                         />
                     </label>
                 </div>
@@ -149,7 +164,7 @@ const Step1BasicInfo: React.FC = () => {
 const Step2Details: React.FC = () => {
     const { details, setDetails } = useVenueCreationStore();
     
-    const { data: cities = [] } = useQuery({
+    const { data: cities = [], isLoading } = useQuery({
         queryKey: ['cities'],
         queryFn: superAdminVenueService.getAllCities,
     });
@@ -170,6 +185,10 @@ const Step2Details: React.FC = () => {
         setDetails({ capacities: newCapacities });
     };
 
+    React.useEffect(() => {
+        setDetails(details);
+    }, [details, setDetails]);
+
     return (
         <div className="space-y-6">
             <div>
@@ -178,12 +197,14 @@ const Step2Details: React.FC = () => {
                     value={details.cityId || ''}
                     onChange={(e) => setDetails({ cityId: Number(e.target.value) })}
                     className="w-full h-12 px-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                    disabled={isLoading}
                 >
                     <option value="">Выберите город</option>
                     {cities.map(city => (
                         <option key={city.id} value={city.id}>{city.name}</option>
                     ))}
                 </select>
+                {isLoading && <p className="text-xs text-slate-400 mt-2">Загрузка городов...</p>}
             </div>
 
             <div>
@@ -627,84 +648,147 @@ const SuccessScreen: React.FC = () => {
 // ─────────── Main Wizard ───────────
 export const CreateVenueWizard: React.FC = () => {
     const navigate = useNavigate();
-    const { currentStep, setCurrentStep, venueId, setVenueId, resetCreation, ...storeData } = useVenueCreationStore();
+    const queryClient = useQueryClient();
+    const { currentStep, setCurrentStep, venueId, setVenueId, resetCreation, basicInfo, details, hours, cuisines, amenities, contacts, conditions } = useVenueCreationStore();
     const [isComplete, setIsComplete] = useState(false);
 
-    const createMutation = useMutation({
-        mutationFn: async () => {
-            // Step 1: Create basic info
-            if (!storeData.basicInfo.nameVenue) throw new Error('Название обязательно');
-            
-            const basicResult = await superAdminVenueService.addBasicInfo({
-                imageUrls: storeData.basicInfo.imageUrls || [],
-                schemaImageUrls: storeData.basicInfo.schemaImageUrls || [],
-                nameVenue: storeData.basicInfo.nameVenue,
-                description: storeData.basicInfo.description || '',
+    // Mutations for each step
+    const step1Mutation = useMutation({
+        mutationFn: () => superAdminVenueService.addBasicInfo({
+            imageUrls: basicInfo.imageUrls || [],
+            schemaImageUrls: basicInfo.schemaImageUrls || [],
+            nameVenue: basicInfo.nameVenue || '',
+            description: basicInfo.description || '',
+        }),
+        onSuccess: (data) => {
+            setVenueId(data.id);
+            toast.success('Основная информация сохранена');
+        },
+        onError: (error: any) => {
+            toast.error(error?.response?.data?.message || 'Ошибка сохранения');
+        },
+    });
+
+    const step2Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueDetails(venueId, {
+                cityId: details.cityId || 0,
+                address: details.address || '',
+                averageCheck: details.averageCheck || 0,
+                capacities: details.capacities || [],
             });
-            
-            const id = basicResult.id;
-            setVenueId(id);
+        },
+        onSuccess: () => toast.success('Детали сохранены'),
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
+    });
 
-            // Step 2: Details
-            if (storeData.details.cityId && storeData.details.address) {
-                await superAdminVenueService.addVenueDetails(id, {
-                    cityId: storeData.details.cityId,
-                    address: storeData.details.address,
-                    averageCheck: storeData.details.averageCheck || 0,
-                    capacities: storeData.details.capacities || [],
-                });
-            }
+    const step3Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueHours(venueId, hours.hours!);
+        },
+        onSuccess: () => toast.success('Время работы сохранено'),
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
+    });
 
-            // Step 3: Hours
-            if (storeData.hours.hours) {
-                await superAdminVenueService.addVenueHours(id, storeData.hours.hours);
-            }
-
-            // Step 4: Cuisines
-            if (storeData.cuisines.cuisinesIds) {
-                await superAdminVenueService.addVenueCuisines(id, {
-                    cuisinesIds: storeData.cuisines.cuisinesIds,
-                });
-            }
-
-            // Step 5: Amenities
-            if (storeData.amenities.amenitiesId) {
-                await superAdminVenueService.addVenueAmenities(id, {
-                    amenitiesId: storeData.amenities.amenitiesId,
-                });
-            }
-
-            // Step 6: Contacts
-            await superAdminVenueService.addVenueContacts(id, {
-                phoneNumber: storeData.contacts.phoneNumber || '',
-                email: storeData.contacts.email || '',
-                linksSocial: storeData.contacts.linksSocial || {},
+    const step4Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueCuisines(venueId, {
+                cuisinesIds: cuisines.cuisinesIds || [],
             });
+        },
+        onSuccess: () => toast.success('Типы кухни сохранены'),
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
+    });
 
-            // Step 7: Conditions
-            await superAdminVenueService.addVenueConditions(id, {
-                deposit: storeData.conditions.deposit || 0,
-                cancelAllowed: storeData.conditions.cancelAllowed || false,
-                cancellationDeadline: storeData.conditions.cancellationDeadline || '00:00',
-                editAllowed: storeData.conditions.editAllowed || false,
-                editingDeadline: storeData.conditions.editingDeadline || '00:00',
+    const step5Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueAmenities(venueId, {
+                amenitiesId: amenities.amenitiesId || [],
+            });
+        },
+        onSuccess: () => toast.success('Услуги сохранены'),
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
+    });
+
+    const step6Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueContacts(venueId, {
+                phoneNumber: contacts.phoneNumber || '',
+                email: contacts.email || '',
+                linksSocial: contacts.linksSocial || {},
+            });
+        },
+        onSuccess: () => toast.success('Контакты сохранены'),
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
+    });
+
+    const step7Mutation = useMutation({
+        mutationFn: () => {
+            if (!venueId) throw new Error('Venue ID not found');
+            return superAdminVenueService.addVenueConditions(venueId, {
+                deposit: conditions.deposit || 0,
+                cancelAllowed: conditions.cancelAllowed || false,
+                cancellationDeadline: conditions.cancellationDeadline || '00:00',
+                editAllowed: conditions.editAllowed || false,
+                editingDeadline: conditions.editingDeadline || '00:00',
             });
         },
         onSuccess: () => {
             toast.success('Заведение успешно создано!');
             setIsComplete(true);
+            queryClient.invalidateQueries({ queryKey: ['super-admin-venues'] });
         },
-        onError: (error: any) => {
-            toast.error(error?.response?.data?.message || error?.message || 'Ошибка создания');
-        },
+        onError: (error: any) => toast.error(error?.response?.data?.message || 'Ошибка сохранения'),
     });
 
     const handleNext = async () => {
-        if (currentStep < 7) {
-            setCurrentStep(currentStep + 1);
-        } else {
-            // Submit all
-            createMutation.mutate();
+        // Validate current step before proceeding
+        if (currentStep === 1 && !basicInfo.nameVenue) {
+            toast.error('Введите название заведения');
+            return;
+        }
+        if (currentStep === 2 && (!details.cityId || !details.address)) {
+            toast.error('Заполните город и адрес');
+            return;
+        }
+
+        try {
+            // Execute mutation for current step
+            switch (currentStep) {
+                case 1:
+                    await step1Mutation.mutateAsync();
+                    break;
+                case 2:
+                    await step2Mutation.mutateAsync();
+                    break;
+                case 3:
+                    await step3Mutation.mutateAsync();
+                    break;
+                case 4:
+                    await step4Mutation.mutateAsync();
+                    break;
+                case 5:
+                    await step5Mutation.mutateAsync();
+                    break;
+                case 6:
+                    await step6Mutation.mutateAsync();
+                    break;
+                case 7:
+                    await step7Mutation.mutateAsync();
+                    return; // Don't go to next step, stay on success screen
+            }
+
+            // Move to next step
+            if (currentStep < 7) {
+                setCurrentStep(currentStep + 1);
+            }
+        } catch (error) {
+            console.error('Step error:', error);
         }
     };
 
@@ -713,6 +797,16 @@ export const CreateVenueWizard: React.FC = () => {
             setCurrentStep(currentStep - 1);
         }
     };
+
+    const isStepLoading = [
+        step1Mutation.isPending,
+        step2Mutation.isPending,
+        step3Mutation.isPending,
+        step4Mutation.isPending,
+        step5Mutation.isPending,
+        step6Mutation.isPending,
+        step7Mutation.isPending,
+    ][currentStep - 1];
 
     const renderStep = () => {
         switch (currentStep) {
@@ -734,39 +828,41 @@ export const CreateVenueWizard: React.FC = () => {
     return (
         <div className="max-w-4xl mx-auto py-4 md:py-8">
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-6">
                 <h1 className="text-2xl md:text-3xl font-black text-slate-900 mb-2">Создание заведения</h1>
                 <p className="text-slate-500 text-sm">Заполните данные для регистрации нового ресторана</p>
             </div>
 
-            {/* Stepper */}
-            <div className="mb-8 overflow-x-auto">
-                <div className="flex items-center gap-2 min-w-max pb-2">
-                    {STEPS.map((step, i) => (
-                        <React.Fragment key={step.id}>
-                            <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
-                                    currentStep >= step.id ? 'bg-brand-primary text-white' : 'bg-slate-100 text-slate-400'
-                                }`}>
-                                    {currentStep > step.id ? <Check size={20} /> : <step.icon size={20} />}
+            {/* Stepper - Fixed position */}
+            <div className="sticky top-4 z-10 mb-6 bg-white/80 backdrop-blur-lg p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="overflow-x-auto">
+                    <div className="flex items-center gap-2 min-w-max">
+                        {STEPS.map((step, i) => (
+                            <React.Fragment key={step.id}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all flex-shrink-0 ${
+                                        currentStep >= step.id ? 'bg-brand-primary text-white' : 'bg-slate-100 text-slate-400'
+                                    }`}>
+                                        {currentStep > step.id ? <Check size={20} /> : <step.icon size={20} />}
+                                    </div>
+                                    <div className="hidden lg:block">
+                                        <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Шаг {step.id}</p>
+                                        <p className={`text-sm font-bold ${currentStep >= step.id ? 'text-slate-900' : 'text-slate-400'}`}>
+                                            {step.title}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div className="hidden lg:block">
-                                    <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Шаг {step.id}</p>
-                                    <p className={`text-sm font-bold ${currentStep >= step.id ? 'text-slate-900' : 'text-slate-400'}`}>
-                                        {step.title}
-                                    </p>
-                                </div>
-                            </div>
-                            {i < STEPS.length - 1 && (
-                                <div className={`w-8 lg:w-12 h-0.5 ${currentStep > step.id ? 'bg-brand-primary' : 'bg-slate-200'}`} />
-                            )}
-                        </React.Fragment>
-                    ))}
+                                {i < STEPS.length - 1 && (
+                                    <div className={`w-8 lg:w-12 h-0.5 ${currentStep > step.id ? 'bg-brand-primary' : 'bg-slate-200'}`} />
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
                 </div>
             </div>
 
             {/* Content */}
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="bg-white border border-slate-100 rounded-2xl shadow-sm">
                 <div className="p-6 md:p-8">
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -781,13 +877,13 @@ export const CreateVenueWizard: React.FC = () => {
                     </AnimatePresence>
                 </div>
 
-                {/* Actions */}
-                <div className="px-6 md:px-8 py-5 bg-slate-50 border-t border-slate-100 flex justify-between sticky bottom-0">
+                {/* Fixed Actions Bar */}
+                <div className="px-6 md:px-8 py-5 bg-white border-t border-slate-100 flex justify-between sticky bottom-0 z-10">
                     <Button
                         variant="ghost"
                         onClick={currentStep === 1 ? () => navigate('/super-admin/venues') : handlePrev}
                         className="gap-2"
-                        disabled={createMutation.isPending}
+                        disabled={isStepLoading}
                     >
                         <ChevronLeft size={18} />
                         {currentStep === 1 ? 'Отмена' : 'Назад'}
@@ -796,12 +892,12 @@ export const CreateVenueWizard: React.FC = () => {
                     <Button
                         onClick={handleNext}
                         className="gap-2"
-                        disabled={createMutation.isPending}
+                        disabled={isStepLoading}
                     >
-                        {createMutation.isPending ? (
+                        {isStepLoading ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                <span>Создание...</span>
+                                <Loader2 size={18} className="animate-spin" />
+                                <span>Сохранение...</span>
                             </>
                         ) : currentStep === 7 ? (
                             <>
