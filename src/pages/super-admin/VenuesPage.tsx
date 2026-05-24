@@ -841,50 +841,54 @@ const VenueActionMenu: React.FC<{
                 <div
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 relative"
                 >
-                    <div ref={menuRef} className="relative">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                        >
-                            <MoreVertical size={18} />
-                        </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                    >
+                        <MoreVertical size={18} />
+                    </button>
 
-                        <AnimatePresence>
-                            {open && (
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                                    transition={{ duration: 0.12 }}
-                                    className="absolute right-0 top-10 z-[100] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
-                                >
-                                    <div className="p-1.5 space-y-0.5">
-                                        {actions.map((action) => (
-                                            <button
-                                                key={action.modal}
-                                                onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
-                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
-                                            >
-                                                <action.icon size={16} className={action.color} />
-                                                <span className="text-sm font-bold text-slate-700">{action.label}</span>
-                                            </button>
-                                        ))}
-                                        <div className="border-t border-slate-100 my-1" />
+                    <AnimatePresence>
+                        {open && (
+                            <motion.div
+                                ref={menuRef}
+                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                transition={{ duration: 0.12 }}
+                                className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
+                                style={{
+                                    top: 'auto',
+                                    bottom: 'auto',
+                                    transform: 'none'
+                                }}
+                            >
+                                <div className="p-1.5 space-y-0.5">
+                                    {actions.map((action) => (
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
-                                            disabled={isDeleting}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                                            key={action.modal}
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
                                         >
-                                            <Trash2 size={16} className="text-red-500" />
-                                            <span className="text-sm font-bold text-red-500">Удалить заведение</span>
+                                            <action.icon size={16} className={action.color} />
+                                            <span className="text-sm font-bold text-slate-700">{action.label}</span>
                                         </button>
-                                    </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                                    ))}
+                                    <div className="border-t border-slate-100 my-1" />
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                        disabled={isDeleting}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                                    >
+                                        <Trash2 size={16} className="text-red-500" />
+                                        <span className="text-sm font-bold text-red-500">Удалить заведение</span>
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </>
         );
