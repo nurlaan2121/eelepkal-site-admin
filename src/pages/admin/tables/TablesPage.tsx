@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
@@ -32,15 +32,8 @@ export const AdminTablesPage: React.FC = () => {
 
     const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.status === filter);
 
-    // Date navigation
-    const changeDate = (days: number) => {
-        const date = new Date(selectedDate);
-        date.setDate(date.getDate() + days);
-        setSelectedDate(date.toISOString().split('T')[0]);
-    };
-
     // Format date for display
-    const formatDate = (dateStr: string) => {
+    const formatDateDisplay = (dateStr: string) => {
         const date = new Date(dateStr);
         const today = new Date();
         const tomorrow = new Date(today);
@@ -49,7 +42,7 @@ export const AdminTablesPage: React.FC = () => {
         if (date.toDateString() === today.toDateString()) return 'Сегодня';
         if (date.toDateString() === tomorrow.toDateString()) return 'Завтра';
         
-        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+        return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
     };
 
     const statusStyles = {
@@ -112,6 +105,30 @@ export const AdminTablesPage: React.FC = () => {
                         {label}
                     </button>
                 ))}
+            </div>
+
+            {/* Date Picker */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <Calendar size={20} className="text-brand-600" />
+                        <span className="text-sm font-black text-slate-700">Дата:</span>
+                    </div>
+                    <div className="flex-1 relative">
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 cursor-pointer"
+                            min={new Date().toISOString().split('T')[0]}
+                        />
+                    </div>
+                    <div className="flex-shrink-0 px-4 py-2 bg-brand-50 rounded-xl">
+                        <span className="text-xs font-bold text-brand-700">
+                            {formatDateDisplay(selectedDate)}
+                        </span>
+                    </div>
+                </div>
             </div>
 
             {/* Tables Grid */}
