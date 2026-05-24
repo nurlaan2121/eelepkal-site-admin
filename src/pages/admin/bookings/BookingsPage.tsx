@@ -17,7 +17,7 @@ export const AdminBookingsPage: React.FC = () => {
 
     // Fetch bookings with filters
     const { data: bookingsData, isLoading } = useQuery({
-        queryKey: ['admin-bookings', activeTab, statusFilter, selectedDate],
+        queryKey: ['admin-bookings', activeTab, statusFilter, selectedDate, searchTerm],
         queryFn: () => adminBookingService.getAllBookings(
             {
                 bookingKinds: activeTab,
@@ -27,7 +27,7 @@ export const AdminBookingsPage: React.FC = () => {
                 limit: 50,
             },
             {
-                ...(searchTerm && { search: searchTerm }),
+                search: searchTerm,
             }
         ),
     });

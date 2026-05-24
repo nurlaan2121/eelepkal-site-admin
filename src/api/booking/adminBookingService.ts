@@ -69,8 +69,16 @@ export interface BookingCountResponse {
 }
 
 export const adminBookingService = {
-    getAllBookings: async (queryParams: BookingQueryParams, requestBody?: BookingListRequest): Promise<BookingResponse[]> => {
-        const response = await apiClient.post<BookingResponse[]>('/api/admin-booking/get-all', requestBody || {}, {
+    getAllBookings: async (queryParams: BookingQueryParams, sortOptions?: BookingListRequest): Promise<BookingResponse[]> => {
+        const requestBody = {
+            search: sortOptions?.search || '',
+            bookingDate: sortOptions?.bookingDate || 'ASC',
+            countOfGuests: sortOptions?.countOfGuests || 'ASC',
+            clientName: sortOptions?.clientName || 'ASC',
+            bookingCreatedDate: sortOptions?.bookingCreatedDate || 'ASC',
+        };
+
+        const response = await apiClient.post<BookingResponse[]>('/api/admin-booking/get-all', requestBody, {
             params: {
                 bookingKinds: queryParams.bookingKinds,
                 ...(queryParams.bookingStatus && { bookingStatus: queryParams.bookingStatus }),
