@@ -123,13 +123,13 @@ export const adminTableService = {
         return response.data;
     },
 
-    getTableEventTypes: async (tableId: number): Promise<number[]> => {
-        const response = await apiClient.get<number[]>(`/api/admin-table/get-event-types/${tableId}`);
+    getTableEventTypes: async (tableId: number): Promise<EventType> => {
+        const response = await apiClient.get<EventType>(`/api/admin-table/get-event-types/${tableId}`);
         return response.data;
     },
 
-    getTableServices: async (tableId: number): Promise<number[]> => {
-        const response = await apiClient.get<number[]>(`/api/admin-table/get-et-services/${tableId}`);
+    getTableServices: async (tableId: number): Promise<{ [key: string]: string }> => {
+        const response = await apiClient.get<{ [key: string]: string }>(`/api/admin-table/get-et-services/${tableId}`);
         return response.data;
     },
 

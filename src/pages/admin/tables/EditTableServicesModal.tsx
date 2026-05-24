@@ -33,7 +33,9 @@ export const EditTableServicesModal: React.FC<EditTableServicesModalProps> = ({ 
 
     useEffect(() => {
         if (isOpen && currentServiceIds) {
-            setSelectedIds(currentServiceIds);
+            // Конвертируем объект {"2": "Детские зоны"} в массив ID [2]
+            const ids = Object.keys(currentServiceIds).map(key => parseInt(key));
+            setSelectedIds(ids);
         }
     }, [isOpen, currentServiceIds]);
 

@@ -33,7 +33,9 @@ export const EditTableEventsModal: React.FC<EditTableEventsModalProps> = ({ isOp
 
     useEffect(() => {
         if (isOpen && currentEventIds) {
-            setSelectedIds(currentEventIds);
+            // Конвертируем объект {"1": "Свадьба"} в массив ID [1]
+            const ids = Object.keys(currentEventIds).map(key => parseInt(key));
+            setSelectedIds(ids);
         }
     }, [isOpen, currentEventIds]);
 
