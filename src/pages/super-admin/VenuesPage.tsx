@@ -8,7 +8,6 @@ import {
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { DraggableContextMenu, MenuItem } from '../../components/ui/DraggableContextMenu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -819,56 +818,75 @@ const VenueActionMenu: React.FC<{
 }> = ({
     venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
-        const menuItems: MenuItem[] = [
-            {
-                icon: UserCog,
-                label: 'Заменить администратора',
-                color: 'text-brand-600',
-                onClick: () => setActiveModal('replace-admin')
-            },
-            {
-                icon: Utensils,
-                label: 'Тип кухни',
-                color: 'text-orange-600',
-                onClick: () => setActiveModal('cuisines')
-            },
-            {
-                icon: Settings2,
-                label: 'Условия бронирования',
-                color: 'text-amber-600',
-                onClick: () => setActiveModal('conditions')
-            },
-            {
-                icon: CreditCard,
-                label: 'Реквизиты оплаты',
-                color: 'text-emerald-600',
-                onClick: () => setActiveModal('payment')
-            },
-            {
-                icon: Trash2,
-                label: 'Удалить заведение',
-                color: 'text-red-500',
-                danger: true,
-                onClick: () => {
-                    if (confirm('Удалить заведение?')) {
-                        onDelete(venue.venueId);
-                    }
-                }
-            },
+        const [open, setOpen] = React.useState(false);
+        const menuRef = React.useRef<HTMLDivElement>(null);
+
+        React.useEffect(() => {
+            const handler = (e: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+            };
+            document.addEventListener('mousedown', handler);
+            return () => document.removeEventListener('mousedown', handler);
+        }, []);
+
+        const actions = [
+            { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
+            { icon: Utensils, label: 'Тип кухни', modal: 'cuisines' as ModalType, color: 'text-orange-600' },
+            { icon: Settings2, label: 'Условия бронирования', modal: 'conditions' as ModalType, color: 'text-amber-600' },
+            { icon: CreditCard, label: 'Реквизиты оплаты', modal: 'payment' as ModalType, color: 'text-emerald-600' },
         ];
 
         return (
-            <div
-                onClick={(e) => e.stopPropagation()}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="relative z-10"
-            >
-                <DraggableContextMenu
-                    items={menuItems}
-                    buttonClassName=""
-                    menuClassName=""
-                />
-            </div>
+            <>
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="flex-shrink-0"
+                >
+                    <div ref={menuRef} className="relative">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                        >
+                            <MoreVertical size={18} />
+                        </button>
+
+                        <AnimatePresence>
+                            {open && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    transition={{ duration: 0.12 }}
+                                    className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                >
+                                    <div className="p-1.5 space-y-0.5">
+                                        {actions.map((action) => (
+                                            <button
+                                                key={action.modal}
+                                                onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            >
+                                                <action.icon size={16} className={action.color} />
+                                                <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            </button>
+                                        ))}
+                                        <div className="border-t border-slate-100 my-1" />
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                            disabled={isDeleting}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                                        >
+                                            <Trash2 size={16} className="text-red-500" />
+                                            <span className="text-sm font-bold text-red-500">Удалить заведение</span>
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </>
         );
     };
 
