@@ -49,6 +49,7 @@ export const AdminTablesPage: React.FC = () => {
     };
 
     const handleEdit = (tableId: number) => {
+        console.log('Card clicked, tableId:', tableId);
         setEditingTableId(tableId);
         setIsEditModalOpen(true);
     };
@@ -202,13 +203,22 @@ export const AdminTablesPage: React.FC = () => {
                             </div>
 
                             <div className="mt-5 pt-4 border-t border-current/10 flex items-center justify-around">
-                                <button className="p-2 rounded-xl hover:bg-white/50 transition-colors">
+                                <button 
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-2 rounded-xl hover:bg-white/50 transition-colors"
+                                >
                                     <Settings2 size={18} />
                                 </button>
-                                <button className="p-2 rounded-xl hover:bg-white/50 transition-colors">
+                                <button 
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-2 rounded-xl hover:bg-white/50 transition-colors"
+                                >
                                     <Edit2 size={18} />
                                 </button>
-                                <button className="p-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors">
+                                <button 
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
