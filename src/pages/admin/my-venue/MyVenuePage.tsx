@@ -35,6 +35,9 @@ const VenueSkeleton: React.FC = () => (
 
 // ─────────── Main Page ───────────
 export const AdminMyVenuePage: React.FC = () => {
+    const [deletedFeedbackIds, setDeletedFeedbackIds] = useState<Set<number>>(new Set());
+    const { ref, inView } = useInView({ threshold: 0.1 });
+
     const results = useQueries({
         queries: [
             { queryKey: ['admin-venue-basic'], queryFn: adminVenueService.getBasic },
@@ -50,6 +53,34 @@ export const AdminMyVenuePage: React.FC = () => {
     const [basic, details, hours, amenities, contacts, publicAdmin, description] = results;
     const isLoading = results.some(r => r.isLoading);
     const isError = results.some(r => r.isError);
+
+    const basicData = basic.data as AdminVenueBasic | undefined;
+    const venueId = basicData?.venueId;
+
+    const {
+        data: feedbacksData,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        isLoading: isLoadingFeedbacks
+    } = useInfiniteQuery({
+        queryKey: ['admin-venue-feedbacks', venueId],
+        queryFn: ({ pageParam = 0 }) => adminVenueService.getFeedbacks(venueId!, pageParam, 12),
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.length === 12 ? allPages.length * 12 : undefined;
+        },
+        initialPageParam: 0,
+        enabled: !!venueId,
+    });
+
+    const allFeedbacks = feedbacksData?.pages.flatMap((page) => page || []) || [];
+    const visibleFeedbacks = allFeedbacks.filter((f) => !deletedFeedbackIds.has(f.id));
+
+    React.useEffect(() => {
+        if (inView && hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+        }
+    }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
     if (isLoading) {
         return <VenueSkeleton />;
@@ -72,16 +103,15 @@ export const AdminMyVenuePage: React.FC = () => {
         );
     }
 
-    const basicData = basic.data as AdminVenueBasic;
+    const basicDataSafe = basicData!;
     const detailsData = details.data as AdminVenueDetails;
     const hoursData = hours.data as AdminVenueWorkingHours;
     const amenitiesData = amenities.data as AdminVenueAmenities;
     const contactsData = contacts.data as AdminVenueContacts;
     const publicAdminData = publicAdmin.data as AdminVenuePublicAdmin;
     const descriptionText = (description.data as string) || '';
-    const venueId = basicData.venueId;
 
-    const images = Object.values(basicData.images) as string[];
+    const images = Object.values(basicDataSafe.images) as string[];
     const mainImage = images[0] || '';
     const amenitiesList = Object.entries(amenitiesData) as [string, string][];
     const capacitiesList = Object.entries(detailsData.capacities) as [string, number][];
@@ -95,35 +125,6 @@ export const AdminMyVenuePage: React.FC = () => {
     };
 
     const formattedHours = formatHours(hoursData);
-
-    // Feedbacks with infinite scroll
-    const { ref, inView } = useInView({ threshold: 0.1 });
-    const [deletedFeedbackIds, setDeletedFeedbackIds] = useState<Set<number>>(new Set());
-
-    const {
-        data: feedbacksData,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading: isLoadingFeedbacks
-    } = useInfiniteQuery({
-        queryKey: ['admin-venue-feedbacks', venueId],
-        queryFn: ({ pageParam = 0 }) => adminVenueService.getFeedbacks(venueId, pageParam, 12),
-        getNextPageParam: (lastPage, allPages) => {
-            return lastPage.length === 12 ? allPages.length * 12 : undefined;
-        },
-        initialPageParam: 0,
-        enabled: !!venueId,
-    });
-
-    const allFeedbacks = feedbacksData?.pages.flatMap((page) => page || []) || [];
-    const visibleFeedbacks = allFeedbacks.filter((f) => !deletedFeedbackIds.has(f.id));
-
-    React.useEffect(() => {
-        if (inView && hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
-        }
-    }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
@@ -144,24 +145,24 @@ export const AdminMyVenuePage: React.FC = () => {
                 >
                     <img
                         src={mainImage}
-                        alt={basicData.name}
+                        alt={basicDataSafe.name}
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                        <h2 className="text-3xl md:text-4xl font-black mb-2">{basicData.name}</h2>
+                        <h2 className="text-3xl md:text-4xl font-black mb-2">{basicDataSafe.name}</h2>
                         <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
                                 <Star size={16} fill="currentColor" className="text-amber-400" />
-                                {basicData.rating.toFixed(1)}
+                                {basicDataSafe.rating.toFixed(1)}
                             </span>
                             <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
                                 <Wallet size={16} />
-                                ≈ {basicData.averageCheck} сом
+                                ≈ {basicDataSafe.averageCheck} сом
                             </span>
                             <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
                                 <Clock size={16} />
-                                {basicData.todayWorkingHours}
+                                {basicDataSafe.todayWorkingHours}
                             </span>
                         </div>
                     </div>
@@ -183,7 +184,7 @@ export const AdminMyVenuePage: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Адрес</p>
-                            <p className="text-sm font-bold text-slate-900">{basicData.address}</p>
+                            <p className="text-sm font-bold text-slate-900">{basicDataSafe.address}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -220,7 +221,7 @@ export const AdminMyVenuePage: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Рейтинг</p>
-                            <p className="text-2xl font-black text-slate-900">{basicData.rating.toFixed(2)}</p>
+                            <p className="text-2xl font-black text-slate-900">{basicDataSafe.rating.toFixed(2)}</p>
                         </div>
                     </div>
                 </motion.div>
@@ -238,7 +239,7 @@ export const AdminMyVenuePage: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Средний чек</p>
-                            <p className="text-2xl font-black text-slate-900">{basicData.averageCheck} <span className="text-sm font-bold text-slate-400">сом</span></p>
+                            <p className="text-2xl font-black text-slate-900">{basicDataSafe.averageCheck} <span className="text-sm font-bold text-slate-400">сом</span></p>
                         </div>
                     </div>
                 </motion.div>
