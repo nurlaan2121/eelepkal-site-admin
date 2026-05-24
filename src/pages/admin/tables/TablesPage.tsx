@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, MoreVertical } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, MoreVertical, AlertTriangle, Loader2 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
@@ -12,6 +12,7 @@ import { EditTableEventsModal } from './EditTableEventsModal';
 import { toast } from 'sonner';
 
 export const AdminTablesPage: React.FC = () => {
+    const queryClient = useQueryClient();
     const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'BUSY' | 'RSVN'>('ALL');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [floor, setFloor] = useState<number>(1);
@@ -26,6 +27,8 @@ export const AdminTablesPage: React.FC = () => {
     const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
     const [isServicesModalOpen, setIsServicesModalOpen] = useState(false);
     const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
+    const [deleteTableId, setDeleteTableId] = useState<number | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const limit = 20;
 
     // Fetch tables
@@ -72,6 +75,63 @@ export const AdminTablesPage: React.FC = () => {
 
     const closeMenu = () => {
         setActiveMenuId(null);
+    };
+
+    // Delete mutation
+    const deleteMutation = useMutation({
+        mutationFn: () => {
+            if (!deleteTableId) return Promise.reject('No tableId');
+            return adminTableService.deleteTable(deleteTableId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
+            toast.success('Столик удален');
+            setIsDeleteModalOpen(false);
+            setDeleteTableId(null);
+        },
+        onError: (error: any) => {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка удаления';
+            toast.error(errorMessage);
+        },
+    });
+
+    const handleDeleteClick = (tableId: number) => {
+        setDeleteTableId(tableId);
+        setIsDeleteModalOpen(true);
+        closeMenu();
+    };
+
+    const confirmDelete = () => {
+        deleteMutation.mutate();
+    };
+
+    // Status update mutation
+    const statusMutation = useMutation({
+        mutationFn: ({ tableId, action }: { tableId: number; action: 'OPEN' | 'CLOSE' }) => {
+            return adminTableService.updateTableStatus(tableId, selectedDate, action);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
+            toast.success('Статус столика обновлен');
+        },
+        onError: (error: any) => {
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка обновления статуса';
+            toast.error(errorMessage);
+        },
+    });
+
+    const handleStatusToggle = (tableId: number, currentStatus: string) => {
+        const newAction = currentStatus === 'OPEN' ? 'CLOSE' : 'OPEN';
+        const actionLabel = newAction === 'OPEN' ? 'открыть' : 'закрыть';
+        
+        toast.promise(
+            statusMutation.mutateAsync({ tableId, action: newAction }),
+            {
+                loading: `Обновление статуса...`,
+                success: `Столик ${actionLabel}`, 
+                error: 'Ошибка обновления статуса',
+            }
+        );
     };
 
     const statusStyles = {
@@ -305,9 +365,10 @@ export const AdminTablesPage: React.FC = () => {
                                 <button 
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        toast.info('Настройки');
+                                        handleStatusToggle(table.etableId, table.tableStatus);
                                     }}
                                     className="p-3 rounded-xl hover:bg-white/50 transition-colors"
+                                    title={table.tableStatus === 'OPEN' ? 'Закрыть столик' : 'Открыть столик'}
                                 >
                                     <Settings2 size={20} />
                                 </button>
@@ -323,7 +384,7 @@ export const AdminTablesPage: React.FC = () => {
                                 <button 
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        toast.info('Удалить столик');
+                                        handleDeleteClick(table.etableId);
                                     }}
                                     className="p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
                                 >
@@ -387,6 +448,81 @@ export const AdminTablesPage: React.FC = () => {
                 tableId={editingTableData?.etableId || null}
                 currentEvents={[]}
             />
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {isDeleteModalOpen && deleteTableId && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
+                        />
+
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ type: "spring", duration: 0.3, bounce: 0.3 }}
+                            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+                        >
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                                <div className="bg-gradient-to-br from-red-500 to-red-600 p-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                            <AlertTriangle size={24} className="text-white" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-xl font-black text-white">Удалить столик?</h2>
+                                            <p className="text-sm text-red-100 font-bold mt-1">Это действие нельзя отменить</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-6">
+                                    <div className="bg-red-50 border border-red-100 rounded-xl p-4">
+                                        <p className="text-sm font-bold text-red-900">
+                                            Вы собираетесь удалить столик #{deleteTableId}. Все связанные данные будут потеряны.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setIsDeleteModalOpen(false)}
+                                        className="flex-1 h-12 rounded-xl font-bold"
+                                        disabled={deleteMutation.isPending}
+                                    >
+                                        Отмена
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={confirmDelete}
+                                        disabled={deleteMutation.isPending}
+                                        className="flex-1 h-12 rounded-xl font-bold bg-red-500 hover:bg-red-600 disabled:opacity-50"
+                                    >
+                                        {deleteMutation.isPending ? (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Loader2 size={18} className="animate-spin" />
+                                                <span>Удаление...</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center justify-center gap-2">
+                                                <Trash2 size={18} />
+                                                <span>Удалить</span>
+                                            </div>
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

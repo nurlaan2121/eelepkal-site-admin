@@ -156,4 +156,20 @@ export const adminTableService = {
         
         await apiClient.put(`/api/admin-table/update-et-services/${tableId}?${params.toString()}`);
     },
+
+    deleteTable: async (tableId: number): Promise<{ httpStatus: string; message: string }> => {
+        const response = await apiClient.delete<{ httpStatus: string; message: string }>(
+            `/api/admin-table/delete/${tableId}`
+        );
+        return response.data;
+    },
+
+    updateTableStatus: async (tableId: number, date: string, action: 'OPEN' | 'CLOSE'): Promise<void> => {
+        await apiClient.put(`/api/admin-table/update-status-table/${tableId}`, null, {
+            params: {
+                date,
+                tableStatusActionRequest: action,
+            },
+        });
+    },
 };
