@@ -1,37 +1,71 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2 } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Table {
-    id: number;
-    number: string | number;
-    capacity: number;
-    status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED';
-    type: 'TABLE' | 'BOOTH' | 'VIP';
-}
+import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
 
 export const AdminTablesPage: React.FC = () => {
-    const [filter, setFilter] = React.useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'RESERVED'>('ALL');
+    const [filter, setFilter] = useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'RESERVED'>('ALL');
+    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [floor, setFloor] = useState<number>(1);
+    const [page, setPage] = useState(0);
+    const limit = 20;
 
-    const tables: Table[] = [
-        { id: 1, number: 1, capacity: 4, status: 'AVAILABLE', type: 'TABLE' },
-        { id: 2, number: 2, capacity: 2, status: 'OCCUPIED', type: 'TABLE' },
-        { id: 3, number: 3, capacity: 4, status: 'RESERVED', type: 'TABLE' },
-        { id: 4, number: 'C1', capacity: 8, status: 'AVAILABLE', type: 'BOOTH' },
-        { id: 5, number: 'VIP1', capacity: 10, status: 'OCCUPIED', type: 'VIP' },
-        { id: 6, number: 4, capacity: 4, status: 'AVAILABLE', type: 'TABLE' },
-        { id: 7, number: 5, capacity: 2, status: 'AVAILABLE', type: 'TABLE' },
-        { id: 8, number: 6, capacity: 4, status: 'RESERVED', type: 'TABLE' },
-    ];
+    // Fetch tables
+    const { data: tablesData, isLoading } = useQuery({
+        queryKey: ['admin-tables', selectedDate, floor, page],
+        queryFn: () => adminTableService.getAllTables({
+            date: selectedDate,
+            floor,
+            offset: page * limit,
+            limit,
+        }),
+    });
+
+    const tables = tablesData?.tableGetAllResponses || [];
+    const countOpen = tablesData?.countOpen || 0;
+    const countBusy = tablesData?.countBusy || 0;
+    const countWaiting = tablesData?.countWaiting || 0;
 
     const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.status === filter);
 
+    // Date navigation
+    const changeDate = (days: number) => {
+        const date = new Date(selectedDate);
+        date.setDate(date.getDate() + days);
+        setSelectedDate(date.toISOString().split('T')[0]);
+    };
+
+    // Format date for display
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        if (date.toDateString() === today.toDateString()) return 'Сегодня';
+        if (date.toDateString() === tomorrow.toDateString()) return 'Завтра';
+        
+        return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+    };
+
     const statusStyles = {
-        AVAILABLE: 'border-brand-200 bg-brand-50 text-brand-700 shadow-brand-50',
-        OCCUPIED: 'border-blue-200 bg-blue-50 text-blue-700 shadow-blue-50',
-        RESERVED: 'border-amber-200 bg-amber-50 text-amber-700 shadow-amber-50',
+        AVAILABLE: 'border-brand-200 bg-gradient-to-br from-brand-50 to-brand-100/50 text-brand-700 shadow-lg shadow-brand-100/50',
+        OCCUPIED: 'border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 shadow-lg shadow-blue-100/50',
+        RESERVED: 'border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-700 shadow-lg shadow-amber-100/50',
+    };
+
+    const statusLabels = {
+        AVAILABLE: 'FREE',
+        OCCUPIED: 'BUSY',
+        RESERVED: 'RSVN',
+    };
+
+    const typeLabels: Record<string, string> = {
+        TABLE: 'Стол',
+        BOOTH: 'Кабина',
+        VIP: 'VIP',
     };
 
     return (
@@ -55,34 +89,70 @@ export const AdminTablesPage: React.FC = () => {
 
             {/* Filters */}
             <div className="flex overflow-x-auto no-scrollbar gap-2 px-1 md:px-0 pb-2">
-                {['ALL', 'AVAILABLE', 'OCCUPIED', 'RESERVED'].map((s) => (
+                {[
+                    { key: 'ALL', label: 'Все' },
+                    { key: 'AVAILABLE', label: 'Свободны' },
+                    { key: 'OCCUPIED', label: 'Заняты' },
+                    { key: 'RESERVED', label: 'Бронь' },
+                ].map(({ key, label }) => (
                     <button
-                        key={s}
-                        onClick={() => setFilter(s as any)}
-                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${filter === s
-                            ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
-                            : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'
-                            }`}
+                        key={key}
+                        onClick={() => setFilter(key as any)}
+                        className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${
+                            filter === key
+                                ? 'bg-slate-900 border-slate-900 text-white shadow-lg'
+                                : 'bg-white border-slate-100 text-slate-500 hover:border-slate-300'
+                        }`}
                     >
-                        {s === 'ALL' ? 'Все' : s === 'AVAILABLE' ? 'Свободны' : s === 'OCCUPIED' ? 'Заняты' : 'Бронь'}
+                        {label}
                     </button>
                 ))}
             </div>
 
             {/* Tables Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
-                <AnimatePresence mode="popLayout">
-                    {filteredTables.map((table) => (
+            {isLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="relative p-5 md:p-6 rounded-3xl border-2 border-slate-200 bg-slate-100 animate-pulse"
+                        >
+                            <div className="flex flex-col items-center space-y-3">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-slate-200" />
+                                <div className="space-y-2 w-full">
+                                    <div className="h-3 bg-slate-200 rounded w-1/2 mx-auto" />
+                                    <div className="h-3 bg-slate-200 rounded w-2/3 mx-auto" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : filteredTables.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                        <LayoutGrid size={32} className="text-slate-300" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900 mb-2">
+                        Нет столиков
+                    </h3>
+                    <p className="text-sm text-slate-400 font-medium max-w-xs">
+                        На выбранную дату нет столиков или попробуйте изменить фильтры
+                    </p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+                    <AnimatePresence mode="popLayout">
+                        {filteredTables.map((table: TableResponse) => (
                         <motion.div
                             layout
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             key={table.id}
-                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation shadow-sm ${statusStyles[table.status]}`}
+                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation ${statusStyles[table.status as keyof typeof statusStyles]}`}
                         >
                             <div className="absolute top-3 right-3 text-[9px] font-black uppercase opacity-40">
-                                {table.type}
+                                {table.type ? typeLabels[table.type] || table.type : ''}
                             </div>
 
                             <div className="flex flex-col items-center text-center space-y-3">
@@ -91,7 +161,7 @@ export const AdminTablesPage: React.FC = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                                        {table.status === 'AVAILABLE' ? 'FREE' : table.status === 'OCCUPIED' ? 'BUSY' : 'RSVN'}
+                                        {statusLabels[table.status as keyof typeof statusLabels]}
                                     </p>
                                     <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
                                         <Users size={12} strokeWidth={3} />
@@ -113,8 +183,9 @@ export const AdminTablesPage: React.FC = () => {
                             </div>
                         </motion.div>
                     ))}
-                </AnimatePresence>
-            </div>
+                    </AnimatePresence>
+                </div>
+            )}
         </div>
     );
 };
