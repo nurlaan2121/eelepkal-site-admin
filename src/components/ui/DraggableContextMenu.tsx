@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreVertical } from 'lucide-react';
+import { MoreVertical, LucideIcon } from 'lucide-react';
 
 export interface MenuItem {
-    icon: React.ComponentType<{ size?: number; className?: string }>;
+    icon: LucideIcon;
     label: string;
     color: string;
     onClick: () => void;
