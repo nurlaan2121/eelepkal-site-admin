@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, ArrowUpDown, Edit2, Trash2, Utensils, AlertCircle } from 'lucide-react';
+import { Plus, Search, ArrowUpDown, Edit2, Trash2, Utensils, AlertCircle, AlertTriangle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminMenuService, MenuItem, MenuCategory, MenuStatus } from '../../../api/admin/adminMenuService';
 import { Button } from '../../../components/ui/Button';
@@ -50,7 +50,7 @@ const MenuCard: React.FC<{
     item: MenuItem;
     onMove: (id: number) => void;
     onEdit: (id: number) => void;
-    onDelete: (id: number) => void;
+    onDelete: (id: number, title: string) => void;
     isMoving: boolean;
     isDeleting: boolean;
 }> = ({ item, onMove, onEdit, onDelete, isMoving, isDeleting }) => {
@@ -111,7 +111,7 @@ const MenuCard: React.FC<{
                         <Edit2 size={16} />
                     </button>
                     <button
-                        onClick={() => onDelete(item.id)}
+                        onClick={() => onDelete(item.id, item.title)}
                         disabled={isDeleting}
                         className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors disabled:opacity-50"
                         title="Удалить"
@@ -137,6 +137,11 @@ export const AdminMenuPage: React.FC = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingMenuId, setEditingMenuId] = useState<number | null>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ isOpen: boolean; menuId: number | null; menuTitle: string }>({
+        isOpen: false,
+        menuId: null,
+        menuTitle: '',
+    });
     const pageSize = 10;
 
     // Fetch categories
@@ -211,9 +216,18 @@ export const AdminMenuPage: React.FC = () => {
         }
     };
 
-    const handleDelete = (menuId: number) => {
-        if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
-            deleteMutation.mutate(menuId);
+    const handleDelete = (menuId: number, menuTitle: string) => {
+        setDeleteConfirmation({
+            isOpen: true,
+            menuId,
+            menuTitle,
+        });
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirmation.menuId) {
+            deleteMutation.mutate(deleteConfirmation.menuId);
+            setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' });
         }
     };
 
@@ -391,6 +405,107 @@ export const AdminMenuPage: React.FC = () => {
                 menuId={editingMenuId}
                 menuStatus={activeTab}
             />
+
+            {/* Delete Confirmation Modal */}
+            <AnimatePresence>
+                {deleteConfirmation.isOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]"
+                        />
+
+                        {/* Modal */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[10000] px-4"
+                        >
+                            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                                {/* Header with warning icon */}
+                                <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 border-b border-red-200">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-full bg-red-200 flex items-center justify-center flex-shrink-0">
+                                            <AlertTriangle size={28} className="text-red-700" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h2 className="text-xl font-black text-red-900 mb-1">
+                                                Удалить блюдо?
+                                            </h2>
+                                            <p className="text-sm text-red-700 font-medium">
+                                                Это действие нельзя отменить
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
+                                            className="p-2 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0"
+                                        >
+                                            <X size={20} className="text-red-700" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6">
+                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 mb-4">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                                            Блюдо
+                                        </p>
+                                        <p className="text-base font-black text-slate-900">
+                                            {deleteConfirmation.menuTitle}
+                                        </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <div className="w-2 h-2 rounded-full bg-red-600" />
+                                            </div>
+                                            <p className="text-sm text-slate-600 font-medium">
+                                                Блюдо будет удалено навсегда
+                                            </p>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                <div className="w-2 h-2 rounded-full bg-red-600" />
+                                            </div>
+                                            <p className="text-sm text-slate-600 font-medium">
+                                                Это действие нельзя будет отменить
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
+                                        className="flex-1 h-12 rounded-xl font-bold"
+                                        disabled={deleteMutation.isPending}
+                                    >
+                                        Отмена
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={confirmDelete}
+                                        className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700"
+                                        isLoading={deleteMutation.isPending}
+                                    >
+                                        Удалить
+                                    </Button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

@@ -117,7 +117,7 @@ export const adminMenuService = {
     },
 
     deleteMenu: async (menuId: number): Promise<void> => {
-        await apiClient.delete(`/api/admin-menu/${menuId}`);
+        await apiClient.delete(`/api/admin-menu/delete/${menuId}`);
     },
 
     createMenu: async (data: CreateMenuRequest, status: MenuStatus = 'INACTIVE'): Promise<MenuItem> => {
