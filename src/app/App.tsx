@@ -67,9 +67,9 @@ export const App = () => {
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="my-venue" element={<AdminMyVenuePage />} />
-                    <Route path="bookings" element={<div>Бронирования</div>} />
-                    <Route path="tables" element={<div>Столы</div>} />
-                    <Route path="menu" element={<div>Меню</div>} />
+                    <Route path="bookings" element={<AdminBookingsPage />} />
+                    <Route path="tables" element={<AdminTablesPage />} />
+                    <Route path="menu" element={<AdminMenuPage />} />
                     <Route path="customers" element={<div>Клиенты</div>} />
                     <Route path="analytics" element={<div>Аналитика заведения</div>} />
                     <Route path="profile" element={<div>Профиль админа</div>} />
