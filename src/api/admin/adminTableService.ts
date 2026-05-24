@@ -63,6 +63,15 @@ export interface CreateTableRequest {
     eventTypeIds: number[];
 }
 
+export interface UpdateTableBasicRequest {
+    inFloor: number;
+    title: string;
+    capacityMin: number;
+    capacityMax: number;
+    deposit: string;
+    description: string;
+}
+
 export const adminTableService = {
     getAllTables: async (params: GetTablesParams): Promise<TablesListResponse> => {
         const { date, floor = 1, offset = 0, limit = 50 } = params;
@@ -112,5 +121,27 @@ export const adminTableService = {
     getTableById: async (tableId: number): Promise<TableDetail> => {
         const response = await apiClient.get<TableDetail>(`/api/admin-table/getTableByIdForUpdate/${tableId}`);
         return response.data;
+    },
+
+    updateTableBasic: async (tableId: number, data: UpdateTableBasicRequest): Promise<void> => {
+        await apiClient.put(`/api/admin-table/update/${tableId}`, data);
+    },
+
+    updateTableEventTypes: async (tableId: number, eventTypeIds: number[]): Promise<void> => {
+        await apiClient.put(`/api/admin-table/update-event-types/${tableId}`, null, {
+            params: { eventTypeIdsForAssign: eventTypeIds },
+        });
+    },
+
+    updateTableType: async (tableId: number, eTableTypeId: number): Promise<void> => {
+        await apiClient.put(`/api/admin-table/update-et-type/${tableId}`, null, {
+            params: { eTableTypeId },
+        });
+    },
+
+    updateTableServices: async (tableId: number, eTableServiceIds: number[]): Promise<void> => {
+        await apiClient.put(`/api/admin-table/update-et-services/${tableId}`, null, {
+            params: { eTableServiceIdsForAssign: eTableServiceIds },
+        });
     },
 };

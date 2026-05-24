@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Loader2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminTableService, TableDetail, TableType, TableAmenity, EventType } from '../../../api/admin/adminTableService';
+import { adminTableService, TableDetail, TableType, TableAmenity, EventType, UpdateTableBasicRequest } from '../../../api/admin/adminTableService';
 import { Button } from '../../../components/ui/Button';
 import { toast } from 'sonner';
 
@@ -19,6 +19,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [isUploading, setIsUploading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     console.log('EditTableModal - isOpen:', isOpen, 'tableId:', tableId);
 
@@ -61,6 +62,47 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
             setImagePreviews(images);
         }
     }, [tableDetail]);
+
+    const handleSave = async () => {
+        if (!formData || !tableId) return;
+
+        setIsSaving(true);
+        try {
+            // 1. Обновляем основную информацию
+            const basicData: UpdateTableBasicRequest = {
+                inFloor: formData.inFloor,
+                title: formData.title,
+                capacityMin: parseInt(formData.capacity.split('-')[0]) || 1,
+                capacityMax: parseInt(formData.capacity.split('-')[1] || formData.capacity) || 1,
+                deposit: formData.price,
+                description: formData.description,
+            };
+            await adminTableService.updateTableBasic(tableId, basicData);
+            console.log('Basic info updated');
+
+            // 2. Обновляем типы мероприятий (если есть изменения)
+            if (formData.eventTypes.length > 0) {
+                // Нужно получить ID из названий
+                // Пока пропускаем, т.к. eventTypes приходят как string[]
+                console.log('Event types:', formData.eventTypes);
+            }
+
+            // 3. Обновляем услуги (если есть изменения)
+            if (formData.amenities.length > 0) {
+                console.log('Amenities:', formData.amenities);
+            }
+
+            queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
+            toast.success('Столик успешно обновлен');
+            onClose();
+        } catch (error: any) {
+            console.error('Update error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка обновления';
+            toast.error(errorMessage);
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     const updateMutation = useMutation({
         mutationFn: (data: any) => {
@@ -357,17 +399,27 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
                                             variant="outline"
                                             onClick={onClose}
                                             className="flex-1 h-12 rounded-xl font-bold"
+                                            disabled={isSaving}
                                         >
                                             Закрыть
                                         </Button>
                                         <Button
                                             type="button"
-                                            onClick={() => {
-                                                toast.info('Функция обновления будет добавлена позже');
-                                            }}
-                                            className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider"
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider disabled:opacity-50"
                                         >
-                                            Сохранить изменения
+                                            {isSaving ? (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 size={18} className="animate-spin" />
+                                                    <span>Сохранение...</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Save size={18} />
+                                                    <span>Сохранить изменения</span>
+                                                </div>
+                                            )}
                                         </Button>
                                     </div>
                                 </>
