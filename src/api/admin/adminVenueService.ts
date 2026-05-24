@@ -46,6 +46,18 @@ export interface AdminVenuePublicAdmin {
     phoneNumber: string;
 }
 
+export interface AdminVenueFeedback {
+    id: number;
+    client: {
+        id: number;
+        image: string | null;
+        fullName: string | null;
+    };
+    text: string;
+    rating: number;
+    createdAt: string;
+}
+
 export const adminVenueService = {
     getBasic: async (): Promise<AdminVenueBasic> => {
         const response = await apiClient.get<AdminVenueBasic>('/api/admin-venue/get-basic');
@@ -83,6 +95,14 @@ export const adminVenueService = {
                 'Accept': 'text/plain;charset=UTF-8'
             }
         });
+        return response.data;
+    },
+
+    getFeedbacks: async (venueId: number, offset: number = 0, limit: number = 12): Promise<AdminVenueFeedback[]> => {
+        const response = await apiClient.get<AdminVenueFeedback[]>(
+            `/api/admin-venue/feedbacks/${venueId}`,
+            { params: { offset, limit } }
+        );
         return response.data;
     },
 };
