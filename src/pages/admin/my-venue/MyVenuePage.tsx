@@ -6,8 +6,8 @@ import {
     User, Building2, AlertCircle, Layers
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { adminVenueService, AdminVenueBasic, AdminVenueDetails, AdminVenueWorkingHours, AdminVenueAmenities, AdminVenueContacts, AdminVenuePublicAdmin } from '../../api/admin/adminVenueService';
-import { Button } from '../../components/ui/Button';
+import { adminVenueService, AdminVenueBasic, AdminVenueDetails, AdminVenueWorkingHours, AdminVenueAmenities, AdminVenueContacts, AdminVenuePublicAdmin } from '../../../api/admin/adminVenueService';
+import { Button } from '../../../components/ui/Button';
 
 
 // ─────────── Skeleton Loader ───────────
@@ -84,7 +84,7 @@ export const AdminMyVenuePage: React.FC = () => {
     const amenitiesList = Object.entries(amenitiesData) as [string, string][];
     const capacitiesList = Object.entries(detailsData.capacities) as [string, number][];
 
-    const formatHours = (hours: Record<string, string>) => {
+    const formatHours = (hours: AdminVenueWorkingHours) => {
         return Object.entries(hours).map(([day, time]) => ({
             day: day.charAt(0) + day.slice(1).toLowerCase(),
             time,
