@@ -78,10 +78,10 @@ export const AdminMyVenuePage: React.FC = () => {
     const publicAdminData = publicAdmin.data as AdminVenuePublicAdmin;
     const descriptionText = (description.data as string) || '';
 
-    const images = Object.values(basicData.images);
+    const images = Object.values(basicData.images) as string[];
     const mainImage = images[0] || '';
-    const amenitiesList = Object.entries(amenitiesData);
-    const capacitiesList = Object.entries(detailsData.capacities);
+    const amenitiesList = Object.entries(amenitiesData) as [string, string][];
+    const capacitiesList = Object.entries(detailsData.capacities) as [string, number][];
 
     const formatHours = (hours: Record<string, string>) => {
         return Object.entries(hours).map(([day, time]) => ({
@@ -276,7 +276,7 @@ export const AdminMyVenuePage: React.FC = () => {
                                     className="bg-gradient-to-br from-brand-50 to-white rounded-xl p-4 border border-brand-100"
                                 >
                                     <p className="text-xs font-bold text-slate-500 mb-1">{title}</p>
-                                    <p className="text-2xl font-black text-brand-700">{value} <span className="text-sm font-bold text-slate-400">мест</span></p>
+                                    <p className="text-2xl font-black text-brand-700">{String(value)} <span className="text-sm font-bold text-slate-400">мест</span></p>
                                 </div>
                             ))}
                         </div>
@@ -289,7 +289,7 @@ export const AdminMyVenuePage: React.FC = () => {
                             <h3 className="text-lg font-black text-slate-900">Тип кухни</h3>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {detailsData.typesOfCuisines.split(', ').map((cuisine) => (
+                            {detailsData.typesOfCuisines.split(', ').map((cuisine: string) => (
                                 <span
                                     key={cuisine}
                                     className="px-3 py-1.5 bg-orange-50 text-orange-700 rounded-lg text-sm font-bold border border-orange-200"
@@ -321,7 +321,7 @@ export const AdminMyVenuePage: React.FC = () => {
                                 className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-slate-50 to-transparent rounded-xl border border-slate-100 hover:border-brand-200 hover:from-brand-50 transition-all"
                             >
                                 <div className="w-2 h-2 rounded-full bg-brand-500 flex-shrink-0" />
-                                <span className="text-sm font-bold text-slate-700">{name}</span>
+                                <span className="text-sm font-bold text-slate-700">{String(name)}</span>
                             </div>
                         ))}
                     </div>
