@@ -9,6 +9,21 @@ export interface TableResponse {
     type?: string;
 }
 
+export interface TableDetail {
+    images: {
+        [key: string]: string;
+    };
+    capacity: string;
+    title: string;
+    inFloor: number;
+    price: string;
+    description: string;
+    amenities: string[];
+    eventTypes: string[];
+    etableId: number;
+    etableType: string;
+}
+
 export interface TablesListResponse {
     tableGetAllResponses: TableResponse[];
     countOpen: number;
@@ -93,5 +108,10 @@ export const adminTableService = {
         });
 
         return response.data.data;
+    },
+
+    getTableById: async (tableId: number): Promise<TableDetail> => {
+        const response = await apiClient.get<TableDetail>(`/api/admin-table/getTableByIdForUpdate/${tableId}`);
+        return response.data;
     },
 };

@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
 import { AddTableModal } from './AddTableModal';
+import { EditTableModal } from './EditTableModal';
 
 export const AdminTablesPage: React.FC = () => {
     const [filter, setFilter] = useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'RESERVED'>('ALL');
@@ -12,6 +13,8 @@ export const AdminTablesPage: React.FC = () => {
     const [floor, setFloor] = useState<number>(1);
     const [page, setPage] = useState(0);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingTableId, setEditingTableId] = useState<number | null>(null);
     const limit = 20;
 
     // Fetch tables
@@ -43,6 +46,11 @@ export const AdminTablesPage: React.FC = () => {
         if (date.toDateString() === tomorrow.toDateString()) return 'Завтра';
         
         return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
+    };
+
+    const handleEdit = (tableId: number) => {
+        setEditingTableId(tableId);
+        setIsEditModalOpen(true);
     };
 
     const statusStyles = {
@@ -171,7 +179,8 @@ export const AdminTablesPage: React.FC = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             key={table.id}
-                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation ${statusStyles[table.status as keyof typeof statusStyles]}`}
+                            onClick={() => handleEdit(table.id)}
+                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl ${statusStyles[table.status as keyof typeof statusStyles]}`}
                         >
                             <div className="absolute top-3 right-3 text-[9px] font-black uppercase opacity-40">
                                 {table.type ? typeLabels[table.type] || table.type : ''}
@@ -214,6 +223,17 @@ export const AdminTablesPage: React.FC = () => {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 defaultFloor={floor}
+            />
+
+            {/* Edit Table Modal */}
+            <EditTableModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingTableId(null);
+                }}
+                tableId={editingTableId}
+                selectedDate={selectedDate}
             />
         </div>
     );
