@@ -192,10 +192,17 @@ export const VenueDetailPage: React.FC = () => {
         Object.entries(rawData).forEach(([key, value]) => {
             const dayKey = dayMapping[key.toUpperCase()];
             if (dayKey && typeof value === 'string') {
-                const parts = value.split(' - ');
-                if (parts.length === 2) {
-                    result[`${dayKey}Open`] = parts[0].trim();
-                    result[`${dayKey}Close`] = parts[1].trim();
+                // Check if the day is closed ("Выходной" means closed/day off)
+                if (value === 'Выходной') {
+                    result[`${dayKey}Open`] = '00:00';
+                    result[`${dayKey}Close`] = '00:00';
+                } else {
+                    // Try to parse time range format like "09:00 - 23:00"
+                    const parts = value.split(' - ');
+                    if (parts.length === 2) {
+                        result[`${dayKey}Open`] = parts[0].trim();
+                        result[`${dayKey}Close`] = parts[1].trim();
+                    }
                 }
             }
         });
