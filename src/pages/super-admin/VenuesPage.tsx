@@ -872,40 +872,49 @@ const VenueActionMenu: React.FC<{
 
                     <AnimatePresence>
                         {open && (
-                            <motion.div
-                                ref={menuRef}
-                                initial={{ opacity: 0, scale: 0.95, y: -8 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -8 }}
-                                transition={{ duration: 0.12 }}
-                                className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
-                                style={{
-                                    top: `${menuPosition.top}px`,
-                                    right: `${menuPosition.right}px`
-                                }}
-                            >
-                                <div className="p-1.5 space-y-0.5">
-                                    {actions.map((action) => (
+                            <>
+                                {/* Backdrop to catch clicks outside */}
+                                <div 
+                                    className="fixed inset-0 z-[199]" 
+                                    onClick={() => setOpen(false)}
+                                />
+                                <motion.div
+                                    ref={menuRef}
+                                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    transition={{ duration: 0.12 }}
+                                    className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
+                                    style={{
+                                        top: `${menuPosition.top}px`,
+                                        right: `${menuPosition.right}px`
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                    <div className="p-1.5 space-y-0.5">
+                                        {actions.map((action) => (
+                                            <button
+                                                key={action.modal}
+                                                onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            >
+                                                <action.icon size={16} className={action.color} />
+                                                <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            </button>
+                                        ))}
+                                        <div className="border-t border-slate-100 my-1" />
                                         <button
-                                            key={action.modal}
-                                            onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
-                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                            disabled={isDeleting}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
                                         >
-                                            <action.icon size={16} className={action.color} />
-                                            <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            <Trash2 size={16} className="text-red-500" />
+                                            <span className="text-sm font-bold text-red-500">Удалить заведение</span>
                                         </button>
-                                    ))}
-                                    <div className="border-t border-slate-100 my-1" />
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
-                                        disabled={isDeleting}
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
-                                    >
-                                        <Trash2 size={16} className="text-red-500" />
-                                        <span className="text-sm font-bold text-red-500">Удалить заведение</span>
-                                    </button>
-                                </div>
-                            </motion.div>
+                                    </div>
+                                </motion.div>
+                            </>
                         )}
                     </AnimatePresence>
                 </div>
