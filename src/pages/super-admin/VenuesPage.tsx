@@ -820,33 +820,33 @@ const VenueActionMenu: React.FC<{
     venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
         const menuItems: MenuItem[] = [
-            { 
-                icon: UserCog, 
-                label: 'Заменить администратора', 
+            {
+                icon: UserCog,
+                label: 'Заменить администратора',
                 color: 'text-brand-600',
                 onClick: () => setActiveModal('replace-admin')
             },
-            { 
-                icon: Utensils, 
-                label: 'Тип кухни', 
+            {
+                icon: Utensils,
+                label: 'Тип кухни',
                 color: 'text-orange-600',
                 onClick: () => setActiveModal('cuisines')
             },
-            { 
-                icon: Settings2, 
-                label: 'Условия бронирования', 
+            {
+                icon: Settings2,
+                label: 'Условия бронирования',
                 color: 'text-amber-600',
                 onClick: () => setActiveModal('conditions')
             },
-            { 
-                icon: CreditCard, 
-                label: 'Реквизиты оплаты', 
+            {
+                icon: CreditCard,
+                label: 'Реквизиты оплаты',
                 color: 'text-emerald-600',
                 onClick: () => setActiveModal('payment')
             },
-            { 
-                icon: Trash2, 
-                label: 'Удалить заведение', 
+            {
+                icon: Trash2,
+                label: 'Удалить заведение',
                 color: 'text-red-500',
                 danger: true,
                 onClick: () => {
@@ -858,11 +858,17 @@ const VenueActionMenu: React.FC<{
         ];
 
         return (
-            <DraggableContextMenu
-                items={menuItems}
-                buttonClassName=""
-                menuClassName=""
-            />
+            <div
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="relative z-10"
+            >
+                <DraggableContextMenu
+                    items={menuItems}
+                    buttonClassName=""
+                    menuClassName=""
+                />
+            </div>
         );
     };
 

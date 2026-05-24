@@ -170,6 +170,8 @@ export const DraggableContextMenu: React.FC<DraggableMenuProps> = ({
             <button
                 ref={buttonRef}
                 onClick={handleToggle}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
                 className={`w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-all duration-200 hover:scale-105 active:scale-95 ${buttonClassName}`}
             >
                 <MoreVertical size={18} />
@@ -185,7 +187,12 @@ export const DraggableContextMenu: React.FC<DraggableMenuProps> = ({
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                             className="fixed inset-0 z-[199] bg-black/20 backdrop-blur-sm"
-                            onClick={() => setOpen(false)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setOpen(false);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
                         />
 
                         {/* Menu */}
@@ -232,8 +239,8 @@ export const DraggableContextMenu: React.FC<DraggableMenuProps> = ({
                                             item.onClick();
                                         }}
                                         className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 text-left group hover:translate-x-[3px] ${item.danger
-                                                ? 'hover:bg-red-50 active:bg-red-100'
-                                                : 'hover:bg-black/[0.04] active:bg-black/[0.08]'
+                                            ? 'hover:bg-red-50 active:bg-red-100'
+                                            : 'hover:bg-black/[0.04] active:bg-black/[0.08]'
                                             }`}
                                     >
                                         <item.icon
