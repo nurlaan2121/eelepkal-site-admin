@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminMenuService, CreateMenuRequest, MenuStatus, MenuCategorySimple, MenuUnit } from '../../../api/admin/adminMenuService';
 import { Button } from '../../../components/ui/Button';
+import { toast } from 'sonner';
 
 interface AddMenuModalProps {
     isOpen: boolean;
@@ -25,6 +26,9 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
 
     const [status, setStatus] = useState<MenuStatus>(defaultStatus);
     const [errors, setErrors] = useState<Partial<Record<keyof CreateMenuRequest, string>>>({});
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Fetch categories
     const { data: categories } = useQuery({
@@ -62,6 +66,9 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
             unitAsEnumId: 0,
         });
         setErrors({});
+        setSelectedFile(null);
+        setImagePreview(null);
+        setIsUploading(false);
     };
 
     const validate = (): boolean => {
@@ -102,6 +109,52 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
         setFormData(prev => ({ ...prev, [field]: value }));
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: undefined }));
+        }
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            toast.error('Пожалуйста, выберите изображение');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error('Размер файла не должен превышать 5MB');
+            return;
+        }
+
+        setSelectedFile(file);
+        
+        // Create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleUploadImage = async () => {
+        if (!selectedFile) {
+            toast.error('Выберите изображение для загрузки');
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const imageUrl = await adminMenuService.uploadImageToS3(selectedFile);
+            setFormData(prev => ({ ...prev, imageUrl }));
+            toast.success('Изображение загружено');
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка загрузки изображения';
+            toast.error(errorMessage);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -171,35 +224,74 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                 </div>
                             </div>
 
-                            {/* Image URL */}
+                            {/* Image Upload */}
                             <div>
                                 <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                    URL изображения
+                                    Изображение блюда
                                 </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={formData.imageUrl}
-                                        onChange={(e) => handleChange('imageUrl', e.target.value)}
-                                        placeholder="https://example.com/image.jpg"
-                                        className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                                            errors.imageUrl ? 'border-red-300' : 'border-slate-200 focus:border-brand-500'
-                                        }`}
-                                    />
-                                    <ImageIcon size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300" />
-                                </div>
+                                
+                                {!imagePreview ? (
+                                    <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-brand-500 hover:bg-brand-50/30 transition-all">
+                                        <ImageIcon size={32} className="text-slate-300 mb-2" />
+                                        <p className="text-sm font-bold text-slate-400">Нажмите для выбора изображения</p>
+                                        <p className="text-xs text-slate-300 mt-1">JPG, PNG до 5MB</p>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileSelect}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                ) : (
+                                    <div className="relative rounded-xl overflow-hidden bg-slate-100">
+                                        <img 
+                                            src={imagePreview} 
+                                            alt="Preview" 
+                                            className="w-full h-48 object-cover"
+                                        />
+                                        <div className="absolute top-2 right-2 flex gap-2">
+                                            {!formData.imageUrl && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUploadImage}
+                                                    disabled={isUploading}
+                                                    className="flex items-center gap-2 px-3 py-1.5 bg-brand-primary text-white text-xs font-bold rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50 shadow-lg"
+                                                >
+                                                    {isUploading ? (
+                                                        <>
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                            Загрузка...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Upload size={14} />
+                                                            Загрузить в S3
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setSelectedFile(null);
+                                                    setImagePreview(null);
+                                                    setFormData(prev => ({ ...prev, imageUrl: '' }));
+                                                }}
+                                                className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        </div>
+                                        {formData.imageUrl && (
+                                            <div className="absolute bottom-2 left-2 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                                                ✓ Загружено
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                
                                 {errors.imageUrl && (
                                     <p className="mt-1.5 text-xs font-bold text-red-500">{errors.imageUrl}</p>
-                                )}
-                                {formData.imageUrl && (
-                                    <div className="mt-3 rounded-xl overflow-hidden bg-slate-100 h-32">
-                                        <img 
-                                            src={formData.imageUrl} 
-                                            alt="Preview" 
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => (e.currentTarget.style.display = 'none')}
-                                        />
-                                    </div>
                                 )}
                             </div>
 

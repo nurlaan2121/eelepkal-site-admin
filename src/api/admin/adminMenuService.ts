@@ -42,6 +42,19 @@ export interface MenuResponse {
 export type MenuStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 export const adminMenuService = {
+    uploadImageToS3: async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await apiClient.post('/api/s3', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data.data;
+    },
+
     getUnits: async (): Promise<MenuUnit[]> => {
         const response = await apiClient.get<MenuUnit[]>('/api/dev/unit-as-enum/all');
         return response.data;
