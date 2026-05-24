@@ -20,12 +20,19 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [isUploading, setIsUploading] = useState(false);
 
+    console.log('EditTableModal - isOpen:', isOpen, 'tableId:', tableId);
+
     // Fetch table details
-    const { data: tableDetail, isLoading: isLoadingTable } = useQuery({
+    const { data: tableDetail, isLoading: isLoadingTable, error: tableError } = useQuery({
         queryKey: ['table-detail', tableId],
-        queryFn: () => adminTableService.getTableById(tableId!),
+        queryFn: () => {
+            console.log('Fetching table details for ID:', tableId);
+            return adminTableService.getTableById(tableId!);
+        },
         enabled: isOpen && !!tableId,
     });
+
+    console.log('Table detail loaded:', tableDetail, 'error:', tableError, 'isLoading:', isLoadingTable);
 
     // Fetch helper data
     const { data: tableTypes } = useQuery({
