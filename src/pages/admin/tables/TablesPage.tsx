@@ -4,12 +4,14 @@ import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, Chev
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
+import { AddTableModal } from './AddTableModal';
 
 export const AdminTablesPage: React.FC = () => {
     const [filter, setFilter] = useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'RESERVED'>('ALL');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [floor, setFloor] = useState<number>(1);
     const [page, setPage] = useState(0);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const limit = 20;
 
     // Fetch tables
@@ -76,11 +78,14 @@ export const AdminTablesPage: React.FC = () => {
                     <p className="text-gray-500 text-sm md:text-base">Мониторинг залов в реальном времени</p>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
-                    <Button variant="outline" className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl">
+                    <Button variant="outline" className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl font-bold">
                         <LayoutGrid size={20} />
                         <span className="hidden md:inline">Схема зала</span>
                     </Button>
-                    <Button className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-brand-100">
+                    <Button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-brand-100 font-bold uppercase tracking-wider text-xs"
+                    >
                         <Plus size={20} />
                         <span>Добавить стол</span>
                     </Button>
@@ -186,6 +191,13 @@ export const AdminTablesPage: React.FC = () => {
                     </AnimatePresence>
                 </div>
             )}
+
+            {/* Add Table Modal */}
+            <AddTableModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                defaultFloor={floor}
+            />
         </div>
     );
 };

@@ -23,6 +23,32 @@ export interface GetTablesParams {
     limit?: number;
 }
 
+export interface TableType {
+    [key: string]: number;
+}
+
+export interface TableAmenity {
+    id: number;
+    title: string;
+}
+
+export interface EventType {
+    [key: string]: number;
+}
+
+export interface CreateTableRequest {
+    inFloor: number;
+    tableTypeId: number;
+    imageUrls: string[];
+    title: string;
+    capacityMin: number;
+    capacityMax: number;
+    deposit: string;
+    description: string;
+    tableAmenitiesIds: number[];
+    eventTypeIds: number[];
+}
+
 export const adminTableService = {
     getAllTables: async (params: GetTablesParams): Promise<TablesListResponse> => {
         const { date, floor = 1, offset = 0, limit = 50 } = params;
@@ -35,5 +61,37 @@ export const adminTableService = {
             },
         });
         return response.data;
+    },
+
+    getTableTypes: async (): Promise<TableType> => {
+        const response = await apiClient.get<TableType>('/api/dev/e-table-type/all');
+        return response.data;
+    },
+
+    getTableAmenities: async (): Promise<TableAmenity[]> => {
+        const response = await apiClient.get<TableAmenity[]>('/api/dev/e-table-amenities/all');
+        return response.data;
+    },
+
+    getEventTypes: async (): Promise<EventType> => {
+        const response = await apiClient.get<EventType>('/api/dev/event-type/all');
+        return response.data;
+    },
+
+    addTable: async (data: CreateTableRequest): Promise<void> => {
+        await apiClient.post('/api/admin-table/add-new', data);
+    },
+
+    uploadImageToS3: async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await apiClient.post('/api/s3', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return response.data.data;
     },
 };
