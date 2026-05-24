@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, MoreVertical } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
 import { AddTableModal } from './AddTableModal';
 import { EditTableModal } from './EditTableModal';
+import { toast } from 'sonner';
 
 export const AdminTablesPage: React.FC = () => {
     const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'BUSY' | 'RSVN'>('ALL');
@@ -15,6 +16,7 @@ export const AdminTablesPage: React.FC = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTableId, setEditingTableId] = useState<number | null>(null);
+    const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
     const limit = 20;
 
     // Fetch tables
@@ -52,6 +54,10 @@ export const AdminTablesPage: React.FC = () => {
         console.log('Card clicked, tableId:', tableId);
         setEditingTableId(tableId);
         setIsEditModalOpen(true);
+    };
+
+    const toggleMenu = (tableId: number) => {
+        setActiveMenuId(activeMenuId === tableId ? null : tableId);
     };
 
     const statusStyles = {
@@ -171,7 +177,7 @@ export const AdminTablesPage: React.FC = () => {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <AnimatePresence mode="popLayout">
                         {filteredTables.map((table: TableResponse) => {
                             console.log('Table object:', table);
@@ -186,45 +192,128 @@ export const AdminTablesPage: React.FC = () => {
                                 console.log('Clicked table.etableId:', table.etableId, 'full table:', table);
                                 handleEdit(table.etableId);
                             }}
-                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl ${statusStyles[table.tableStatus as keyof typeof statusStyles]}`}
+                            className={`relative p-6 md:p-8 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl hover:-translate-y-1 ${statusStyles[table.tableStatus as keyof typeof statusStyles]}`}
                         >
-                            <div className="absolute top-3 right-3 text-[9px] font-black uppercase opacity-40">
-                                {table.tableType || ''}
+                            {/* Menu Button */}
+                            <div className="absolute top-4 right-4 z-10">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleMenu(table.etableId);
+                                    }}
+                                    className="p-2 rounded-xl bg-white/60 hover:bg-white transition-colors backdrop-blur-sm"
+                                >
+                                    <MoreVertical size={18} className="text-slate-600" />
+                                </button>
+                                
+                                {/* Dropdown Menu */}
+                                <AnimatePresence>
+                                    {activeMenuId === table.etableId && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                            className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50"
+                                        >
+                                            <div className="p-2">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toast.info('Изменение типа столика');
+                                                        setActiveMenuId(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                        <Settings2 size={16} className="text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900">Тип столика</p>
+                                                        <p className="text-xs text-slate-500">{table.tableType}</p>
+                                                    </div>
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toast.info('Управление услугами');
+                                                        setActiveMenuId(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                                                        <LayoutGrid size={16} className="text-purple-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900">Услуги и удобства</p>
+                                                        <p className="text-xs text-slate-500">Настроить</p>
+                                                    </div>
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toast.info('Типы мероприятий');
+                                                        setActiveMenuId(null);
+                                                    }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                                                >
+                                                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                                                        <Calendar size={16} className="text-amber-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-bold text-slate-900">Типы мероприятий</p>
+                                                        <p className="text-xs text-slate-500">Настроить</p>
+                                                    </div>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
-                            <div className="flex flex-col items-center text-center space-y-3">
-                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-current flex items-center justify-center font-black text-xl md:text-2xl bg-white/40 backdrop-blur-sm">
+                            <div className="flex flex-col items-center text-center space-y-4 pt-2">
+                                <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-3 border-current flex items-center justify-center font-black text-2xl md:text-3xl bg-white/40 backdrop-blur-sm">
                                     {table.tableTitle}
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
+                                <div className="space-y-2">
+                                    <p className="text-xs font-black uppercase tracking-widest opacity-70">
                                         {statusLabels[table.tableStatus as keyof typeof statusLabels]}
                                     </p>
-                                    <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
-                                        <Users size={12} strokeWidth={3} />
+                                    <div className="flex items-center justify-center gap-2 font-bold text-sm">
+                                        <Users size={16} strokeWidth={3} />
                                         <span>{table.capacity} мест</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-5 pt-4 border-t border-current/10 flex items-center justify-around">
+                            <div className="mt-6 pt-4 border-t border-current/10 flex items-center justify-around">
                                 <button 
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-2 rounded-xl hover:bg-white/50 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toast.info('Настройки');
+                                    }}
+                                    className="p-3 rounded-xl hover:bg-white/50 transition-colors"
                                 >
-                                    <Settings2 size={18} />
+                                    <Settings2 size={20} />
                                 </button>
                                 <button 
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-2 rounded-xl hover:bg-white/50 transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEdit(table.etableId);
+                                    }}
+                                    className="p-3 rounded-xl hover:bg-white/50 transition-colors"
                                 >
-                                    <Edit2 size={18} />
+                                    <Edit2 size={20} />
                                 </button>
                                 <button 
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-2 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        toast.info('Удалить столик');
+                                    }}
+                                    className="p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
                                 >
-                                    <Trash2 size={18} />
+                                    <Trash2 size={20} />
                                 </button>
                             </div>
                         </motion.div>
