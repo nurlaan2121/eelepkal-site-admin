@@ -8,7 +8,6 @@ import {
 import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { DraggableContextMenu, MenuItem } from '../../components/ui/DraggableContextMenu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -819,50 +818,107 @@ const VenueActionMenu: React.FC<{
 }> = ({
     venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
-        const menuItems: MenuItem[] = [
-            { 
-                icon: UserCog, 
-                label: 'Заменить администратора', 
-                color: 'text-brand-600',
-                onClick: () => setActiveModal('replace-admin')
-            },
-            { 
-                icon: Utensils, 
-                label: 'Тип кухни', 
-                color: 'text-orange-600',
-                onClick: () => setActiveModal('cuisines')
-            },
-            { 
-                icon: Settings2, 
-                label: 'Условия бронирования', 
-                color: 'text-amber-600',
-                onClick: () => setActiveModal('conditions')
-            },
-            { 
-                icon: CreditCard, 
-                label: 'Реквизиты оплаты', 
-                color: 'text-emerald-600',
-                onClick: () => setActiveModal('payment')
-            },
-            { 
-                icon: Trash2, 
-                label: 'Удалить заведение', 
-                color: 'text-red-500',
-                danger: true,
-                onClick: () => {
-                    if (confirm('Удалить заведение?')) {
-                        onDelete(venue.venueId);
-                    }
+        const [open, setOpen] = React.useState(false);
+        const [menuPosition, setMenuPosition] = React.useState({ top: 0, right: 0 });
+        const buttonRef = React.useRef<HTMLButtonElement>(null);
+        const menuRef = React.useRef<HTMLDivElement>(null);
+
+        const handleToggle = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            setOpen(v => !v);
+            
+            if (!open && buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setMenuPosition({
+                    top: rect.bottom + 8,
+                    right: window.innerWidth - rect.right
+                });
+            }
+        };
+
+        React.useEffect(() => {
+            if (!open) return;
+            const handler = (e: MouseEvent) => {
+                if (menuRef.current && !menuRef.current.contains(e.target as Node) && 
+                    buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+                    setOpen(false);
                 }
-            },
+            };
+            document.addEventListener('mousedown', handler);
+            return () => document.removeEventListener('mousedown', handler);
+        }, [open]);
+
+        const actions = [
+            { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
+            { icon: Utensils, label: 'Тип кухни', modal: 'cuisines' as ModalType, color: 'text-orange-600' },
+            { icon: Settings2, label: 'Условия бронирования', modal: 'conditions' as ModalType, color: 'text-amber-600' },
+            { icon: CreditCard, label: 'Реквизиты оплаты', modal: 'payment' as ModalType, color: 'text-emerald-600' },
         ];
 
         return (
-            <DraggableContextMenu
-                items={menuItems}
-                buttonClassName=""
-                menuClassName=""
-            />
+            <>
+                <div
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    className="flex-shrink-0 relative"
+                >
+                    <button
+                        ref={buttonRef}
+                        onClick={handleToggle}
+                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                    >
+                        <MoreVertical size={18} />
+                    </button>
+
+                    <AnimatePresence>
+                        {open && (
+                            <>
+                                {/* Backdrop to catch clicks outside */}
+                                <div 
+                                    className="fixed inset-0 z-[199]" 
+                                    onClick={() => setOpen(false)}
+                                />
+                                <motion.div
+                                    ref={menuRef}
+                                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -8 }}
+                                    transition={{ duration: 0.12 }}
+                                    className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
+                                    style={{
+                                        top: `${menuPosition.top}px`,
+                                        right: `${menuPosition.right}px`
+                                    }}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                >
+                                    <div className="p-1.5 space-y-0.5">
+                                        {actions.map((action) => (
+                                            <button
+                                                key={action.modal}
+                                                onClick={(e) => { e.stopPropagation(); setOpen(false); setActiveModal(action.modal); }}
+                                                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left group"
+                                            >
+                                                <action.icon size={16} className={action.color} />
+                                                <span className="text-sm font-bold text-slate-700">{action.label}</span>
+                                            </button>
+                                        ))}
+                                        <div className="border-t border-slate-100 my-1" />
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setOpen(false); if (confirm('Удалить заведение?')) onDelete(venue.venueId); }}
+                                            disabled={isDeleting}
+                                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 transition-colors text-left"
+                                        >
+                                            <Trash2 size={16} className="text-red-500" />
+                                            <span className="text-sm font-bold text-red-500">Удалить заведение</span>
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </>
         );
     };
 
