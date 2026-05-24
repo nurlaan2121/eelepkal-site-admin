@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Upload, Image as ImageIcon, Loader2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminMenuService, CreateMenuRequest, MenuCategorySimple, MenuUnit, MenuItemFull } from '../../../api/admin/adminMenuService';
+import { adminMenuService, CreateMenuRequest, MenuCategorySimple, MenuUnit, MenuItemFull, MenuStatus } from '../../../api/admin/adminMenuService';
 import { Button } from '../../../components/ui/Button';
 import { toast } from 'sonner';
 
@@ -10,9 +10,10 @@ interface EditMenuModalProps {
     isOpen: boolean;
     onClose: () => void;
     menuId: number | null;
+    menuStatus?: MenuStatus;
 }
 
-export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, menuId }) => {
+export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, menuId, menuStatus }) => {
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState<CreateMenuRequest>({
         imageUrl: '',
@@ -191,6 +192,8 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, m
 
     if (!isOpen || !menuId) return null;
 
+    const isInactive = menuStatus === 'INACTIVE';
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -234,7 +237,27 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, m
                                 </div>
                             </div>
                         ) : (
-                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+                            <>
+                                {/* Warning for inactive menu */}
+                                {isInactive && (
+                                    <div className="p-4 bg-amber-50 border-b border-amber-200">
+                                        <div className="flex items-start gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                                                <AlertTriangle size={20} className="text-amber-600" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-black text-amber-900 mb-1">
+                                                    Блюдо в резерве
+                                                </p>
+                                                <p className="text-xs font-bold text-amber-700">
+                                                    Чтобы изменить сначала сделайте меню активным!
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
                                 {/* Image Upload */}
                                 <div>
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
@@ -389,6 +412,7 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, m
                                     </div>
                                 </div>
                             </form>
+                            </>
                         )}
 
                         {/* Footer */}
@@ -407,8 +431,9 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({ isOpen, onClose, m
                                 onClick={handleSubmit}
                                 className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider"
                                 isLoading={updateMutation.isPending || isLoadingMenuItem}
+                                disabled={isInactive}
                             >
-                                Сохранить изменения
+                                {isInactive ? 'Сначала сделайте активным' : 'Сохранить изменения'}
                             </Button>
                         </div>
                     </motion.div>

@@ -389,6 +389,7 @@ export const AdminMenuPage: React.FC = () => {
                     setEditingMenuId(null);
                 }}
                 menuId={editingMenuId}
+                menuStatus={activeTab}
             />
         </div>
     );
