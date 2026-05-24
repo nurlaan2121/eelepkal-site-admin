@@ -82,7 +82,10 @@ export const VenueDetailPage: React.FC = () => {
             queryClient.invalidateQueries({ queryKey: ['venue-hours', id] });
             setIsHoursModalOpen(false);
         },
-        onError: () => toast.error('Ошибка при обновлении графика')
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || 'Ошибка при обновлении графика';
+            toast.error(message);
+        }
     });
 
     const updateAmenitiesMutation = useMutation({
