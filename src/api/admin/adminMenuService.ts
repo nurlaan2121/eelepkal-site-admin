@@ -101,7 +101,9 @@ export const adminMenuService = {
     },
 
     updateMenuStatus: async (menuId: number, status: MenuStatus): Promise<void> => {
-        await apiClient.patch(`/api/admin-menu/${menuId}/status`, { status });
+        await apiClient.put(`/api/admin-menu/replace-status/${menuId}`, null, {
+            params: { status },
+        });
     },
 
     getMenuItem: async (menuId: number): Promise<MenuItemFull> => {

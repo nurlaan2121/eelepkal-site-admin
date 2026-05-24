@@ -6,6 +6,7 @@ import { adminMenuService, MenuItem, MenuCategory, MenuStatus } from '../../../a
 import { Button } from '../../../components/ui/Button';
 import { AddMenuModal } from './AddMenuModal';
 import { EditMenuModal } from './EditMenuModal';
+import { toast } from 'sonner';
 
 // ─────────── Skeleton Loader ───────────
 const MenuCardSkeleton: React.FC = () => (
@@ -167,8 +168,16 @@ export const AdminMenuPage: React.FC = () => {
     const moveMutation = useMutation({
         mutationFn: ({ menuId, newStatus }: { menuId: number; newStatus: MenuStatus }) =>
             adminMenuService.updateMenuStatus(menuId, newStatus),
-        onSuccess: () => {
+        onSuccess: (_, { newStatus }) => {
             queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+            queryClient.invalidateQueries({ queryKey: ['menu-categories'] });
+            const statusLabel = newStatus === 'ACTIVE' ? 'активное' : 'резервное';
+            toast.success(`Блюдо перемещено в ${statusLabel} меню`);
+        },
+        onError: (error: any) => {
+            console.error('Move error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка перемещения';
+            toast.error(errorMessage);
         },
     });
 
@@ -176,12 +185,30 @@ export const AdminMenuPage: React.FC = () => {
         mutationFn: (menuId: number) => adminMenuService.deleteMenu(menuId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+            queryClient.invalidateQueries({ queryKey: ['menu-categories'] });
+            toast.success('Блюдо удалено');
+        },
+        onError: (error: any) => {
+            console.error('Delete error:', error);
+            const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка удаления';
+            toast.error(errorMessage);
         },
     });
 
     const handleMove = (menuId: number) => {
+        const currentStatus = activeTab;
         const newStatus = activeTab === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-        moveMutation.mutate({ menuId, newStatus });
+        
+        const currentLabel = currentStatus === 'ACTIVE' ? 'активного' : 'резервного';
+        const newLabel = newStatus === 'ACTIVE' ? 'активное' : 'резервное';
+        
+        const confirmed = window.confirm(
+            `Вы уверены, что хотите переместить блюдо из ${currentLabel} меню в ${newLabel}?`
+        );
+        
+        if (confirmed) {
+            moveMutation.mutate({ menuId, newStatus });
+        }
     };
 
     const handleDelete = (menuId: number) => {
