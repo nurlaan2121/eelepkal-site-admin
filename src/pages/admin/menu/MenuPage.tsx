@@ -1,45 +1,216 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Filter, MoreVertical, Edit2, Trash2, Eye, EyeOff, Utensils } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, ArrowUpDown, Edit2, Trash2, Utensils, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { adminMenuService, MenuItem, MenuCategory, MenuStatus } from '../../../api/admin/adminMenuService';
+import { Button } from '../../../components/ui/Button';
 
-interface MenuItem {
-    id: number;
-    name: string;
-    category: string;
-    price: number;
-    currency: string;
-    isAvailable: boolean;
-    image?: string;
-}
+// ─────────── Skeleton Loader ───────────
+const MenuCardSkeleton: React.FC = () => (
+    <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm animate-pulse">
+        <div className="flex gap-4">
+            <div className="w-24 h-24 rounded-xl bg-slate-200 flex-shrink-0" />
+            <div className="flex-1 space-y-3">
+                <div className="h-5 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-full" />
+                <div className="h-3 bg-slate-200 rounded w-2/3" />
+                <div className="h-6 bg-slate-200 rounded w-1/4 mt-4" />
+            </div>
+            <div className="flex flex-col gap-2">
+                <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+                <div className="w-8 h-8 bg-slate-200 rounded-lg" />
+            </div>
+        </div>
+    </div>
+);
 
-export const AdminMenuPage: React.FC = () => {
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [activeCategory, setActiveCategory] = React.useState('Все');
+// ─────────── Empty State ───────────
+const EmptyState: React.FC<{ status: MenuStatus }> = ({ status }) => (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <Utensils size={32} className="text-slate-300" />
+        </div>
+        <h3 className="text-lg font-black text-slate-900 mb-2">
+            {status === 'ACTIVE' ? 'В этой категории пока нет активных блюд' : 'В этой категории пока нет резервных блюд'}
+        </h3>
+        <p className="text-sm text-slate-400 font-medium max-w-xs">
+            {status === 'ACTIVE' 
+                ? 'Добавьте новые блюда или переместите их из резервных'
+                : 'Переместите сюда блюда из активного меню'}
+        </p>
+    </div>
+);
 
-    const menuItems: MenuItem[] = [
-        { id: 1, name: 'Стейк Рибай', category: 'Горячее', price: 1200, currency: 'сом', isAvailable: true },
-        { id: 2, name: 'Цезарь с курицей', category: 'Салаты', price: 450, currency: 'сом', isAvailable: true },
-        { id: 3, name: 'Лимонад Классический', category: 'Напитки', price: 250, currency: 'сом', isAvailable: false },
-        { id: 4, name: 'Паста Карбонара', category: 'Горячее', price: 550, currency: 'сом', isAvailable: true },
-        { id: 5, name: 'Чизкейк Нью-Йорк', category: 'Десерты', price: 350, currency: 'сом', isAvailable: true },
-    ];
+// ─────────── Menu Card ───────────
+const MenuCard: React.FC<{
+    item: MenuItem;
+    onMove: (id: number) => void;
+    onEdit: (id: number) => void;
+    onDelete: (id: number) => void;
+    isMoving: boolean;
+    isDeleting: boolean;
+}> = ({ item, onMove, onEdit, onDelete, isMoving, isDeleting }) => {
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all group"
+        >
+            <div className="flex gap-4">
+                {/* Image */}
+                <div className="w-24 h-24 rounded-xl overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50 flex-shrink-0 ring-2 ring-white shadow-sm">
+                    {item.imageUrl ? (
+                        <img 
+                            src={item.imageUrl} 
+                            alt={item.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                            <Utensils size={24} />
+                        </div>
+                    )}
+                </div>
 
-    const categories = ['Все', 'Горячее', 'Салаты', 'Напитки', 'Десерты', 'Закуски'];
+                {/* Content */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                        <h3 className="font-black text-slate-900 text-base line-clamp-1 mb-1">{item.title}</h3>
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{item.description}</p>
+                    </div>
+                    <p className="text-xl font-black text-brand-primary">
+                        {item.price} <span className="text-xs font-bold text-slate-400">с</span>
+                    </p>
+                </div>
 
-    const filteredItems = menuItems.filter(item =>
-        (activeCategory === 'Все' || item.category === activeCategory) &&
-        item.name.toLowerCase().includes(searchTerm.toLowerCase())
+                {/* Actions */}
+                <div className="flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={() => onMove(item.id)}
+                        disabled={isMoving}
+                        className="p-2 rounded-lg bg-slate-50 hover:bg-brand-50 text-slate-400 hover:text-brand-600 transition-colors disabled:opacity-50"
+                        title="Переместить"
+                    >
+                        {isMoving ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <ArrowUpDown size={16} />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => onEdit(item.id)}
+                        className="p-2 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
+                        title="Редактировать"
+                    >
+                        <Edit2 size={16} />
+                    </button>
+                    <button
+                        onClick={() => onDelete(item.id)}
+                        disabled={isDeleting}
+                        className="p-2 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                        title="Удалить"
+                    >
+                        {isDeleting ? (
+                            <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                            <Trash2 size={16} />
+                        )}
+                    </button>
+                </div>
+            </div>
+        </motion.div>
     );
+};
+
+// ─────────── Main Page ───────────
+export const AdminMenuPage: React.FC = () => {
+    const queryClient = useQueryClient();
+    const [activeTab, setActiveTab] = useState<MenuStatus>('ACTIVE');
+    const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+    const [page, setPage] = useState(1);
+    const pageSize = 10;
+
+    // Fetch categories
+    const { data: categories, isLoading: categoriesLoading } = useQuery({
+        queryKey: ['menu-categories'],
+        queryFn: adminMenuService.getCategories,
+    });
+
+    // Auto-select first category
+    useEffect(() => {
+        if (categories && categories.length > 0 && !selectedCategory) {
+            setSelectedCategory(categories[0].id);
+        }
+    }, [categories, selectedCategory]);
+
+    // Fetch menu items
+    const { data: menuData, isLoading: menuLoading } = useQuery({
+        queryKey: ['menu-items', selectedCategory, activeTab, page],
+        queryFn: () => adminMenuService.getAllMenus({
+            categoryId: selectedCategory!,
+            status: activeTab,
+            page,
+            pageSize,
+        }),
+        enabled: !!selectedCategory,
+    });
+
+    // Mutations
+    const moveMutation = useMutation({
+        mutationFn: ({ menuId, newStatus }: { menuId: number; newStatus: MenuStatus }) =>
+            adminMenuService.updateMenuStatus(menuId, newStatus),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+        },
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (menuId: number) => adminMenuService.deleteMenu(menuId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['menu-items'] });
+        },
+    });
+
+    const handleMove = (menuId: number) => {
+        const newStatus = activeTab === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        moveMutation.mutate({ menuId, newStatus });
+    };
+
+    const handleDelete = (menuId: number) => {
+        if (window.confirm('Вы уверены, что хотите удалить это блюдо?')) {
+            deleteMutation.mutate(menuId);
+        }
+    };
+
+    const handleEdit = (menuId: number) => {
+        // TODO: Open edit modal or navigate to edit page
+        console.log('Edit menu item:', menuId);
+    };
+
+    const handleCategoryChange = (categoryId: number) => {
+        setSelectedCategory(categoryId);
+        setPage(1);
+    };
+
+    const handleTabChange = (tab: MenuStatus) => {
+        setActiveTab(tab);
+        setPage(1);
+    };
+
+    const menuItems = menuData?.getMenuResponse || [];
+    const totalMenus = menuData?.totalMenus || 0;
+    const totalPages = Math.ceil(totalMenus / pageSize);
 
     return (
         <div className="space-y-6 pb-20 md:pb-0">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 md:px-0">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Меню</h1>
-                    <p className="text-gray-500 text-sm md:text-base">Управление блюдами и стоп-листами</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Меню</h1>
+                    <p className="text-slate-400 text-sm mt-0.5">Управление блюдами и стоп-листами</p>
                 </div>
                 <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100 font-bold uppercase tracking-widest text-xs">
                     <Plus size={20} />
@@ -47,138 +218,122 @@ export const AdminMenuPage: React.FC = () => {
                 </Button>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 space-y-4 bg-gray-50/30">
-                    <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <Input
-                            placeholder="Поиск по меню..."
-                            className="pl-10 h-11 bg-white"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                    <div className="flex overflow-x-auto no-scrollbar gap-2 pb-1">
-                        {categories.map(cat => (
+            {/* Status Tabs */}
+            <div className="bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
+                <div className="grid grid-cols-2 gap-1">
+                    <button
+                        onClick={() => handleTabChange('ACTIVE')}
+                        className={`py-3 px-4 rounded-xl text-sm font-black transition-all ${
+                            activeTab === 'ACTIVE'
+                                ? 'bg-brand-primary text-white shadow-md'
+                                : 'bg-transparent text-slate-500 hover:bg-slate-50'
+                        }`}
+                    >
+                        Активное
+                    </button>
+                    <button
+                        onClick={() => handleTabChange('INACTIVE')}
+                        className={`py-3 px-4 rounded-xl text-sm font-black transition-all ${
+                            activeTab === 'INACTIVE'
+                                ? 'bg-brand-primary text-white shadow-md'
+                                : 'bg-transparent text-slate-500 hover:bg-slate-50'
+                        }`}
+                    >
+                        Резервное
+                    </button>
+                </div>
+            </div>
+
+            {/* Category Tabs */}
+            {categoriesLoading ? (
+                <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="px-5 py-3 rounded-2xl bg-slate-200 animate-pulse min-w-[120px]" />
+                    ))}
+                </div>
+            ) : (
+                categories && categories.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                        {categories.map((category) => (
                             <button
-                                key={cat}
-                                onClick={() => setActiveCategory(cat)}
-                                className={`px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 whitespace-nowrap ${activeCategory === cat
-                                    ? 'bg-brand-primary border-brand-primary text-white shadow-lg'
-                                    : 'bg-white border-gray-100 text-gray-500 hover:border-brand-200'
-                                    }`}
+                                key={category.id}
+                                onClick={() => handleCategoryChange(category.id)}
+                                className={`px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border-2 whitespace-nowrap ${
+                                    selectedCategory === category.id
+                                        ? 'bg-brand-primary border-brand-primary text-white shadow-lg'
+                                        : 'bg-white border-slate-100 text-slate-500 hover:border-brand-200 hover:bg-brand-50'
+                                }`}
                             >
-                                {cat}
+                                {category.name} {category.count !== undefined && `(${category.count})`}
                             </button>
                         ))}
                     </div>
-                </div>
+                )
+            )}
 
-                {/* Mobile View */}
-                <div className="md:hidden divide-y divide-gray-100">
-                    {filteredItems.length === 0 ? (
-                        <div className="p-8 text-center text-gray-500 font-bold">Ничего не найдено</div>
-                    ) : (
-                        filteredItems.map((item) => (
-                            <div key={item.id} className="p-4 active:bg-gray-50 transition-colors">
-                                <div className="flex gap-4">
-                                    <div className="w-20 h-20 rounded-2xl bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-300 border border-slate-100 overflow-hidden">
-                                        {item.image ? (
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <Utensils size={32} />
-                                        )}
-                                    </div>
-                                    <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                                        <div>
-                                            <div className="flex items-start justify-between">
-                                                <h3 className="font-black text-gray-900 text-base line-clamp-1">{item.name}</h3>
-                                                <button className="p-1 px-2 text-gray-400">
-                                                    <MoreVertical size={18} />
-                                                </button>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">
-                                                    {item.category}
-                                                </span>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${item.isAvailable ? 'bg-brand-500' : 'bg-red-500'}`} />
-                                            </div>
-                                        </div>
-                                        <div className="flex items-end justify-between">
-                                            <p className="text-lg font-black text-brand-primary">
-                                                {item.price} <span className="text-[10px] uppercase">{item.currency}</span>
-                                            </p>
-                                            <div className="flex gap-1.5">
-                                                <button className={`p-2 rounded-xl border ${item.isAvailable ? 'bg-white border-slate-200 text-slate-400' : 'bg-red-50 bg-red-100 border-red-500 text-red-500'}`}>
-                                                    {item.isAvailable ? <Eye size={16} /> : <EyeOff size={16} />}
-                                                </button>
-                                                <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400">
-                                                    <Edit2 size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    )}
+            {/* Menu Items Grid */}
+            {menuLoading ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <MenuCardSkeleton key={i} />
+                    ))}
                 </div>
-
-                {/* Desktop View */}
-                <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left font-bold">
-                        <thead>
-                            <tr className="bg-gray-50 text-gray-400 text-[10px] uppercase tracking-wider font-black">
-                                <th className="px-6 py-4">Блюдо</th>
-                                <th className="px-6 py-4">Категория</th>
-                                <th className="px-6 py-4">Цена</th>
-                                <th className="px-6 py-4">Статус</th>
-                                <th className="px-6 py-4 text-right">Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {filteredItems.map((item) => (
-                                <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 overflow-hidden border border-slate-200 group-hover:scale-110 transition-transform">
-                                                {item.image ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" /> : <Utensils size={18} />}
-                                            </div>
-                                            <p className="text-sm font-bold text-gray-900">{item.name}</p>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg">
-                                            {item.category}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-gray-900">
-                                        {item.price} <span className="text-[10px] uppercase text-gray-400">{item.currency}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${item.isAvailable ? 'bg-brand-500' : 'bg-red-500'}`} />
-                                            <span className={`text-[10px] font-black uppercase tracking-tight ${item.isAvailable ? 'text-brand-700' : 'text-red-700'}`}>
-                                                {item.isAvailable ? 'В наличии' : 'Стоп-лист'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 text-gray-400 hover:text-brand-600">
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button className="p-2 text-gray-400 hover:text-red-600">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+            ) : menuItems.length === 0 ? (
+                <EmptyState status={activeTab} />
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <AnimatePresence>
+                            {menuItems.map((item) => (
+                                <MenuCard
+                                    key={item.id}
+                                    item={item}
+                                    onMove={handleMove}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    isMoving={moveMutation.variables?.menuId === item.id && moveMutation.isPending}
+                                    isDeleting={deleteMutation.variables === item.id && deleteMutation.isPending}
+                                />
                             ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-center gap-2 mt-6">
+                            <button
+                                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                            >
+                                Назад
+                            </button>
+                            <div className="flex items-center gap-1">
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <button
+                                        key={i + 1}
+                                        onClick={() => setPage(i + 1)}
+                                        className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
+                                            page === i + 1
+                                                ? 'bg-brand-primary text-white shadow-md'
+                                                : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages}
+                                className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
+                            >
+                                Вперед
+                            </button>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 };
