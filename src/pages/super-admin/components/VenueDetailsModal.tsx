@@ -31,7 +31,20 @@ export const VenueDetailsModal: React.FC<VenueDetailsModalProps> = ({
             setCityId(initialDetails.cityId || 0);
             setAddress(initialDetails.address || '');
             setAverageCheck(initialDetails.averageCheck || 0);
-            setCapacities(Array.isArray(initialDetails.capacities) ? initialDetails.capacities : []);
+            
+            // Handle capacities - could be array or object
+            if (Array.isArray(initialDetails.capacities)) {
+                setCapacities(initialDetails.capacities);
+            } else if (initialDetails.capacities && typeof initialDetails.capacities === 'object') {
+                // Convert object format { "Кабина": 10, "Стол": 100 } to array
+                const capacitiesArray = Object.entries(initialDetails.capacities).map(([title, value]) => ({
+                    title,
+                    value: Number(value)
+                }));
+                setCapacities(capacitiesArray);
+            } else {
+                setCapacities([]);
+            }
         }
     }, [isOpen, initialDetails]);
 
