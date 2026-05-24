@@ -8,7 +8,7 @@ import { AddTableModal } from './AddTableModal';
 import { EditTableModal } from './EditTableModal';
 
 export const AdminTablesPage: React.FC = () => {
-    const [filter, setFilter] = useState<'ALL' | 'AVAILABLE' | 'OCCUPIED' | 'RESERVED'>('ALL');
+    const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'BUSY' | 'RSVN'>('ALL');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [floor, setFloor] = useState<number>(1);
     const [page, setPage] = useState(0);
@@ -33,7 +33,7 @@ export const AdminTablesPage: React.FC = () => {
     const countBusy = tablesData?.countBusy || 0;
     const countWaiting = tablesData?.countWaiting || 0;
 
-    const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.status === filter);
+    const filteredTables = filter === 'ALL' ? tables : tables.filter(t => t.tableStatus === filter);
 
     // Format date for display
     const formatDateDisplay = (dateStr: string) => {
@@ -55,15 +55,15 @@ export const AdminTablesPage: React.FC = () => {
     };
 
     const statusStyles = {
-        AVAILABLE: 'border-brand-200 bg-gradient-to-br from-brand-50 to-brand-100/50 text-brand-700 shadow-lg shadow-brand-100/50',
-        OCCUPIED: 'border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 shadow-lg shadow-blue-100/50',
-        RESERVED: 'border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-700 shadow-lg shadow-amber-100/50',
+        OPEN: 'border-brand-200 bg-gradient-to-br from-brand-50 to-brand-100/50 text-brand-700 shadow-lg shadow-brand-100/50',
+        BUSY: 'border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 shadow-lg shadow-blue-100/50',
+        RSVN: 'border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-700 shadow-lg shadow-amber-100/50',
     };
 
     const statusLabels = {
-        AVAILABLE: 'FREE',
-        OCCUPIED: 'BUSY',
-        RESERVED: 'RSVN',
+        OPEN: 'FREE',
+        BUSY: 'BUSY',
+        RSVN: 'RSVN',
     };
 
     const typeLabels: Record<string, string> = {
@@ -98,9 +98,9 @@ export const AdminTablesPage: React.FC = () => {
             <div className="flex overflow-x-auto no-scrollbar gap-2 px-1 md:px-0 pb-2">
                 {[
                     { key: 'ALL', label: 'Все' },
-                    { key: 'AVAILABLE', label: 'Свободны' },
-                    { key: 'OCCUPIED', label: 'Заняты' },
-                    { key: 'RESERVED', label: 'Бронь' },
+                    { key: 'OPEN', label: 'Свободны' },
+                    { key: 'BUSY', label: 'Заняты' },
+                    { key: 'RSVN', label: 'Бронь' },
                 ].map(({ key, label }) => (
                     <button
                         key={key}
@@ -173,27 +173,32 @@ export const AdminTablesPage: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
                     <AnimatePresence mode="popLayout">
-                        {filteredTables.map((table: TableResponse) => (
+                        {filteredTables.map((table: TableResponse) => {
+                            console.log('Table object:', table);
+                            return (
                         <motion.div
                             layout
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
-                            key={table.id}
-                            onClick={() => handleEdit(table.id)}
-                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl ${statusStyles[table.status as keyof typeof statusStyles]}`}
+                            key={table.etableId}
+                            onClick={() => {
+                                console.log('Clicked table.etableId:', table.etableId, 'full table:', table);
+                                handleEdit(table.etableId);
+                            }}
+                            className={`relative p-5 md:p-6 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl ${statusStyles[table.tableStatus as keyof typeof statusStyles]}`}
                         >
                             <div className="absolute top-3 right-3 text-[9px] font-black uppercase opacity-40">
-                                {table.type ? typeLabels[table.type] || table.type : ''}
+                                {table.tableType || ''}
                             </div>
 
                             <div className="flex flex-col items-center text-center space-y-3">
                                 <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-current flex items-center justify-center font-black text-xl md:text-2xl bg-white/40 backdrop-blur-sm">
-                                    {table.number}
+                                    {table.tableTitle}
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest opacity-70">
-                                        {statusLabels[table.status as keyof typeof statusLabels]}
+                                        {statusLabels[table.tableStatus as keyof typeof statusLabels]}
                                     </p>
                                     <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
                                         <Users size={12} strokeWidth={3} />
@@ -223,7 +228,8 @@ export const AdminTablesPage: React.FC = () => {
                                 </button>
                             </div>
                         </motion.div>
-                    ))}
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
             )}

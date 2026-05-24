@@ -1,12 +1,11 @@
 import { apiClient } from '../client';
 
 export interface TableResponse {
-    id: number;
-    number: string | number;
-    capacity: number;
-    status: 'AVAILABLE' | 'OCCUPIED' | 'RESERVED';
-    floor: number;
-    type?: string;
+    etableId: number;
+    tableTitle: string;
+    tableType: string;
+    capacity: string;
+    tableStatus: 'OPEN' | 'BUSY' | 'RSVN' | string;
 }
 
 export interface TableDetail {
