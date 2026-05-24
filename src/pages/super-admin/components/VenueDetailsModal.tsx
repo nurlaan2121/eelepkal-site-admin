@@ -8,6 +8,10 @@ interface VenueDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialDetails: VenueDetailsData;
+    basicInfo: {
+        address?: string;
+        averageCheck?: number;
+    };
     cities: City[];
     onSave: (details: VenueDetailsData) => void;
     isSaving: boolean;
@@ -17,6 +21,7 @@ export const VenueDetailsModal: React.FC<VenueDetailsModalProps> = ({
     isOpen,
     onClose,
     initialDetails,
+    basicInfo,
     cities,
     onSave,
     isSaving
@@ -27,17 +32,20 @@ export const VenueDetailsModal: React.FC<VenueDetailsModalProps> = ({
     const [capacities, setCapacities] = useState<Capacity[]>([]);
 
     useEffect(() => {
-        if (isOpen && initialDetails) {
-            setCityId(initialDetails.cityId || 0);
-            setAddress(initialDetails.address || '');
-            setAverageCheck(initialDetails.averageCheck || 0);
+        if (isOpen) {
+            // address and averageCheck come from basicInfo API
+            // cityId and capacities come from details API
+            setCityId(initialDetails?.cityId || 0);
+            setAddress(basicInfo?.address || initialDetails?.address || '');
+            setAverageCheck(basicInfo?.averageCheck || initialDetails?.averageCheck || 0);
             
             // Handle capacities - could be array or object
-            if (Array.isArray(initialDetails.capacities)) {
-                setCapacities(initialDetails.capacities);
-            } else if (initialDetails.capacities && typeof initialDetails.capacities === 'object') {
+            const capacitiesData = initialDetails?.capacities;
+            if (Array.isArray(capacitiesData)) {
+                setCapacities(capacitiesData);
+            } else if (capacitiesData && typeof capacitiesData === 'object') {
                 // Convert object format { "Кабина": 10, "Стол": 100 } to array
-                const capacitiesArray = Object.entries(initialDetails.capacities).map(([title, value]) => ({
+                const capacitiesArray = Object.entries(capacitiesData).map(([title, value]) => ({
                     title,
                     value: Number(value)
                 }));
@@ -46,7 +54,7 @@ export const VenueDetailsModal: React.FC<VenueDetailsModalProps> = ({
                 setCapacities([]);
             }
         }
-    }, [isOpen, initialDetails]);
+    }, [isOpen, initialDetails, basicInfo]);
 
     const addCapacity = () => {
         setCapacities([...capacities, { title: '', value: 0 }]);

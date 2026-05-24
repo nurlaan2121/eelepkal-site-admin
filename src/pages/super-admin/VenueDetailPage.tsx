@@ -462,6 +462,10 @@ export const VenueDetailPage: React.FC = () => {
                 isOpen={isDetailsModalOpen}
                 onClose={() => setIsDetailsModalOpen(false)}
                 initialDetails={detailsData || { cityId: 0, address: '', averageCheck: 0, capacities: [] }}
+                basicInfo={{
+                    address: (basicData as any)?.address || detailsData?.address || '',
+                    averageCheck: (basicData as any)?.averageCheck || detailsData?.averageCheck || 0
+                }}
                 cities={(allCities.data as any[]) || []}
                 onSave={(details) => updateDetailsMutation.mutate(details)}
                 isSaving={updateDetailsMutation.isPending}
