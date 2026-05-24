@@ -819,15 +819,34 @@ const VenueActionMenu: React.FC<{
     venue, onDelete, isDeleting, activeModal, setActiveModal
 }) => {
         const [open, setOpen] = React.useState(false);
+        const [menuPosition, setMenuPosition] = React.useState({ top: 0, right: 0 });
+        const buttonRef = React.useRef<HTMLButtonElement>(null);
         const menuRef = React.useRef<HTMLDivElement>(null);
 
+        const handleToggle = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            setOpen(v => !v);
+            
+            if (!open && buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setMenuPosition({
+                    top: rect.bottom + 8,
+                    right: window.innerWidth - rect.right
+                });
+            }
+        };
+
         React.useEffect(() => {
+            if (!open) return;
             const handler = (e: MouseEvent) => {
-                if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+                if (menuRef.current && !menuRef.current.contains(e.target as Node) && 
+                    buttonRef.current && !buttonRef.current.contains(e.target as Node)) {
+                    setOpen(false);
+                }
             };
             document.addEventListener('mousedown', handler);
             return () => document.removeEventListener('mousedown', handler);
-        }, []);
+        }, [open]);
 
         const actions = [
             { icon: UserCog, label: 'Заменить администратора', modal: 'replace-admin' as ModalType, color: 'text-brand-600' },
@@ -844,7 +863,8 @@ const VenueActionMenu: React.FC<{
                     className="flex-shrink-0 relative"
                 >
                     <button
-                        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                        ref={buttonRef}
+                        onClick={handleToggle}
                         className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
                     >
                         <MoreVertical size={18} />
@@ -860,9 +880,8 @@ const VenueActionMenu: React.FC<{
                                 transition={{ duration: 0.12 }}
                                 className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
                                 style={{
-                                    top: 'auto',
-                                    bottom: 'auto',
-                                    transform: 'none'
+                                    top: `${menuPosition.top}px`,
+                                    right: `${menuPosition.right}px`
                                 }}
                             >
                                 <div className="p-1.5 space-y-0.5">
