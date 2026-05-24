@@ -53,7 +53,7 @@ export const adminMenuService = {
     },
 
     getCategories: async (): Promise<MenuCategory[]> => {
-        const response = await apiClient.get<MenuCategory[]>('/api/admin-menu/getCategories');
+        const response = await apiClient.get<MenuCategory[]>('/api/dev/category/allIdAndName');
         return response.data;
     },
 
