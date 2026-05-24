@@ -206,6 +206,8 @@ export const DraggableContextMenu: React.FC<DraggableMenuProps> = ({
                                 left: `${position.left}px`
                             }}
                             onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
                         >
                             {/* Drag Handle */}
                             <div
