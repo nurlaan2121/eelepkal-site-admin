@@ -78,18 +78,42 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
                 description: formData.description,
             };
             await adminTableService.updateTableBasic(tableId, basicData);
-            console.log('Basic info updated');
+            console.log('✓ Basic info updated');
 
-            // 2. Обновляем типы мероприятий (если есть изменения)
-            if (formData.eventTypes.length > 0) {
-                // Нужно получить ID из названий
-                // Пока пропускаем, т.к. eventTypes приходят как string[]
-                console.log('Event types:', formData.eventTypes);
+            // 2. Обновляем типы мероприятий
+            if (eventTypes && formData.eventTypes.length > 0) {
+                // Конвертируем названия в ID: {"Свадьба": 1, "Корпоратив": 2}
+                const eventTypeIds = formData.eventTypes
+                    .map(name => eventTypes[name])
+                    .filter(id => id !== undefined);
+                
+                if (eventTypeIds.length > 0) {
+                    await adminTableService.updateTableEventTypes(tableId, eventTypeIds);
+                    console.log('✓ Event types updated:', eventTypeIds);
+                }
             }
 
-            // 3. Обновляем услуги (если есть изменения)
-            if (formData.amenities.length > 0) {
-                console.log('Amenities:', formData.amenities);
+            // 3. Обновляем тип стола
+            if (tableTypes && formData.etableType) {
+                // Находим ID типа стола по названию
+                const tableTypeId = tableTypes[formData.etableType];
+                if (tableTypeId !== undefined) {
+                    await adminTableService.updateTableType(tableId, tableTypeId);
+                    console.log('✓ Table type updated:', tableTypeId);
+                }
+            }
+
+            // 4. Обновляем услуги/удобства
+            if (amenities && formData.amenities.length > 0) {
+                // Конвертируем названия в ID
+                const amenityIds = formData.amenities
+                    .map(name => amenities.find(a => a.title === name)?.id)
+                    .filter(id => id !== undefined) as number[];
+                
+                if (amenityIds.length > 0) {
+                    await adminTableService.updateTableServices(tableId, amenityIds);
+                    console.log('✓ Services updated:', amenityIds);
+                }
             }
 
             queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
