@@ -27,6 +27,7 @@ import { VenueHoursModal } from './components/VenueHoursModal';
 import { VenueAmenitiesModal } from './components/VenueAmenitiesModal';
 import { VenueContactsModal } from './components/VenueContactsModal';
 import { VenueDescModal } from './components/VenueDescModal';
+import { VenueDetailsModal } from './components/VenueDetailsModal';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
@@ -36,6 +37,7 @@ export const VenueDetailPage: React.FC = () => {
 
     const [deletedFeedbackIds, setDeletedFeedbackIds] = useState<Set<number>>(new Set());
     const [isHoursModalOpen, setIsHoursModalOpen] = useState(false);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [isAmenitiesModalOpen, setIsAmenitiesModalOpen] = useState(false);
     const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
     const [isDescModalOpen, setIsDescModalOpen] = useState(false);
@@ -118,6 +120,19 @@ export const VenueDetailPage: React.FC = () => {
             setIsDescModalOpen(false);
         },
         onError: () => toast.error('Ошибка при обновлении информации')
+    });
+
+    const updateDetailsMutation = useMutation({
+        mutationFn: (details: VenueDetailsData) => superAdminVenueService.addVenueDetails(id, details),
+        onSuccess: () => {
+            toast.success('Детали заведения обновлены');
+            queryClient.invalidateQueries({ queryKey: ['venue-details', id] });
+            setIsDetailsModalOpen(false);
+        },
+        onError: (error: any) => {
+            const message = error?.response?.data?.message || 'Ошибка при обновлении деталей';
+            toast.error(message);
+        }
     });
 
     const results = useQueries({
@@ -291,7 +306,7 @@ export const VenueDetailPage: React.FC = () => {
                 />
 
                 <div className="px-4 sm:px-0 space-y-6">
-                    <VenueInfoCard onEdit={() => console.log('Edit Basic')} className="!p-0">
+                    <VenueInfoCard onEdit={() => setIsDetailsModalOpen(true)} className="!p-0">
                         <div className="p-6 space-y-6">
                             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{(basicData as any)?.name || basicData?.nameVenue || 'Без названия'}</h1>
                             <div className="space-y-4">
@@ -329,7 +344,7 @@ export const VenueDetailPage: React.FC = () => {
                         </div>
                     )}
 
-                    <VenueInfoCard title="Детали заведения" icon={<LayoutGrid size={20} />} onEdit={() => console.log('Edit Details')}>
+                    <VenueInfoCard title="Детали заведения" icon={<LayoutGrid size={20} />} onEdit={() => setIsDetailsModalOpen(true)}>
                         <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                             <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Layers size={20} /></div><div><p className="text-[9px] font-black uppercase text-slate-400">Этаж</p><p className="font-bold text-sm">1 этаж</p></div></div>
                             <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400"><Sofa size={20} /></div><div><p className="text-[9px] font-black uppercase text-slate-400">Кабины</p><p className="font-bold text-sm">Есть VIP</p></div></div>
@@ -441,6 +456,15 @@ export const VenueDetailPage: React.FC = () => {
                 initialHours={venueHours}
                 onSave={(hours) => updateHoursMutation.mutate(hours)}
                 isSaving={updateHoursMutation.isPending}
+            />
+
+            <VenueDetailsModal
+                isOpen={isDetailsModalOpen}
+                onClose={() => setIsDetailsModalOpen(false)}
+                initialDetails={detailsData}
+                cities={allCities.data as any[] || []}
+                onSave={(details) => updateDetailsMutation.mutate(details)}
+                isSaving={updateDetailsMutation.isPending}
             />
 
             <VenueAmenitiesModal

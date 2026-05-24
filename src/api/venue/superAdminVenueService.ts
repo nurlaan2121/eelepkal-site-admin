@@ -223,4 +223,8 @@ export const superAdminVenueService = {
             params: { name, description }
         });
     },
+
+    // addVenueDetails: async (venueId: number, data: VenueDetailsData): Promise<void> => {
+    //     await apiClient.put(`/api/super-admin-venue/add-venue-details`, { venueId, ...data });
+    // },
 };
