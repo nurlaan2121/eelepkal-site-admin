@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Upload, Image as ImageIcon, Loader2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminTableService, TableDetail, TableType, TableAmenity, EventType, UpdateTableBasicRequest } from '../../../api/admin/adminTableService';
+import { adminTableService, TableDetail, UpdateTableBasicRequest } from '../../../api/admin/adminTableService';
 import { Button } from '../../../components/ui/Button';
 import { toast } from 'sonner';
 
@@ -35,25 +35,6 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
 
     console.log('Table detail loaded:', tableDetail, 'error:', tableError, 'isLoading:', isLoadingTable);
 
-    // Fetch helper data
-    const { data: tableTypes } = useQuery({
-        queryKey: ['table-types'],
-        queryFn: adminTableService.getTableTypes,
-        enabled: isOpen,
-    });
-
-    const { data: amenities } = useQuery({
-        queryKey: ['table-amenities'],
-        queryFn: adminTableService.getTableAmenities,
-        enabled: isOpen,
-    });
-
-    const { data: eventTypes } = useQuery({
-        queryKey: ['event-types'],
-        queryFn: adminTableService.getEventTypes,
-        enabled: isOpen,
-    });
-
     // Initialize form when tableDetail is loaded
     useEffect(() => {
         if (tableDetail) {
@@ -79,42 +60,6 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
             };
             await adminTableService.updateTableBasic(tableId, basicData);
             console.log('✓ Basic info updated');
-
-            // 2. Обновляем типы мероприятий
-            if (eventTypes && formData.eventTypes.length > 0) {
-                // Конвертируем названия в ID: {"Свадьба": 1, "Корпоратив": 2}
-                const eventTypeIds = formData.eventTypes
-                    .map(name => eventTypes[name])
-                    .filter(id => id !== undefined);
-                
-                if (eventTypeIds.length > 0) {
-                    await adminTableService.updateTableEventTypes(tableId, eventTypeIds);
-                    console.log('✓ Event types updated:', eventTypeIds);
-                }
-            }
-
-            // 3. Обновляем тип стола
-            if (tableTypes && formData.etableType) {
-                // Находим ID типа стола по названию
-                const tableTypeId = tableTypes[formData.etableType];
-                if (tableTypeId !== undefined) {
-                    await adminTableService.updateTableType(tableId, tableTypeId);
-                    console.log('✓ Table type updated:', tableTypeId);
-                }
-            }
-
-            // 4. Обновляем услуги/удобства
-            if (amenities && formData.amenities.length > 0) {
-                // Конвертируем названия в ID
-                const amenityIds = formData.amenities
-                    .map(name => amenities.find(a => a.title === name)?.id)
-                    .filter(id => id !== undefined) as number[];
-                
-                if (amenityIds.length > 0) {
-                    await adminTableService.updateTableServices(tableId, amenityIds);
-                    console.log('✓ Services updated:', amenityIds);
-                }
-            }
 
             queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
             toast.success('Столик успешно обновлен');
@@ -379,40 +324,6 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
                                                 rows={3}
                                                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                                             />
-                                        </div>
-
-                                        {/* Amenities */}
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                                Удобства
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {formData.amenities.map((amenity, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-xl text-xs font-bold text-blue-700"
-                                                    >
-                                                        {amenity}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        {/* Event Types */}
-                                        <div>
-                                            <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                                Типы мероприятий
-                                            </label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {formData.eventTypes.map((eventType, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="px-3 py-2 bg-purple-50 border border-purple-200 rounded-xl text-xs font-bold text-purple-700"
-                                                    >
-                                                        {eventType}
-                                                    </div>
-                                                ))}
-                                            </div>
                                         </div>
                                     </div>
 

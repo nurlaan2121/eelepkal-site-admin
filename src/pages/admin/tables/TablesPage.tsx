@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
 import { AddTableModal } from './AddTableModal';
 import { EditTableModal } from './EditTableModal';
+import { EditTableTypeModal } from './EditTableTypeModal';
+import { EditTableServicesModal } from './EditTableServicesModal';
+import { EditTableEventsModal } from './EditTableEventsModal';
 import { toast } from 'sonner';
 
 export const AdminTablesPage: React.FC = () => {
@@ -17,6 +20,12 @@ export const AdminTablesPage: React.FC = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingTableId, setEditingTableId] = useState<number | null>(null);
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+    const [editingTableData, setEditingTableData] = useState<TableResponse | null>(null);
+    
+    // New modals state
+    const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
+    const [isServicesModalOpen, setIsServicesModalOpen] = useState(false);
+    const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
     const limit = 20;
 
     // Fetch tables
@@ -56,8 +65,13 @@ export const AdminTablesPage: React.FC = () => {
         setIsEditModalOpen(true);
     };
 
-    const toggleMenu = (tableId: number) => {
+    const toggleMenu = (tableId: number, tableData?: TableResponse) => {
+        if (tableData) setEditingTableData(tableData);
         setActiveMenuId(activeMenuId === tableId ? null : tableId);
+    };
+
+    const closeMenu = () => {
+        setActiveMenuId(null);
     };
 
     const statusStyles = {
@@ -199,7 +213,7 @@ export const AdminTablesPage: React.FC = () => {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        toggleMenu(table.etableId);
+                                        toggleMenu(table.etableId, table);
                                     }}
                                     className="p-2 rounded-xl bg-white/60 hover:bg-white transition-colors backdrop-blur-sm"
                                 >
@@ -219,8 +233,8 @@ export const AdminTablesPage: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toast.info('Изменение типа столика');
-                                                        setActiveMenuId(null);
+                                                        closeMenu();
+                                                        setIsTypeModalOpen(true);
                                                     }}
                                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
                                                 >
@@ -236,8 +250,8 @@ export const AdminTablesPage: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toast.info('Управление услугами');
-                                                        setActiveMenuId(null);
+                                                        closeMenu();
+                                                        setIsServicesModalOpen(true);
                                                     }}
                                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
                                                 >
@@ -253,8 +267,8 @@ export const AdminTablesPage: React.FC = () => {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        toast.info('Типы мероприятий');
-                                                        setActiveMenuId(null);
+                                                        closeMenu();
+                                                        setIsEventsModalOpen(true);
                                                     }}
                                                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
                                                 >
@@ -339,6 +353,39 @@ export const AdminTablesPage: React.FC = () => {
                 }}
                 tableId={editingTableId}
                 selectedDate={selectedDate}
+            />
+
+            {/* Edit Table Type Modal */}
+            <EditTableTypeModal
+                isOpen={isTypeModalOpen}
+                onClose={() => {
+                    setIsTypeModalOpen(false);
+                    setEditingTableData(null);
+                }}
+                tableId={editingTableData?.etableId || null}
+                currentType={editingTableData?.tableType || ''}
+            />
+
+            {/* Edit Table Services Modal */}
+            <EditTableServicesModal
+                isOpen={isServicesModalOpen}
+                onClose={() => {
+                    setIsServicesModalOpen(false);
+                    setEditingTableData(null);
+                }}
+                tableId={editingTableData?.etableId || null}
+                currentAmenities={[]} // TODO: Get from API
+            />
+
+            {/* Edit Table Events Modal */}
+            <EditTableEventsModal
+                isOpen={isEventsModalOpen}
+                onClose={() => {
+                    setIsEventsModalOpen(false);
+                    setEditingTableData(null);
+                }}
+                tableId={editingTableData?.etableId || null}
+                currentEvents={[]} // TODO: Get from API
             />
         </div>
     );
