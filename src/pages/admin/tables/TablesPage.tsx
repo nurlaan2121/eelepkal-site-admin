@@ -374,7 +374,7 @@ export const AdminTablesPage: React.FC = () => {
                     setEditingTableData(null);
                 }}
                 tableId={editingTableData?.etableId || null}
-                currentAmenities={[]} // TODO: Get from API
+                currentAmenities={[]}
             />
 
             {/* Edit Table Events Modal */}
@@ -385,7 +385,7 @@ export const AdminTablesPage: React.FC = () => {
                     setEditingTableData(null);
                 }}
                 tableId={editingTableData?.etableId || null}
-                currentEvents={[]} // TODO: Get from API
+                currentEvents={[]}
             />
         </div>
     );

@@ -17,21 +17,25 @@ export const EditTableServicesModal: React.FC<EditTableServicesModalProps> = ({ 
     const queryClient = useQueryClient();
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+    // Загружаем ВСЕ доступные услуги
     const { data: amenities } = useQuery({
         queryKey: ['table-amenities'],
         queryFn: adminTableService.getTableAmenities,
         enabled: isOpen,
     });
 
+    // Загружаем ТЕКУЩИЕ услуги стола
+    const { data: currentServiceIds } = useQuery({
+        queryKey: ['table-services', tableId],
+        queryFn: () => adminTableService.getTableServices(tableId!),
+        enabled: isOpen && !!tableId,
+    });
+
     useEffect(() => {
-        if (isOpen && amenities) {
-            // Конвертируем названия в ID
-            const ids = currentAmenities
-                .map(name => amenities.find(a => a.title === name)?.id)
-                .filter((id): id is number => id !== undefined);
-            setSelectedIds(ids);
+        if (isOpen && currentServiceIds) {
+            setSelectedIds(currentServiceIds);
         }
-    }, [isOpen, amenities, currentAmenities]);
+    }, [isOpen, currentServiceIds]);
 
     const toggleAmenity = (id: number) => {
         setSelectedIds(prev => 

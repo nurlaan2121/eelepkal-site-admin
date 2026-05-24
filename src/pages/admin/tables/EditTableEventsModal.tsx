@@ -17,20 +17,25 @@ export const EditTableEventsModal: React.FC<EditTableEventsModalProps> = ({ isOp
     const queryClient = useQueryClient();
     const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
+    // Загружаем ВСЕ доступные типы мероприятий
     const { data: eventTypes } = useQuery({
         queryKey: ['event-types'],
         queryFn: adminTableService.getEventTypes,
         enabled: isOpen,
     });
 
+    // Загружаем ТЕКУЩИЕ типы мероприятий стола
+    const { data: currentEventIds } = useQuery({
+        queryKey: ['table-events', tableId],
+        queryFn: () => adminTableService.getTableEventTypes(tableId!),
+        enabled: isOpen && !!tableId,
+    });
+
     useEffect(() => {
-        if (isOpen && eventTypes) {
-            const ids = currentEvents
-                .map(name => eventTypes[name])
-                .filter((id): id is number => id !== undefined);
-            setSelectedIds(ids);
+        if (isOpen && currentEventIds) {
+            setSelectedIds(currentEventIds);
         }
-    }, [isOpen, eventTypes, currentEvents]);
+    }, [isOpen, currentEventIds]);
 
     const toggleEvent = (id: number) => {
         setSelectedIds(prev => 
