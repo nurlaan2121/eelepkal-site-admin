@@ -128,9 +128,10 @@ export const adminTableService = {
     },
 
     updateTableEventTypes: async (tableId: number, eventTypeIds: number[]): Promise<void> => {
-        await apiClient.put(`/api/admin-table/update-event-types/${tableId}`, null, {
-            params: { eventTypeIdsForAssign: eventTypeIds },
-        });
+        const params = new URLSearchParams();
+        eventTypeIds.forEach(id => params.append('eventTypeIdsForAssign', id.toString()));
+        
+        await apiClient.put(`/api/admin-table/update-event-types/${tableId}?${params.toString()}`);
     },
 
     updateTableType: async (tableId: number, eTableTypeId: number): Promise<void> => {
@@ -140,8 +141,9 @@ export const adminTableService = {
     },
 
     updateTableServices: async (tableId: number, eTableServiceIds: number[]): Promise<void> => {
-        await apiClient.put(`/api/admin-table/update-et-services/${tableId}`, null, {
-            params: { eTableServiceIdsForAssign: eTableServiceIds },
-        });
+        const params = new URLSearchParams();
+        eTableServiceIds.forEach(id => params.append('eTableServiceIdsForAssign', id.toString()));
+        
+        await apiClient.put(`/api/admin-table/update-et-services/${tableId}?${params.toString()}`);
     },
 };
