@@ -416,90 +416,97 @@ export const AdminMenuPage: React.FC = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
-                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]"
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
                         />
 
                         {/* Modal */}
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md z-[10000] px-4"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ type: "spring", duration: 0.3, bounce: 0.3 }}
+                            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
                         >
-                            <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-                                {/* Header with warning icon */}
-                                <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 border-b border-red-200">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-full bg-red-200 flex items-center justify-center flex-shrink-0">
-                                            <AlertTriangle size={28} className="text-red-700" />
-                                        </div>
-                                        <div className="flex-1">
-                                            <h2 className="text-xl font-black text-red-900 mb-1">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                                {/* Header */}
+                                <div className="bg-gradient-to-br from-red-500 to-red-600 p-5">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
+                                                <AlertTriangle size={24} className="text-white" />
+                                            </div>
+                                            <h2 className="text-lg font-black text-white">
                                                 Удалить блюдо?
                                             </h2>
-                                            <p className="text-sm text-red-700 font-medium">
-                                                Это действие нельзя отменить
-                                            </p>
                                         </div>
                                         <button
                                             onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
-                                            className="p-2 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0"
+                                            className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                                         >
-                                            <X size={20} className="text-red-700" />
+                                            <X size={18} className="text-white" />
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-6">
-                                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 mb-4">
-                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                                <div className="p-5">
+                                    {/* Dish name */}
+                                    <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 mb-4 border border-slate-200">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
                                             Блюдо
                                         </p>
-                                        <p className="text-base font-black text-slate-900">
+                                        <p className="text-sm font-black text-slate-900 line-clamp-2">
                                             {deleteConfirmation.menuTitle}
                                         </p>
                                     </div>
 
+                                    {/* Warning */}
                                     <div className="space-y-2">
-                                        <div className="flex items-start gap-2">
+                                        <div className="flex items-start gap-2.5">
                                             <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <div className="w-2 h-2 rounded-full bg-red-600" />
                                             </div>
-                                            <p className="text-sm text-slate-600 font-medium">
-                                                Блюдо будет удалено навсегда
+                                            <p className="text-sm text-slate-700 font-semibold">
+                                                Будет удалено навсегда
                                             </p>
                                         </div>
-                                        <div className="flex items-start gap-2">
+                                        <div className="flex items-start gap-2.5">
                                             <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                                                 <div className="w-2 h-2 rounded-full bg-red-600" />
                                             </div>
-                                            <p className="text-sm text-slate-600 font-medium">
-                                                Это действие нельзя будет отменить
+                                            <p className="text-sm text-slate-700 font-semibold">
+                                                Нельзя будет отменить
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Footer */}
-                                <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
+                                <div className="px-5 pb-5 flex gap-2.5">
+                                    <button
                                         onClick={() => setDeleteConfirmation({ isOpen: false, menuId: null, menuTitle: '' })}
-                                        className="flex-1 h-12 rounded-xl font-bold"
                                         disabled={deleteMutation.isPending}
+                                        className="flex-1 h-11 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-50"
                                     >
                                         Отмена
-                                    </Button>
-                                    <Button
-                                        type="button"
+                                    </button>
+                                    <button
                                         onClick={confirmDelete}
-                                        className="flex-1 h-12 rounded-xl font-bold uppercase tracking-wider bg-red-600 hover:bg-red-700"
-                                        isLoading={deleteMutation.isPending}
+                                        disabled={deleteMutation.isPending}
+                                        className="flex-1 h-11 rounded-xl font-bold text-sm uppercase tracking-wide bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                     >
-                                        Удалить
-                                    </Button>
+                                        {deleteMutation.isPending ? (
+                                            <>
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <span>Удаление...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Trash2 size={16} />
+                                                <span>Удалить</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
                             </div>
                         </motion.div>
