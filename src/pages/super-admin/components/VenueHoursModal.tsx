@@ -31,6 +31,7 @@ export const VenueHoursModal: React.FC<VenueHoursModalProps> = ({
 }) => {
     const [hours, setHours] = useState<VenueWorkingHours>(initialHours);
     const [dayOffs, setDayOffs] = useState<Record<string, boolean>>({});
+    const [validationError, setValidationError] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) {
@@ -76,6 +77,31 @@ export const VenueHoursModal: React.FC<VenueHoursModalProps> = ({
         });
     };
 
+    const validateHours = (): boolean => {
+        for (const day of DAYS) {
+            if (dayOffs[day.key]) continue;
+            
+            const open = (hours as any)[`${day.key}Open`];
+            const close = (hours as any)[`${day.key}Close`];
+            
+            if (open && close) {
+                // Compare times as strings (works for HH:MM format)
+                if (open > close) {
+                    setValidationError(`${day.label}: время открытия (${open}) не может быть позднее времени закрытия (${close})`);
+                    return false;
+                }
+            }
+        }
+        setValidationError('');
+        return true;
+    };
+
+    const handleSave = () => {
+        if (validateHours()) {
+            onSave(hours);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -110,6 +136,14 @@ export const VenueHoursModal: React.FC<VenueHoursModalProps> = ({
                             <X size={20} />
                         </button>
                     </div>
+
+                    {/* Validation Error */}
+                    {validationError && (
+                        <div className="mx-6 mt-4 p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3">
+                            <AlertCircle size={20} className="text-rose-500 flex-shrink-0 mt-0.5" />
+                            <p className="text-sm font-bold text-rose-700">{validationError}</p>
+                        </div>
+                    )}
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -161,7 +195,7 @@ export const VenueHoursModal: React.FC<VenueHoursModalProps> = ({
                             Отмена
                         </Button>
                         <Button
-                            onClick={() => onSave(hours)}
+                            onClick={handleSave}
                             disabled={isSaving}
                             className="flex-[2] h-12 rounded-2xl font-black bg-slate-900 text-brand-primary hover:bg-black shadow-xl shadow-slate-900/10"
                         >
