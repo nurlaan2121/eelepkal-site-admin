@@ -860,37 +860,24 @@ const VenueActionMenu: React.FC<{
                 <div
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
-                    className="flex-shrink-0 relative"
+                    className="flex-shrink-0"
                 >
-                    <button
-                        ref={buttonRef}
-                        onClick={handleToggle}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
-                    >
-                        <MoreVertical size={18} />
-                    </button>
+                    <div ref={menuRef} className="relative">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+                        >
+                            <MoreVertical size={18} />
+                        </button>
 
-                    <AnimatePresence>
-                        {open && (
-                            <>
-                                {/* Backdrop to catch clicks outside */}
-                                <div 
-                                    className="fixed inset-0 z-[199]" 
-                                    onClick={() => setOpen(false)}
-                                />
+                        <AnimatePresence>
+                            {open && (
                                 <motion.div
-                                    ref={menuRef}
                                     initial={{ opacity: 0, scale: 0.95, y: -8 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
                                     transition={{ duration: 0.12 }}
-                                    className="fixed z-[200] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
-                                    style={{
-                                        top: `${menuPosition.top}px`,
-                                        right: `${menuPosition.right}px`
-                                    }}
-                                    onClick={(e) => e.stopPropagation()}
-                                    onMouseDown={(e) => e.stopPropagation()}
+                                    className="absolute right-0 top-10 z-[100] w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
                                 >
                                     <div className="p-1.5 space-y-0.5">
                                         {actions.map((action) => (
@@ -914,9 +901,9 @@ const VenueActionMenu: React.FC<{
                                         </button>
                                     </div>
                                 </motion.div>
-                            </>
-                        )}
-                    </AnimatePresence>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </>
         );
