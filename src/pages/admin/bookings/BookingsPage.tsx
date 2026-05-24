@@ -14,8 +14,6 @@ export const AdminBookingsPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<'WAITING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'NOT_PAID' | 'ALL'>('ALL');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
-
-    // Fetch bookings with filters
     const { data: bookingsData, isLoading } = useQuery({
         queryKey: ['admin-bookings', activeTab, statusFilter, selectedDate, searchTerm],
         queryFn: () => adminBookingService.getAllBookings(
@@ -66,6 +64,19 @@ export const AdminBookingsPage: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
         });
+    };
+
+    // Format date for display in picker
+    const formatDateDisplay = (dateStr: string) => {
+        const date = new Date(dateStr);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        if (date.toDateString() === today.toDateString()) return 'Сегодня';
+        if (date.toDateString() === tomorrow.toDateString()) return 'Завтра';
+        
+        return date.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' });
     };
 
     // Get status label and color
@@ -151,6 +162,29 @@ export const AdminBookingsPage: React.FC = () => {
                         ))}
                     </div>
                 )}
+
+                {/* Date Picker */}
+                <div className="p-4 border-b border-gray-100 bg-white">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Calendar size={20} className="text-brand-600" />
+                            <span className="text-sm font-black text-slate-700">Дата:</span>
+                        </div>
+                        <div className="flex-1 relative">
+                            <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 cursor-pointer"
+                            />
+                        </div>
+                        <div className="flex-shrink-0 px-4 py-2 bg-brand-50 rounded-xl">
+                            <span className="text-xs font-bold text-brand-700">
+                                {formatDateDisplay(selectedDate)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Mobile View */}
                 <div className="md:hidden divide-y divide-gray-100">
