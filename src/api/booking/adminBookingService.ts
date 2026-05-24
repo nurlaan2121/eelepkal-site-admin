@@ -35,21 +35,18 @@ export interface BookingResponse {
 
 export interface BookingDetail {
     bookingId: number;
-    clientName: string;
-    clientPhone: string;
-    clientEmail?: string;
-    date: string;
-    time: string;
-    guestsCount: number;
-    status: string;
-    tableId?: number;
-    tableNumber?: string;
+    clientId: number;
+    clientFullName: string;
+    typeClientResponse: 'NEW' | 'LOYAL';
+    deposit: string;
+    bookingFullVisitTime: string;
     tableTitle?: string;
-    eventType?: string;
-    deposit?: string;
-    comment?: string;
-    createdAt: string;
-    updatedAt: string;
+    tableType?: string;
+    tableInFloor?: string;
+    countOfGuests: number;
+    bookingStatus: 'WAITING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'NOT_PAID';
+    bookingCreatedAd: string;
+    bookingCode: number;
 }
 
 export interface AvailableTable {

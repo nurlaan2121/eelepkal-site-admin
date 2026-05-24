@@ -4,7 +4,7 @@ import { Calendar, Search, Filter, Clock, User, Phone, Check, X, MoreHorizontal,
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminBookingService, BookingResponse } from '../../../api/booking/adminBookingService';
+import { adminBookingService, BookingResponse, BookingDetail } from '../../../api/booking/adminBookingService';
 import { toast } from 'sonner';
 
 export const AdminBookingsPage: React.FC = () => {
@@ -14,6 +14,14 @@ export const AdminBookingsPage: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<'WAITING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'NOT_PAID' | 'ALL'>('ALL');
     const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    // Fetch booking details when modal opens
+    const { data: bookingDetails, isLoading: isDetailsLoading } = useQuery({
+        queryKey: ['booking-details', selectedBooking?.bookingId],
+        queryFn: () => adminBookingService.getBookingDetails(selectedBooking!.bookingId),
+        enabled: !!selectedBooking && isDetailModalOpen,
+    });
     const { data: bookingsData, isLoading } = useQuery({
         queryKey: ['admin-bookings', activeTab, statusFilter, selectedDate, searchTerm],
         queryFn: () => adminBookingService.getAllBookings(
@@ -52,6 +60,11 @@ export const AdminBookingsPage: React.FC = () => {
 
     const handleReject = (bookingId: number) => {
         acceptRejectMutation.mutate({ bookingId, accept: false });
+    };
+
+    const handleOpenDetails = (booking: BookingResponse) => {
+        setSelectedBooking(booking);
+        setIsDetailModalOpen(true);
     };
 
     // Format date for display
@@ -273,7 +286,7 @@ export const AdminBookingsPage: React.FC = () => {
                                         </>
                                     ) : (
                                         <button 
-                                            onClick={() => setSelectedBooking(booking)}
+                                            onClick={() => handleOpenDetails(booking)}
                                             className="flex-1 py-3 bg-slate-50 text-slate-700 rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 active:bg-slate-100 transition-colors"
                                         >
                                             Подробнее
@@ -376,7 +389,7 @@ export const AdminBookingsPage: React.FC = () => {
                                                     </>
                                                 )}
                                                 <button 
-                                                    onClick={() => setSelectedBooking(booking)}
+                                                    onClick={() => handleOpenDetails(booking)}
                                                     className="p-2 text-gray-400 hover:text-gray-900"
                                                 >
                                                     <MoreVertical size={18} />
@@ -391,6 +404,151 @@ export const AdminBookingsPage: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Booking Detail Modal */}
+            <AnimatePresence>
+                {isDetailModalOpen && selectedBooking && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setIsDetailModalOpen(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
+                        >
+                            {/* Header */}
+                            <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-brand-50 to-white">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-xl font-black text-gray-900">Детали бронирования</h2>
+                                        <p className="text-sm text-gray-500 mt-1">#{bookingDetails?.bookingCode || selectedBooking.bookingId}</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsDetailModalOpen(false)}
+                                        className="p-2 rounded-xl hover:bg-white transition-colors"
+                                    >
+                                        <X size={24} className="text-gray-600" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            {isDetailsLoading ? (
+                                <div className="p-6 space-y-4 animate-pulse">
+                                    <div className="h-16 bg-slate-200 rounded-2xl" />
+                                    <div className="h-16 bg-slate-200 rounded-2xl" />
+                                    <div className="h-16 bg-slate-200 rounded-2xl" />
+                                    <div className="h-16 bg-slate-200 rounded-2xl" />
+                                </div>
+                            ) : bookingDetails ? (
+                                <div className="p-6 space-y-4">
+                                    {/* Client Info */}
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Клиент</p>
+                                        <p className="text-lg font-black text-gray-900">{bookingDetails.clientFullName}</p>
+                                        <p className="text-sm text-gray-600 mt-1">
+                                            {bookingDetails.typeClientResponse === 'NEW' ? '🆕 Новый клиент' : '⭐ Постоянный клиент'}
+                                        </p>
+                                    </div>
+
+                                    {/* Booking Info Grid */}
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Дата и время</p>
+                                            <p className="text-sm font-black text-gray-900">{formatDate(bookingDetails.bookingFullVisitTime)}</p>
+                                        </div>
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Гости</p>
+                                            <p className="text-sm font-black text-gray-900">{bookingDetails.countOfGuests} чел.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Table Info */}
+                                    {bookingDetails.tableTitle && (
+                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Стол</p>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-sm font-black text-gray-900">{bookingDetails.tableTitle}</span>
+                                                {bookingDetails.tableType && (
+                                                    <span className="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-lg">
+                                                        {bookingDetails.tableType}
+                                                    </span>
+                                                )}
+                                                {bookingDetails.tableInFloor && (
+                                                    <span className="text-xs font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded-lg">
+                                                        Этаж: {bookingDetails.tableInFloor}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Deposit */}
+                                    {bookingDetails.deposit && (
+                                        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100">
+                                            <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-2">💰 Депозит</p>
+                                            <p className="text-lg font-black text-amber-900">{bookingDetails.deposit}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Status */}
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Статус</p>
+                                        <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${getStatusInfo(bookingDetails.bookingStatus).color}`}>
+                                            {getStatusInfo(bookingDetails.bookingStatus).label}
+                                        </span>
+                                    </div>
+
+                                    {/* Created Date */}
+                                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Создано</p>
+                                        <p className="text-sm font-bold text-gray-900">{formatDate(bookingDetails.bookingCreatedAd)}</p>
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            {/* Footer Actions */}
+                            {bookingDetails?.bookingStatus === 'WAITING' && (
+                                <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                                    <button
+                                        onClick={() => {
+                                            handleAccept(bookingDetails.bookingId);
+                                            setIsDetailModalOpen(false);
+                                        }}
+                                        disabled={acceptRejectMutation.isPending}
+                                        className="flex-1 py-3 bg-brand-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg shadow-brand-100 disabled:opacity-50"
+                                    >
+                                        {acceptRejectMutation.isPending ? (
+                                            <Loader2 size={16} className="animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Check size={16} />
+                                                Принять
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            handleReject(bookingDetails.bookingId);
+                                            setIsDetailModalOpen(false);
+                                        }}
+                                        disabled={acceptRejectMutation.isPending}
+                                        className="px-6 py-3 bg-red-50 text-red-500 rounded-2xl text-xs font-black uppercase tracking-widest active:scale-95 transition-transform disabled:opacity-50"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
