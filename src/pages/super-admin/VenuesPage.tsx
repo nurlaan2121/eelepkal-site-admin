@@ -858,7 +858,7 @@ const VenueActionMenu: React.FC<{
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: -8 }}
                                     transition={{ duration: 0.12 }}
-                                    className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden"
+                                    className="absolute right-0 top-10 z-40 w-56 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden max-h-[calc(100vh-120px)] overflow-y-auto"
                                 >
                                     <div className="p-1.5 space-y-0.5">
                                         {actions.map((action) => (
