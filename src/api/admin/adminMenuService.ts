@@ -24,6 +24,18 @@ export interface MenuItem {
     imageUrl: string;
 }
 
+export interface MenuItemFull {
+    id: number;
+    name: string;
+    price: number;
+    description: string;
+    imageUrl: string;
+    addressVenue: string;
+    unit: string;
+    value: string;
+    favorite: boolean;
+}
+
 export interface CreateMenuRequest {
     imageUrl: string;
     categoryId: number;
@@ -92,13 +104,18 @@ export const adminMenuService = {
         await apiClient.patch(`/api/admin-menu/${menuId}/status`, { status });
     },
 
-    deleteMenu: async (menuId: number): Promise<void> => {
-        await apiClient.delete(`/api/admin-menu/${menuId}`);
+    getMenuItem: async (menuId: number): Promise<MenuItemFull> => {
+        const response = await apiClient.get<MenuItemFull>(`/api/guest-menu/get/${menuId}`);
+        return response.data;
     },
 
-    updateMenu: async (menuId: number, data: Partial<MenuItem>): Promise<MenuItem> => {
-        const response = await apiClient.patch<MenuItem>(`/api/admin-menu/${menuId}`, data);
+    updateMenu: async (menuId: number, data: CreateMenuRequest): Promise<MenuItem> => {
+        const response = await apiClient.put<MenuItem>(`/api/admin-menu/updateMenu/${menuId}`, data);
         return response.data;
+    },
+
+    deleteMenu: async (menuId: number): Promise<void> => {
+        await apiClient.delete(`/api/admin-menu/${menuId}`);
     },
 
     createMenu: async (data: CreateMenuRequest, status: MenuStatus = 'INACTIVE'): Promise<MenuItem> => {

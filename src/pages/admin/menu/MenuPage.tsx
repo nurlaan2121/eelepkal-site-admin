@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { adminMenuService, MenuItem, MenuCategory, MenuStatus } from '../../../api/admin/adminMenuService';
 import { Button } from '../../../components/ui/Button';
 import { AddMenuModal } from './AddMenuModal';
+import { EditMenuModal } from './EditMenuModal';
 
 // ─────────── Skeleton Loader ───────────
 const MenuCardSkeleton: React.FC = () => (
@@ -133,6 +134,8 @@ export const AdminMenuPage: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [page, setPage] = useState(1);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingMenuId, setEditingMenuId] = useState<number | null>(null);
     const pageSize = 10;
 
     // Fetch categories
@@ -188,8 +191,8 @@ export const AdminMenuPage: React.FC = () => {
     };
 
     const handleEdit = (menuId: number) => {
-        // TODO: Open edit modal or navigate to edit page
-        console.log('Edit menu item:', menuId);
+        setEditingMenuId(menuId);
+        setIsEditModalOpen(true);
     };
 
     const handleAddMenu = () => {
@@ -349,6 +352,16 @@ export const AdminMenuPage: React.FC = () => {
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
                 defaultStatus={activeTab}
+            />
+
+            {/* Edit Menu Modal */}
+            <EditMenuModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setEditingMenuId(null);
+                }}
+                menuId={editingMenuId}
             />
         </div>
     );
