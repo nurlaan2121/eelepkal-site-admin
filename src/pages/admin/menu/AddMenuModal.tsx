@@ -112,7 +112,7 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
         }
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -136,17 +136,11 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
             setImagePreview(reader.result as string);
         };
         reader.readAsDataURL(file);
-    };
 
-    const handleUploadImage = async () => {
-        if (!selectedFile) {
-            toast.error('Выберите изображение для загрузки');
-            return;
-        }
-
+        // Auto upload to S3
         setIsUploading(true);
         try {
-            const imageUrl = await adminMenuService.uploadImageToS3(selectedFile);
+            const imageUrl = await adminMenuService.uploadImageToS3(file);
             setFormData(prev => ({ ...prev, imageUrl }));
             toast.success('Изображение загружено');
         } catch (error: any) {
@@ -234,7 +228,7 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                     <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-slate-300 rounded-xl cursor-pointer hover:border-brand-500 hover:bg-brand-50/30 transition-all">
                                         <ImageIcon size={32} className="text-slate-300 mb-2" />
                                         <p className="text-sm font-bold text-slate-400">Нажмите для выбора изображения</p>
-                                        <p className="text-xs text-slate-300 mt-1">JPG, PNG до 5MB</p>
+                                        <p className="text-xs text-slate-300 mt-1">JPG, PNG до 5MB • Загрузка автоматически</p>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -249,26 +243,20 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                             alt="Preview" 
                                             className="w-full h-48 object-cover"
                                         />
+                                        {isUploading && (
+                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                                <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg">
+                                                    <Loader2 size={20} className="animate-spin text-brand-primary" />
+                                                    <span className="text-sm font-bold text-slate-700">Загрузка...</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="absolute top-2 right-2 flex gap-2">
-                                            {!formData.imageUrl && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleUploadImage}
-                                                    disabled={isUploading}
-                                                    className="flex items-center gap-2 px-3 py-1.5 bg-brand-primary text-white text-xs font-bold rounded-lg hover:bg-brand-600 transition-colors disabled:opacity-50 shadow-lg"
-                                                >
-                                                    {isUploading ? (
-                                                        <>
-                                                            <Loader2 size={14} className="animate-spin" />
-                                                            Загрузка...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Upload size={14} />
-                                                            Загрузить в S3
-                                                        </>
-                                                    )}
-                                                </button>
+                                            {formData.imageUrl && (
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-lg shadow-lg">
+                                                    <div className="w-2 h-2 bg-white rounded-full" />
+                                                    Загружено в S3
+                                                </div>
                                             )}
                                             <button
                                                 type="button"
@@ -277,16 +265,12 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                                     setImagePreview(null);
                                                     setFormData(prev => ({ ...prev, imageUrl: '' }));
                                                 }}
-                                                className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg"
+                                                disabled={isUploading}
+                                                className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50"
                                             >
                                                 <X size={14} />
                                             </button>
                                         </div>
-                                        {formData.imageUrl && (
-                                            <div className="absolute bottom-2 left-2 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-lg shadow-lg">
-                                                ✓ Загружено
-                                            </div>
-                                        )}
                                     </div>
                                 )}
                                 
@@ -333,7 +317,7 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                 )}
                             </div>
 
-                            {/* Price and Meaning */}
+                            {/* Price and Weight/Portion */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
@@ -356,15 +340,16 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
 
                                 <div>
                                     <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-2">
-                                        Значение
+                                        Порция / Вес
                                     </label>
                                     <input
                                         type="text"
                                         value={formData.meaning}
                                         onChange={(e) => handleChange('meaning', e.target.value)}
-                                        placeholder="например, 250"
+                                        placeholder="например, 200 гр, 1 литр, 6 персон"
                                         className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                                     />
+                                    <p className="mt-1.5 text-xs text-slate-400">Укажите размер порции, вес или количество персон</p>
                                 </div>
                             </div>
 
