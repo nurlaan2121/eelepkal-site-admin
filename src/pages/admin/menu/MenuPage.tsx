@@ -4,6 +4,7 @@ import { Plus, Search, ArrowUpDown, Edit2, Trash2, Utensils, AlertCircle } from 
 import { motion, AnimatePresence } from 'framer-motion';
 import { adminMenuService, MenuItem, MenuCategory, MenuStatus } from '../../../api/admin/adminMenuService';
 import { Button } from '../../../components/ui/Button';
+import { AddMenuModal } from './AddMenuModal';
 
 // ─────────── Skeleton Loader ───────────
 const MenuCardSkeleton: React.FC = () => (
@@ -131,6 +132,7 @@ export const AdminMenuPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<MenuStatus>('ACTIVE');
     const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
     const [page, setPage] = useState(1);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const pageSize = 10;
 
     // Fetch categories
@@ -190,6 +192,10 @@ export const AdminMenuPage: React.FC = () => {
         console.log('Edit menu item:', menuId);
     };
 
+    const handleAddMenu = () => {
+        setIsAddModalOpen(true);
+    };
+
     const handleCategoryChange = (categoryId: number) => {
         setSelectedCategory(categoryId);
         setPage(1);
@@ -212,7 +218,10 @@ export const AdminMenuPage: React.FC = () => {
                     <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Меню</h1>
                     <p className="text-slate-400 text-sm mt-0.5">Управление блюдами и стоп-листами</p>
                 </div>
-                <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100 font-bold uppercase tracking-widest text-xs">
+                <Button 
+                    onClick={handleAddMenu}
+                    className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100 font-bold uppercase tracking-widest text-xs"
+                >
                     <Plus size={20} />
                     <span>Добавить блюдо</span>
                 </Button>
@@ -334,6 +343,13 @@ export const AdminMenuPage: React.FC = () => {
                     )}
                 </>
             )}
+
+            {/* Add Menu Modal */}
+            <AddMenuModal 
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                defaultStatus={activeTab}
+            />
         </div>
     );
 };

@@ -1,5 +1,15 @@
 import { apiClient } from '../client';
 
+export interface MenuUnit {
+    id: number;
+    name: string;
+}
+
+export interface MenuCategorySimple {
+    id: number;
+    name: string;
+}
+
 export interface MenuCategory {
     id: number;
     name: string;
@@ -14,6 +24,16 @@ export interface MenuItem {
     imageUrl: string;
 }
 
+export interface CreateMenuRequest {
+    imageUrl: string;
+    categoryId: number;
+    title: string;
+    description: string;
+    price: number;
+    meaning: string;
+    unitAsEnumId: number;
+}
+
 export interface MenuResponse {
     totalMenus: number;
     getMenuResponse: MenuItem[];
@@ -22,6 +42,16 @@ export interface MenuResponse {
 export type MenuStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 export const adminMenuService = {
+    getUnits: async (): Promise<MenuUnit[]> => {
+        const response = await apiClient.get<MenuUnit[]>('/api/dev/unit-as-enum/all');
+        return response.data;
+    },
+
+    getCategoriesSimple: async (): Promise<MenuCategorySimple[]> => {
+        const response = await apiClient.get<MenuCategorySimple[]>('/api/dev/category/allIdAndName');
+        return response.data;
+    },
+
     getCategories: async (): Promise<MenuCategory[]> => {
         const response = await apiClient.get<MenuCategory[]>('/api/admin-menu/getCategories');
         return response.data;
@@ -58,8 +88,10 @@ export const adminMenuService = {
         return response.data;
     },
 
-    createMenu: async (data: Omit<MenuItem, 'id'>): Promise<MenuItem> => {
-        const response = await apiClient.post<MenuItem>('/api/admin-menu', data);
+    createMenu: async (data: CreateMenuRequest, status: MenuStatus = 'INACTIVE'): Promise<MenuItem> => {
+        const response = await apiClient.post<MenuItem>('/api/admin-menu/add', data, {
+            params: { status },
+        });
         return response.data;
     },
 };
