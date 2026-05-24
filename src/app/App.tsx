@@ -14,6 +14,7 @@ import { AdminMenuPage } from '../pages/admin/menu/MenuPage';
 import { AdminBookingsPage } from '../pages/admin/bookings/BookingsPage';
 import { CreateVenueWizard } from '../pages/super-admin/venues/CreateVenueWizard';
 import { VenueDetailPage } from '../pages/super-admin/VenueDetailPage';
+import { AdminMyVenuePage } from '../pages/admin/my-venue/MyVenuePage';
 
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'SUPER_ADMIN' | 'ADMIN' }) => {
     const { user } = useAuthStore();
@@ -65,7 +66,7 @@ export const App = () => {
                 >
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
-                    <Route path="my-venue" element={<div>Моё заведение</div>} />
+                    <Route path="my-venue" element={<AdminMyVenuePage />} />
                     <Route path="bookings" element={<div>Бронирования</div>} />
                     <Route path="tables" element={<div>Столы</div>} />
                     <Route path="menu" element={<div>Меню</div>} />
