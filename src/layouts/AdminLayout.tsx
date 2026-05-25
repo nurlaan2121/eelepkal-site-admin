@@ -3,19 +3,16 @@ import { Outlet } from 'react-router-dom';
 import { AdminSidebar } from '../components/layout/AdminSidebar';
 import { Header } from './Header';
 import { Footer } from './Footer';
-import { PageContainer } from '../components/ui/AppWrapper';
 
 export const AdminLayout = () => {
     return (
-        <div className="flex bg-slate-50 h-screen overflow-hidden">
+        <div className="flex bg-slate-50 min-h-screen">
             <AdminSidebar />
-            <div className="flex-1 flex flex-col min-w-0 h-full">
+            <div className="flex-1 flex flex-col min-w-0">
                 <Header />
-                <PageContainer className="flex-1">
-                    <div className="p-4 md:p-6 lg:p-8 safe-bottom">
-                        <Outlet />
-                    </div>
-                </PageContainer>
+                <main className="flex-1 p-6 md:p-8">
+                    <Outlet />
+                </main>
                 <Footer />
             </div>
         </div>
