@@ -12,12 +12,75 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
     const [notifications, setNotifications] = useState<AdminNotification[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [offset, setOffset] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(false);
+    const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+    const LIMIT = 50;
 
     useEffect(() => {
         if (isOpen && selectedDate) {
-            fetchNotifications();
+            // Reset and fetch initial notifications when modal opens or date changes
+            setNotifications([]);
+            setOffset(0);
+            setHasMore(true);
+            fetchInitialNotifications();
         }
     }, [isOpen, selectedDate]);
+
+    const fetchInitialNotifications = async () => {
+        setInitialLoading(true);
+        setError(null);
+        try {
+            const data = await adminNotificationService.getNotifications({
+                date: selectedDate,
+                offset: 0,
+                limit: LIMIT,
+            });
+            setNotifications(data);
+            setOffset(LIMIT);
+            setHasMore(data.length >= LIMIT);
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Ошибка загрузки уведомлений');
+        } finally {
+            setInitialLoading(false);
+        }
+    };
+
+    const fetchMoreNotifications = async () => {
+        if (loading || !hasMore) return;
+        
+        setLoading(true);
+        try {
+            const data = await adminNotificationService.getNotifications({
+                date: selectedDate,
+                offset,
+                limit: LIMIT,
+            });
+            
+            if (data.length < LIMIT) {
+                setHasMore(false);
+            }
+            
+            setNotifications(prev => [...prev, ...data]);
+            setOffset(prev => prev + LIMIT);
+        } catch (err: any) {
+            console.error('Error fetching more notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle scroll for infinite loading
+    const handleScroll = () => {
+        if (!scrollContainerRef.current) return;
+        
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+        // Load more when user is 200px from bottom
+        if (scrollHeight - scrollTop - clientHeight < 200) {
+            fetchMoreNotifications();
+        }
+    };
 
     // Prevent background scrolling when modal is open
     useEffect(() => {
@@ -31,23 +94,6 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
             document.body.style.overflow = 'unset';
         };
     }, [isOpen]);
-
-    const fetchNotifications = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const data = await adminNotificationService.getNotifications({
-                date: selectedDate,
-                offset: 0,
-                limit: 50,
-            });
-            setNotifications(data);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Ошибка загрузки уведомлений');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const formatDate = (dateString: string) => {
         try {
@@ -100,8 +146,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
                 </div>
 
                 {/* Notifications List */}
-                <div className="flex-1 overflow-y-auto p-4">
-                    {loading ? (
+                <div 
+                    ref={scrollContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto p-4"
+                >
+                    {initialLoading ? (
                         <div className="flex items-center justify-center py-8">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary"></div>
                         </div>
@@ -115,31 +165,48 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, on
                             <p className="text-sm">Нет уведомлений за выбранную дату</p>
                         </div>
                     ) : (
-                        <div className="space-y-3">
-                            {notifications.map((notification) => (
-                                <div
-                                    key={notification.notificationId}
-                                    className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
-                                >
-                                    <div className="flex items-start justify-between mb-2">
-                                        <h3 className="font-semibold text-gray-900 text-sm">
-                                            {notification.title}
-                                        </h3>
-                                        <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
-                                            {formatDate(notification.createdAt)}
-                                        </span>
+                        <>
+                            <div className="space-y-3">
+                                {notifications.map((notification) => (
+                                    <div
+                                        key={notification.notificationId}
+                                        className="p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-start justify-between mb-2">
+                                            <h3 className="font-semibold text-gray-900 text-sm">
+                                                {notification.title}
+                                            </h3>
+                                            <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                                                {formatDate(notification.createdAt)}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 leading-relaxed">
+                                            {notification.description}
+                                        </p>
+                                        <div className="mt-2">
+                                            <span className="inline-block px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-lg font-medium">
+                                                {notification.notificationType}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-gray-600 leading-relaxed">
-                                        {notification.description}
-                                    </p>
-                                    <div className="mt-2">
-                                        <span className="inline-block px-2 py-1 bg-brand-100 text-brand-700 text-xs rounded-lg font-medium">
-                                            {notification.notificationType}
-                                        </span>
-                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Loading more indicator */}
+                            {loading && (
+                                <div className="flex items-center justify-center py-6">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary"></div>
+                                    <span className="ml-3 text-sm text-gray-500">Загрузка...</span>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                            
+                            {/* End of notifications */}
+                            {!hasMore && notifications.length > 0 && (
+                                <div className="text-center py-6 text-gray-400 text-sm">
+                                    Все уведомления загружены
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>
