@@ -628,7 +628,7 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                                     {qrPreview ? (
                                         <div className="space-y-3">
                                             <div className="relative">
-                                                <img src={qrPreview} alt="QR Preview" className="w-32 h-32 mx-auto object-contain rounded-lg" />
+                                                <img src={qrPreview} alt="Предпросмотр QR" className="w-32 h-32 mx-auto object-contain rounded-lg" />
                                                 {isUploading && (
                                                     <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
                                                         <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
@@ -702,7 +702,7 @@ const PaymentModal: React.FC<{ venue: VenueListItem; onClose: () => void }> = ({
                                     </div>
                                     {p.qrcodeUrl && (
                                         <div className="bg-white rounded-xl p-3 flex justify-center">
-                                            <img src={p.qrcodeUrl} alt="QR Code" className="w-32 h-32 object-contain" />
+                                            <img src={p.qrcodeUrl} alt="QR код" className="w-32 h-32 object-contain" />
                                         </div>
                                     )}
                                 </div>

@@ -43,7 +43,7 @@ export const VenueHero: React.FC<VenueHeroProps> = ({
                         animate={{ opacity: 1 }}
                         src={currentImage.url}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2000ms]"
-                        alt="Hero"
+                        alt="Главное изображение"
                         onClick={() => setViewerOpen(true)}
                     />
                 </AnimatePresence>

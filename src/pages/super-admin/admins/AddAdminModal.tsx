@@ -154,7 +154,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                                     name="email"
                                                     value={formData.email}
                                                     onChange={handleInputChange}
-                                                    placeholder="admin@example.com"
+                                                    placeholder="admin@venue.kg"
                                                     className="w-full h-12 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                                                     required
                                                 />
