@@ -2,11 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --radius: 0.75rem;
-}
-
+/* Performance: Preload critical fonts and reduce layout shift */
 @layer base {
+  *
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
   html,
   body {
@@ -15,10 +17,23 @@
     overscroll-behavior: none;
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    /* Prevent layout shift */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   body {
     @apply bg-slate-50 text-slate-900 min-h-screen;
+    /* Prevent FOUC (Flash of Unstyled Content) */
+    opacity: 1 !important;
+  }
+
+  /* Prevent translation styling issues */
+  .notranslate,
+  [translate="no"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   input,
@@ -27,6 +42,22 @@
   button {
     font-size: 16px !important;
     /* Prevent iOS auto-zoom on focus */
+  }
+
+  /* Image optimization - prevent layout shift */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Improve LCP (Largest Contentful Paint) */
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 }
 
@@ -41,4 +72,15 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+/* Print styles for better SEO */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
 }

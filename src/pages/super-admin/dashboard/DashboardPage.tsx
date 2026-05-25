@@ -2,8 +2,14 @@ import React from 'react';
 import { Users, Store, Calendar, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { AnalyticsCard } from '../../../components/ui/AnalyticsCard';
 import { motion, AnimatePresence } from 'framer-motion';
+import { updateSEO, PAGE_SEO } from '../../../utils/seo';
 
 export const SuperAdminDashboard: React.FC = () => {
+    // Prevent indexing of admin pages
+    React.useEffect(() => {
+        updateSEO(PAGE_SEO.superAdminDashboard);
+    }, []);
+
     return (
         <div className="space-y-6 md:space-y-8 pb-10">
             <div className="px-1 md:px-0">

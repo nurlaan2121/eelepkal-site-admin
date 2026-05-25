@@ -3,8 +3,14 @@ import { LayoutGrid, Calendar, Wallet, Star, ArrowUpRight, MessageSquare, Clock,
 import { AnalyticsCard } from '../../../components/ui/AnalyticsCard';
 import { Button } from '../../../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
+import { updateSEO, PAGE_SEO } from '../../../utils/seo';
 
 export const AdminDashboard: React.FC = () => {
+    // Prevent indexing of admin pages
+    React.useEffect(() => {
+        updateSEO(PAGE_SEO.adminDashboard);
+    }, []);
+
     return (
         <div className="space-y-6 md:space-y-8 pb-10">
             <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3 px-1 md:px-0">

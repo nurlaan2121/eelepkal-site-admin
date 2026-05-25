@@ -1,0 +1,35 @@
+# robots.txt for Eelep Kal Admin Panel
+# https://admin.eelepkal.kg
+
+User-agent: *
+Allow: /auth/login
+Allow: /auth/register
+Allow: /
+Allow: /favicon.svg
+Allow: /logo.png
+Allow: /icons.svg
+
+# Block all admin/private routes
+Disallow: /admin/
+Disallow: /super-admin/
+Disallow: /dashboard/
+Disallow: /profile/
+Disallow: /settings/
+Disallow: /bookings/
+Disallow: /tables/
+Disallow: /menu/
+Disallow: /customers/
+Disallow: /analytics/
+Disallow: /venues/
+Disallow: /admins/
+Disallow: /statistics/
+
+# Block API routes
+Disallow: /api/
+
+# Block Vercel internals
+Disallow: /_next/
+Disallow: /cdn-cgi/
+
+# Sitemap
+Sitemap: https://admin.eelepkal.kg/sitemap.xml

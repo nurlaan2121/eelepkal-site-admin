@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { authService } from '../../api/auth/authService';
 import { useAuthStore } from '../../store/authStore';
+import { updateSEO, PAGE_SEO } from '../../utils/seo';
 
 const loginSchema = z.object({
     email: z.string().email('Некорректный email'),
@@ -40,6 +41,11 @@ export const LoginPage = () => {
     const [resendTimer, setResendTimer] = React.useState(0);
     const setAuth = useAuthStore((state) => state.setAuth);
     const navigate = useNavigate();
+
+    // Update SEO on mount
+    React.useEffect(() => {
+        updateSEO(PAGE_SEO.login);
+    }, []);
 
     const {
         register: registerLogin,
