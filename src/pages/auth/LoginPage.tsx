@@ -186,7 +186,7 @@ export const LoginPage = () => {
                             transition={{ delay: 0.2 }}
                             className="w-16 h-16 mb-4"
                         >
-                            <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
+                            <img src="/logo.png" alt="Логотип" className="w-full h-full object-contain" />
                         </motion.div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ээлеп кал</h1>
                         <p className="text-slate-500 mt-2 font-medium">
@@ -285,7 +285,7 @@ export const LoginPage = () => {
                                         <input
                                             {...registerLogin('email')}
                                             type="email"
-                                            placeholder="your@email.com"
+                                            placeholder="example@mail.kg"
                                             className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${loginErrors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>
@@ -351,7 +351,7 @@ export const LoginPage = () => {
                                         <input
                                             {...registerSignup('email')}
                                             type="email"
-                                            placeholder="your@email.com"
+                                            placeholder="example@mail.kg"
                                             className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>

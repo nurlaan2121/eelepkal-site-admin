@@ -240,7 +240,7 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({ isOpen, onClose, def
                                     <div className="relative rounded-xl overflow-hidden bg-slate-100">
                                         <img 
                                             src={imagePreview} 
-                                            alt="Preview" 
+                                            alt="Предпросмотр" 
                                             className="w-full h-48 object-cover"
                                         />
                                         {isUploading && (
