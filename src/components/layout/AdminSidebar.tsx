@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../utils/cn';
 import {
@@ -17,6 +17,7 @@ import {
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 const MENU_ITEMS = [
     { icon: LayoutDashboard, label: 'Панель управления', path: '/admin/dashboard' },
@@ -33,6 +34,7 @@ export const AdminSidebar = () => {
     const [isCollapsed, setIsCollapsed] = React.useState(false);
     const logout = useAuthStore((state) => state.logout);
     const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
+    const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
     const sidebarContent = (
         <aside
@@ -83,7 +85,7 @@ export const AdminSidebar = () => {
 
             <div className="p-4 border-t border-slate-50">
                 <button
-                    onClick={logout}
+                    onClick={() => setIsLogoutConfirmOpen(true)}
                     className={cn(
                         "flex items-center w-full px-3 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all group",
                         (isCollapsed && !isMobileMenuOpen) ? "justify-center" : ""
@@ -125,6 +127,17 @@ export const AdminSidebar = () => {
                     </div>
                 )}
             </AnimatePresence>
+
+            <ConfirmDialog
+                isOpen={isLogoutConfirmOpen}
+                onClose={() => setIsLogoutConfirmOpen(false)}
+                onConfirm={logout}
+                title="Выход из аккаунта"
+                message="Вы действительно хотите выйти из системы? Вам придется снова войти, чтобы получить доступ к панели управления."
+                confirmText="Выйти"
+                cancelText="Отмена"
+                danger
+            />
         </>
     );
 };
