@@ -68,8 +68,9 @@ export const AdminBookingsPage: React.FC = () => {
     };
 
     // Format date for display
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
+    const formatDate = (timestamp: number) => {
+        // Convert Unix timestamp (seconds) to milliseconds
+        const date = new Date(timestamp * 1000);
         return date.toLocaleString('ru-RU', {
             day: '2-digit',
             month: '2-digit',

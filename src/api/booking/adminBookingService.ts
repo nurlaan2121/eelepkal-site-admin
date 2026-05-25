@@ -24,13 +24,13 @@ export interface BookingResponse {
     clientAge: number;
     typeClientResponse: 'NEW' | 'LOYAL';
     deposit: string;
-    bookingFullVisitTime: string;
+    bookingFullVisitTime: number;
     tableTitle?: string;
     tableType?: string;
     tableInFloor?: string;
     countOfGuests: number;
     bookingStatus: 'WAITING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'NOT_PAID';
-    bookingCreatedAd: string;
+    bookingCreatedAd: number;
 }
 
 export interface BookingDetail {
@@ -39,13 +39,13 @@ export interface BookingDetail {
     clientFullName: string;
     typeClientResponse: 'NEW' | 'LOYAL';
     deposit: string;
-    bookingFullVisitTime: string;
+    bookingFullVisitTime: number;
     tableTitle?: string;
     tableType?: string;
     tableInFloor?: string;
     countOfGuests: number;
     bookingStatus: 'WAITING' | 'APPROVED' | 'REJECTED' | 'COMPLETED' | 'NOT_PAID';
-    bookingCreatedAd: string;
+    bookingCreatedAd: number;
     bookingCode: number;
 }
 
