@@ -92,11 +92,11 @@ export const CreateVenuePage: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Название заведения</label>
-                                        <Input {...basicForm.register('name')} placeholder="Напр: Bellagio" error={basicForm.formState.errors.name?.message} />
+                                        <Input {...basicForm.register('name')} placeholder="Напр: Белладжио" error={basicForm.formState.errors.name?.message} />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Бренд</label>
-                                        <Input {...basicForm.register('brandName')} placeholder="Напр: Bellagio Group" error={basicForm.formState.errors.brandName?.message} />
+                                        <Input {...basicForm.register('brandName')} placeholder="Напр: Белладжио Групп" error={basicForm.formState.errors.brandName?.message} />
                                     </div>
                                     <div className="md:col-span-2 space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Адрес</label>
@@ -128,11 +128,11 @@ export const CreateVenuePage: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Телефон</label>
-                                        <Input {...detailsForm.register('phone')} placeholder="+996 555 123 456" error={detailsForm.formState.errors.phone?.message} />
+                                        <Input {...detailsForm.register('phone')} placeholder="+996 555 01 23 45" error={detailsForm.formState.errors.phone?.message} />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Email</label>
-                                        <Input {...detailsForm.register('email')} placeholder="office@venue.kg" error={detailsForm.formState.errors.email?.message} />
+                                        <Input {...detailsForm.register('email')} placeholder="office@venue.ru" error={detailsForm.formState.errors.email?.message} />
                                     </div>
                                     <div className="md:col-span-2 space-y-2">
                                         <label className="text-sm font-medium text-gray-700">Ссылка на карту (2GIS/Google)</label>
@@ -152,7 +152,7 @@ export const CreateVenuePage: React.FC = () => {
                             >
                                 <div className="space-y-4">
                                     <label className="text-sm font-medium text-gray-700">Instagram Username</label>
-                                    <Input {...socialForm.register('instagram')} placeholder="@bellagio_kg" />
+                                    <Input {...socialForm.register('instagram')} placeholder="@bellagio_ru" />
                                 </div>
                                 {/* Simplified Tag selection for demo */}
                                 <div className="space-y-2">

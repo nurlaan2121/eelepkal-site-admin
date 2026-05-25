@@ -21,6 +21,13 @@
     @apply bg-slate-50 text-slate-900 min-h-screen;
   }
 
+  /* Prevent browser translation */
+  .notranslate,
+  [translate="no"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
   input,
   textarea,
   select,

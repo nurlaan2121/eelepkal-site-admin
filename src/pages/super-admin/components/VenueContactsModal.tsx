@@ -98,7 +98,7 @@ export const VenueContactsModal: React.FC<VenueContactsModalProps> = ({
                                             value={formData.email}
                                             onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
                                             className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent focus:border-brand-primary rounded-2xl text-sm font-bold transition-all outline-none"
-                                            placeholder="example@mail.com"
+                                            placeholder="example@mail.kg"
                                         />
                                     </div>
                                 </div>

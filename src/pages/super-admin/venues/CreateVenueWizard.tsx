@@ -150,7 +150,7 @@ const Step1BasicInfo: React.FC = () => {
                 <Input
                     value={basicInfo.nameVenue || ''}
                     onChange={(e) => setBasicInfo({ ...basicInfo, nameVenue: e.target.value })}
-                    placeholder="Например: Bellagio Restaurant"
+                    placeholder="Например: Ресторан Белладжио"
                 />
             </div>
 
@@ -475,7 +475,7 @@ const Step6Contacts: React.FC = () => {
                 <Input
                     value={contacts.phoneNumber || ''}
                     onChange={(e) => setContacts({ phoneNumber: e.target.value })}
-                    placeholder="+996 555 123 456"
+                    placeholder="+996 555 01 23 45"
                 />
             </div>
 
@@ -485,7 +485,7 @@ const Step6Contacts: React.FC = () => {
                     type="email"
                     value={contacts.email || ''}
                     onChange={(e) => setContacts({ email: e.target.value })}
-                    placeholder="info@venue.kg"
+                    placeholder="info@venue.ru"
                 />
             </div>
 
@@ -497,7 +497,7 @@ const Step6Contacts: React.FC = () => {
                     <Input
                         value={social.instagram || ''}
                         onChange={(e) => setContacts({ linksSocial: { ...social, instagram: e.target.value } })}
-                        placeholder="@venue_kg"
+                        placeholder="@venue_ru"
                     />
                 </div>
 
@@ -506,7 +506,7 @@ const Step6Contacts: React.FC = () => {
                     <Input
                         value={social.whatsapp || ''}
                         onChange={(e) => setContacts({ linksSocial: { ...social, whatsapp: e.target.value } })}
-                        placeholder="+996 555 123 456"
+                        placeholder="+996 555 01 23 45"
                     />
                 </div>
 
@@ -515,7 +515,7 @@ const Step6Contacts: React.FC = () => {
                     <Input
                         value={social.telegram || ''}
                         onChange={(e) => setContacts({ linksSocial: { ...social, telegram: e.target.value } })}
-                        placeholder="@venue_kg"
+                        placeholder="@venue_ru"
                     />
                 </div>
 
@@ -524,7 +524,7 @@ const Step6Contacts: React.FC = () => {
                     <Input
                         value={social.facebook || ''}
                         onChange={(e) => setContacts({ linksSocial: { ...social, facebook: e.target.value } })}
-                        placeholder="https://facebook.com/venue"
+                        placeholder="https://facebook.com/venue.ru"
                     />
                 </div>
 
@@ -533,7 +533,7 @@ const Step6Contacts: React.FC = () => {
                     <Input
                         value={social.website || ''}
                         onChange={(e) => setContacts({ linksSocial: { ...social, website: e.target.value } })}
-                        placeholder="https://venue.kg"
+                        placeholder="https://venue.ru"
                     />
                 </div>
             </div>

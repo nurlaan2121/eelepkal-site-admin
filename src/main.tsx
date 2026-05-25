@@ -5,6 +5,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { App } from './app/App';
 import './index.css';
 
+// Prevent browser translation
+const preventTranslation = () => {
+    // Add notranslate class to all elements
+    document.body.classList.add('notranslate');
+    
+    // Set google translate meta
+    const meta = document.createElement('meta');
+    meta.name = 'google';
+    meta.content = 'notranslate';
+    document.head.appendChild(meta);
+    
+    // Add translate="no" to root element
+    const root = document.getElementById('root');
+    if (root) {
+        root.setAttribute('translate', 'no');
+        root.classList.add('notranslate');
+    }
+};
+
+preventTranslation();
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
