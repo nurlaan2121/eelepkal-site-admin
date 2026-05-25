@@ -5,7 +5,7 @@
   
   <!-- Login Page -->
   <url>
-    <loc>https://admin.eelepkal.kg/auth/login</loc>
+    <loc>https://admin.eelepkal.com/auth/login</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -13,7 +13,7 @@
   
   <!-- Home Redirect -->
   <url>
-    <loc>https://admin.eelepkal.kg/</loc>
+    <loc>https://admin.eelepkal.com/</loc>
     <lastmod>2026-05-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
