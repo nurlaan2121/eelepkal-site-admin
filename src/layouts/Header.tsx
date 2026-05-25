@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Bell, User, Search, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
+import { NotificationModal } from '../components/ui/NotificationModal';
 
 export const Header = () => {
     const { user } = useAuthStore();
     const { isMobileMenuOpen, toggleMobileMenu } = useUIStore();
+    const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
     return (
         <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
@@ -33,7 +35,10 @@ export const Header = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-                <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all relative">
+                <button 
+                    onClick={() => setIsNotificationModalOpen(true)}
+                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-xl transition-all relative"
+                >
                     <Bell size={20} />
                     <span className="absolute top-2 right-2 w-2 h-2 bg-brand-primary rounded-full border-2 border-white" />
                 </button>
@@ -50,6 +55,11 @@ export const Header = () => {
                     </div>
                 </div>
             </div>
+
+            <NotificationModal 
+                isOpen={isNotificationModalOpen} 
+                onClose={() => setIsNotificationModalOpen(false)} 
+            />
         </header>
     );
 };
