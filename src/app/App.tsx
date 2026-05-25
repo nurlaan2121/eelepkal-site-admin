@@ -15,7 +15,6 @@ import { AdminBookingsPage } from '../pages/admin/bookings/BookingsPage';
 import { CreateVenueWizard } from '../pages/super-admin/venues/CreateVenueWizard';
 import { VenueDetailPage } from '../pages/super-admin/VenueDetailPage';
 import { AdminMyVenuePage } from '../pages/admin/my-venue/MyVenuePage';
-import { AppWrapper } from '../components/ui/AppWrapper';
 
 const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, allowedRole: 'SUPER_ADMIN' | 'ADMIN' }) => {
     const { user } = useAuthStore();
@@ -28,22 +27,8 @@ const ProtectedRoute = ({ children, allowedRole }: { children: React.ReactNode, 
 
 export const App = () => {
     return (
-        <AppWrapper>
-            <Toaster 
-                position="top-right" 
-                richColors 
-                closeButton
-                expand
-                toastOptions={{
-                    duration: 3000,
-                    style: {
-                        borderRadius: '16px',
-                        background: '#fff',
-                        border: '1px solid #e2e8f0',
-                        boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-                    },
-                }}
-            />
+        <>
+            <Toaster position="top-right" richColors />
             <Routes>
                 <Route path="/auth/login" element={<LoginPage />} />
 
@@ -93,6 +78,6 @@ export const App = () => {
                 <Route path="/" element={<Navigate to="/auth/login" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-        </AppWrapper>
+        </>
     );
 };
