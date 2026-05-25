@@ -3,6 +3,7 @@ import { Bell, User, Search, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
 import { NotificationModal } from '../components/ui/NotificationModal';
+import { createPortal } from 'react-dom';
 
 export const Header = () => {
     const { user } = useAuthStore();
@@ -10,7 +11,8 @@ export const Header = () => {
     const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
     return (
-        <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
+        <>
+            <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <button
                     onClick={toggleMobileMenu}
@@ -55,11 +57,16 @@ export const Header = () => {
                     </div>
                 </div>
             </div>
+            </header>
 
-            <NotificationModal 
-                isOpen={isNotificationModalOpen} 
-                onClose={() => setIsNotificationModalOpen(false)} 
-            />
-        </header>
+            {/* Render modal outside header to avoid z-index stacking context issues */}
+            {createPortal(
+                <NotificationModal 
+                    isOpen={isNotificationModalOpen} 
+                    onClose={() => setIsNotificationModalOpen(false)} 
+                />,
+                document.body
+            )}
+        </>
     );
 };
