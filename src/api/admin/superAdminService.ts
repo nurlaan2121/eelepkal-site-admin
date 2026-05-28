@@ -21,6 +21,17 @@ export interface VerifyPersonalEmailRequest {
     otp: string;
 }
 
+export interface ClaimVenueByLinkRequest {
+    url: string;
+}
+
+export interface ClaimVenueByLinkResponse {
+    success: boolean;
+    venueId: number;
+    message: string;
+    httpStatus: string;
+}
+
 export const superAdminService = {
     getAdmins: async (): Promise<AdminPersonal[]> => {
         const response = await apiClient.get<AdminPersonal[]>('/api/super-admin/myPersonal');
@@ -38,5 +49,10 @@ export const superAdminService = {
 
     verifyPersonalEmail: async (data: VerifyPersonalEmailRequest): Promise<void> => {
         await apiClient.post('/api/super-admin/add-personal-verify-email', data);
+    },
+
+    claimVenueByLink: async (data: ClaimVenueByLinkRequest): Promise<ClaimVenueByLinkResponse> => {
+        const response = await apiClient.post<ClaimVenueByLinkResponse>('/api/super-admin/venue/claim-by-link', data);
+        return response.data;
     },
 };
