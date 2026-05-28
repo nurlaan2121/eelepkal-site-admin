@@ -1,14 +1,41 @@
 import React from 'react';
-import { Users, Store, Calendar, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Users, Store, Calendar, TrendingUp, AlertCircle, ArrowUpRight, ArrowDownRight, X, Link } from 'lucide-react';
 import { AnalyticsCard } from '../../../components/ui/AnalyticsCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { updateSEO, PAGE_SEO } from '../../../utils/seo';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { superAdminService } from '../../../api/admin/superAdminService';
 
 export const SuperAdminDashboard: React.FC = () => {
     // Prevent indexing of admin pages
     React.useEffect(() => {
         updateSEO(PAGE_SEO.superAdminDashboard);
     }, []);
+
+    const [isClaimModalOpen, setIsClaimModalOpen] = React.useState(false);
+    const [claimUrl, setClaimUrl] = React.useState('');
+
+    const claimMutation = useMutation({
+        mutationFn: (url: string) => superAdminService.claimVenueByLink({ url }),
+        onSuccess: (data) => {
+            toast.success(data.message || 'Запрос успешно отправлен');
+            setIsClaimModalOpen(false);
+            setClaimUrl('');
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || 'Ошибка при отправке запроса');
+        },
+    });
+
+    const handleSubmitClaim = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!claimUrl.trim()) {
+            toast.error('Введите ссылку на заведение');
+            return;
+        }
+        claimMutation.mutate(claimUrl);
+    };
 
     return (
         <div className="space-y-6 md:space-y-8 pb-10">
@@ -109,10 +136,96 @@ export const SuperAdminDashboard: React.FC = () => {
                         </motion.div>
                     </div>
 
-                    <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform shadow-xl shadow-slate-200">
-                        Открыть центр поддержки
+                    <button 
+                        onClick={() => setIsClaimModalOpen(true)}
+                        className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform shadow-xl shadow-slate-200"
+                    >
+                        Отправить запрос
                     </button>
                 </div>
+
+                {/* Claim Venue Modal */}
+                <AnimatePresence>
+                    {isClaimModalOpen && (
+                        <>
+                            {/* Backdrop */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsClaimModalOpen(false)}
+                                className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50"
+                            />
+
+                            {/* Modal */}
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                            >
+                                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center">
+                                                <Link size={20} className="text-brand-700" />
+                                            </div>
+                                            <h2 className="text-xl font-black text-slate-900">
+                                                Отправить запрос
+                                            </h2>
+                                        </div>
+                                        <button
+                                            onClick={() => setIsClaimModalOpen(false)}
+                                            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+                                        >
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+
+                                    {/* Content */}
+                                    <form onSubmit={handleSubmitClaim} className="p-6 space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                                Ссылка на заведение <span className="text-red-500">*</span>
+                                            </label>
+                                            <div className="relative">
+                                                <Link size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                <input
+                                                    type="url"
+                                                    value={claimUrl}
+                                                    onChange={(e) => setClaimUrl(e.target.value)}
+                                                    placeholder="https://eelepkal.ru/venue/..."
+                                                    className="w-full h-12 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                                                    required
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-2">
+                                                Вставьте ссылку на заведение для отправки запроса владельцу
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={claimMutation.isPending}
+                                            className="w-full h-12 bg-brand-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-100 hover:bg-brand-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {claimMutation.isPending ? 'Отправка...' : 'Отправить запрос'}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsClaimModalOpen(false)}
+                                            className="w-full h-12 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm hover:bg-slate-200 active:scale-95 transition-all"
+                                        >
+                                            Отмена
+                                        </button>
+                                    </form>
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );
