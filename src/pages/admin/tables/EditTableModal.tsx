@@ -20,6 +20,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
     const [isUploading, setIsUploading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [pendingImageUrls, setPendingImageUrls] = useState<string[]>([]);
 
     console.log('EditTableModal - isOpen:', isOpen, 'tableId:', tableId);
 
@@ -41,6 +42,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
             setFormData(tableDetail);
             const images = Object.values(tableDetail.images);
             setImagePreviews(images);
+            setPendingImageUrls([]);
         }
     }, [tableDetail]);
 
@@ -60,6 +62,15 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
             };
             await adminTableService.updateTableBasic(tableId, basicData);
             console.log('✓ Basic info updated');
+
+            // 2. Загружаем новые изображения
+            if (pendingImageUrls.length > 0) {
+                console.log(`Uploading ${pendingImageUrls.length} new images...`);
+                for (const url of pendingImageUrls) {
+                    await adminTableService.addTableImage(tableId, url);
+                }
+                console.log('✓ New images registered');
+            }
 
             queryClient.invalidateQueries({ queryKey: ['admin-tables'] });
             toast.success('Столик успешно обновлен');
@@ -123,6 +134,10 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
         try {
             const uploadPromises = files.map(file => adminTableService.uploadImageToS3(file));
             const imageUrls = await Promise.all(uploadPromises);
+            
+            // Track pending URLs to be registered on save
+            setPendingImageUrls(prev => [...prev, ...imageUrls]);
+            
             if (formData) {
                 setFormData({
                     ...formData,
@@ -130,7 +145,7 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
                         ...formData.images,
                         ...imageUrls.reduce((acc, url, idx) => ({
                             ...acc,
-                            [`image${Date.now() + idx}`]: url,
+                            [`pending_${Date.now() + idx}`]: url,
                         }), {}),
                     },
                 });
@@ -144,12 +159,40 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
         }
     };
 
-    const removeImage = (key: string) => {
-        if (formData) {
+    const removeImage = async (key: string, imageUrl: string) => {
+        if (!formData || !tableId) return;
+
+        // Check if this is a pending image (not yet saved to backend)
+        if (key.startsWith('pending_')) {
+            // Just remove from local state
             const newImages = { ...formData.images };
             delete newImages[key];
             setFormData({ ...formData, images: newImages });
             setImagePreviews(Object.values(newImages));
+            
+            // Remove from pending URLs
+            setPendingImageUrls(prev => prev.filter(url => url !== imageUrl));
+        } else {
+            // This is an existing image from backend - call delete API
+            try {
+                // The key is the imageId from backend
+                const imageId = parseInt(key);
+                
+                if (!isNaN(imageId) && imageId > 0) {
+                    await adminTableService.deleteTableImage(tableId, imageId);
+                    
+                    const newImages = { ...formData.images };
+                    delete newImages[key];
+                    setFormData({ ...formData, images: newImages });
+                    setImagePreviews(Object.values(newImages));
+                    toast.success('Фото удалено');
+                } else {
+                    toast.error('Не удалось определить ID изображения');
+                }
+            } catch (error: any) {
+                const errorMessage = error?.response?.data?.message || error?.message || 'Ошибка удаления изображения';
+                toast.error(errorMessage);
+            }
         }
     };
 
@@ -220,11 +263,18 @@ export const EditTableModal: React.FC<EditTableModalProps> = ({ isOpen, onClose,
                                                         <img src={url} alt="" className="w-full h-full object-cover" />
                                                         <button
                                                             type="button"
-                                                            onClick={() => removeImage(key)}
+                                                            onClick={() => removeImage(key, url)}
                                                             className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
                                                         >
                                                             <X size={14} />
                                                         </button>
+                                                        {key.startsWith('pending_') && (
+                                                            <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
+                                                                <span className="text-xs font-bold text-white bg-blue-600 px-2 py-1 rounded">
+                                                                    Новое
+                                                                </span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                                 <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors">

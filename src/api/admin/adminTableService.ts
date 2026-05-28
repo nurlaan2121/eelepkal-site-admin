@@ -10,7 +10,7 @@ export interface TableResponse {
 
 export interface TableDetail {
     images: {
-        [key: string]: string;
+        [imageId: string]: string; // key is imageId, value is imageUrl
     };
     capacity: string;
     title: string;
@@ -116,6 +116,16 @@ export const adminTableService = {
         });
 
         return response.data.data;
+    },
+
+    addTableImage: async (tableId: number, imageUrl: string): Promise<void> => {
+        await apiClient.post(`/api/admin-table/add-image/${tableId}`, null, {
+            params: { url: imageUrl },
+        });
+    },
+
+    deleteTableImage: async (tableId: number, imageId: number): Promise<void> => {
+        await apiClient.delete(`/api/admin-table/delete-image/${tableId}/${imageId}`);
     },
 
     getTableById: async (tableId: number): Promise<TableDetail> => {
