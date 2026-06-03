@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Lock, Mail, User, Phone } from 'lucide-react';
+import { Eye, EyeOff, Lock, Phone, User, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
@@ -11,100 +11,104 @@ import { authService } from '../../api/auth/authService';
 import { useAuthStore } from '../../store/authStore';
 import { updateSEO, PAGE_SEO } from '../../utils/seo';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Strip everything except digits from a phone string */
+const cleanPhone = (raw: string) => raw.replace(/\D/g, '');
+
+// ─── Zod Schemas ─────────────────────────────────────────────────────────────
+
+const phoneField = z
+    .string()
+    .transform(cleanPhone)
+    .pipe(z.string().regex(/^996\d{9}$/, 'Введите номер в формате 996XXXXXXXXX'));
+
 const loginSchema = z.object({
-    email: z.string().email('Некорректный email'),
+    phoneNumber: phoneField,
     password: z.string().min(1, 'Пароль обязателен'),
-    rememberMe: z.boolean().optional(),
 });
 
-const registerSchema = z.object({
+const registerPhoneSchema = z.object({
+    phoneNumber: phoneField,
+});
+
+const registerVerifySchema = z.object({
+    otpCode: z.string().length(4, 'OTP должен состоять из 4 цифр'),
     fullName: z.string().min(2, 'Минимум 2 символа'),
-    email: z.string().email('Некорректный email'),
     password: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
-    phoneNumber: z.string().regex(/^\d{9}$/, 'Введите 9 цифр номера (напр: 705123456)'),
 });
 
-const otpSchema = z.object({
-    otp: z.string().length(4, 'OTP должен состоять из 4 цифр'),
+const forgotPhoneSchema = z.object({
+    phoneNumber: phoneField,
+});
+
+const resetPasswordSchema = z.object({
+    otpCode: z.string().length(4, 'OTP должен состоять из 4 цифр'),
+    newPassword: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterFormValues = z.infer<typeof registerSchema>;
-type OtpFormValues = z.infer<typeof otpSchema>;
+type RegisterPhoneFormValues = z.infer<typeof registerPhoneSchema>;
+type RegisterVerifyFormValues = z.infer<typeof registerVerifySchema>;
+type ForgotPhoneFormValues = z.infer<typeof forgotPhoneSchema>;
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+// ─── Screen discriminator ─────────────────────────────────────────────────────
+
+type Screen =
+    | { kind: 'login' }
+    | { kind: 'register-phone' }
+    | { kind: 'register-verify'; phone: string }
+    | { kind: 'forgot-phone' }
+    | { kind: 'forgot-reset'; phone: string };
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export const LoginPage = () => {
-    const [isLogin, setIsLogin] = React.useState(true);
-    const [isVerifying, setIsVerifying] = React.useState(false);
+    const [screen, setScreen] = React.useState<Screen>({ kind: 'login' });
     const [showPassword, setShowPassword] = React.useState(false);
-    const [showRegisterPassword, setShowRegisterPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    const [resendTimer, setResendTimer] = React.useState(0);
+    const [cooldownTimer, setCooldownTimer] = React.useState(0);
     const setAuth = useAuthStore((state) => state.setAuth);
     const navigate = useNavigate();
 
-    // Update SEO on mount
     React.useEffect(() => {
         updateSEO(PAGE_SEO.login);
     }, []);
 
-    const {
-        register: registerLogin,
-        handleSubmit: handleSubmitLogin,
-        formState: { errors: loginErrors },
-    } = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-    });
-
-    const {
-        register: registerSignup,
-        handleSubmit: handleSubmitSignup,
-        formState: { errors: registerErrors },
-        getValues: getSignupValues,
-    } = useForm<RegisterFormValues>({
-        resolver: zodResolver(registerSchema),
-    });
-
-    const {
-        register: registerOtp,
-        handleSubmit: handleSubmitOtp,
-        formState: { errors: otpErrors },
-    } = useForm<OtpFormValues>({
-        resolver: zodResolver(otpSchema),
-    });
-
-    // Handle resend timer
+    // Cooldown countdown
     React.useEffect(() => {
-        let interval: any;
-        if (resendTimer > 0) {
-            interval = setInterval(() => {
-                setResendTimer((prev) => prev - 1);
-            }, 1000);
-        }
-        return () => clearInterval(interval);
-    }, [resendTimer]);
+        if (cooldownTimer <= 0) return;
+        const id = setInterval(() => setCooldownTimer((t) => t - 1), 1000);
+        return () => clearInterval(id);
+    }, [cooldownTimer]);
+
+    const formatCooldown = () =>
+        `${Math.floor(cooldownTimer / 60)}:${(cooldownTimer % 60).toString().padStart(2, '0')}`;
+
+    // ── Login ──────────────────────────────────────────────────────────────
+
+    const loginForm = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
     const onLoginSubmit = async (data: LoginFormValues) => {
         setIsLoading(true);
         try {
             const response = await authService.signIn({
-                email: data.email,
+                phoneNumber: data.phoneNumber,
                 password: data.password,
             });
-
-            setAuth({
-                id: response.userId,
-                email: response.email,
-                role: response.role,
-                venueId: response.venueId
-            }, response.token);
-
+            setAuth(
+                {
+                    id: response.userId,
+                    phoneNumber: response.phoneNumber,
+                    email: response.email,
+                    role: response.role,
+                    venueId: response.venueId,
+                },
+                response.token
+            );
             toast.success('Успешный вход!');
-
-            if (response.role === 'SUPER_ADMIN') {
-                navigate('/super-admin/dashboard');
-            } else {
-                navigate('/admin/dashboard');
-            }
+            navigate(response.role === 'SUPER_ADMIN' ? '/super-admin/dashboard' : '/admin/dashboard');
         } catch (error: any) {
             toast.error(error.response?.data?.message || 'Ошибка при входе');
         } finally {
@@ -112,55 +116,55 @@ export const LoginPage = () => {
         }
     };
 
-    const startResendTimer = () => setResendTimer(90);
+    // ── Register – step 1 (send OTP) ────────────────────────────────────────
 
-    const onRegisterSubmit = async (data: RegisterFormValues) => {
+    const regPhoneForm = useForm<RegisterPhoneFormValues>({ resolver: zodResolver(registerPhoneSchema) });
+
+    const onRegisterSendOtp = async (data: RegisterPhoneFormValues) => {
         setIsLoading(true);
         try {
-            const formattedData = {
-                ...data,
-                phoneNumber: `+996${data.phoneNumber}`
-            };
-            const response = await authService.signUpSuperAdmin(formattedData);
-
-            if (response?.httpStatus === 'OK') {
-                toast.success(response?.message || 'Код подтверждения отправлен на вашу почту!');
-                setIsVerifying(true);
-                startResendTimer();
+            const res = await authService.sendOtpSms({ phoneNumber: data.phoneNumber });
+            if (res?.status === 'OK' || res?.status === 'BAD_REQUEST' === false) {
+                toast.success(res?.message || 'OTP отправлен на ваш номер');
+                setScreen({ kind: 'register-verify', phone: data.phoneNumber });
+                setCooldownTimer(300); // 5 min cooldown
             } else {
-                toast.error(response?.message || 'Ошибка при регистрации');
+                toast.error(res?.message || 'Ошибка при отправке OTP');
             }
         } catch (error: any) {
-            console.error('Registration error:', error);
-            const errorMessage = error.response?.data?.message || error.message || 'Ошибка при регистрации';
-            toast.error(errorMessage);
+            const msg = error.response?.data?.message || error.message || 'Ошибка при отправке OTP';
+            toast.error(msg);
+            // cooldown error – lock the button
+            if (error.response?.status === 429) setCooldownTimer(300);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleResendOtp = async () => {
-        if (resendTimer > 0) return;
-        const data = getSignupValues();
-        await onRegisterSubmit(data);
-    };
+    // ── Register – step 2 (verify + create account) ─────────────────────────
 
-    const onOtpSubmit = async (data: OtpFormValues) => {
+    const regVerifyForm = useForm<RegisterVerifyFormValues>({ resolver: zodResolver(registerVerifySchema) });
+
+    const onRegisterVerify = async (data: RegisterVerifyFormValues) => {
+        if (screen.kind !== 'register-verify') return;
         setIsLoading(true);
         try {
-            const signupData = getSignupValues();
-            const response = await authService.verifyEmail({
-                email: signupData.email,
-                otp: data.otp
+            const response = await authService.verifyOtp({
+                phoneNumber: screen.phone,
+                otpCode: data.otpCode,
+                fullName: data.fullName,
+                password: data.password,
             });
-
-            setAuth({
-                id: response.userId,
-                email: response.email,
-                role: response.role,
-                venueId: response.venueId
-            }, response.token);
-
+            setAuth(
+                {
+                    id: response.userId,
+                    phoneNumber: response.phoneNumber,
+                    email: response.email,
+                    role: response.role,
+                    venueId: response.venueId,
+                },
+                response.token
+            );
             toast.success('Регистрация успешно завершена!');
             navigate('/super-admin/dashboard');
         } catch (error: any) {
@@ -170,15 +174,113 @@ export const LoginPage = () => {
         }
     };
 
+    // ── Forgot password – step 1 ────────────────────────────────────────────
+
+    const forgotPhoneForm = useForm<ForgotPhoneFormValues>({ resolver: zodResolver(forgotPhoneSchema) });
+
+    const onForgotSendOtp = async (data: ForgotPhoneFormValues) => {
+        setIsLoading(true);
+        try {
+            const res = await authService.forgotPassword({ phoneNumber: data.phoneNumber });
+            toast.success(res?.message || 'OTP отправлен на ваш номер');
+            setScreen({ kind: 'forgot-reset', phone: data.phoneNumber });
+            setCooldownTimer(300);
+        } catch (error: any) {
+            const msg = error.response?.data?.message || error.message || 'Ошибка при отправке OTP';
+            toast.error(msg);
+            if (error.response?.status === 429) setCooldownTimer(300);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ── Forgot password – step 2 ────────────────────────────────────────────
+
+    const resetForm = useForm<ResetPasswordFormValues>({ resolver: zodResolver(resetPasswordSchema) });
+
+    const onResetPassword = async (data: ResetPasswordFormValues) => {
+        if (screen.kind !== 'forgot-reset') return;
+        setIsLoading(true);
+        try {
+            const res = await authService.resetPassword({
+                phoneNumber: screen.phone,
+                otpCode: data.otpCode,
+                newPassword: data.newPassword,
+            });
+            toast.success(res?.message || 'Пароль успешно сброшен!');
+            setScreen({ kind: 'login' });
+        } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Ошибка при сбросе пароля');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // ── Resend OTP (re-use step 1 for current screen) ───────────────────────
+
+    const handleResendOtp = async () => {
+        if (cooldownTimer > 0) return;
+        if (screen.kind === 'register-verify') {
+            setIsLoading(true);
+            try {
+                await authService.sendOtpSms({ phoneNumber: screen.phone });
+                toast.success('OTP отправлен повторно');
+                setCooldownTimer(300);
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || 'Ошибка при повторной отправке');
+                if (error.response?.status === 429) setCooldownTimer(300);
+            } finally {
+                setIsLoading(false);
+            }
+        } else if (screen.kind === 'forgot-reset') {
+            setIsLoading(true);
+            try {
+                await authService.forgotPassword({ phoneNumber: screen.phone });
+                toast.success('OTP отправлен повторно');
+                setCooldownTimer(300);
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || 'Ошибка при повторной отправке');
+                if (error.response?.status === 429) setCooldownTimer(300);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    };
+
+    // ── Phone input handler (digits only) ───────────────────────────────────
+
+    const phoneInputProps = (fieldName: string) => ({
+        type: 'tel' as const,
+        inputMode: 'numeric' as const,
+        placeholder: '996700123456',
+        onInput: (e: React.FormEvent<HTMLInputElement>) => {
+            e.currentTarget.value = e.currentTarget.value.replace(/\D/g, '');
+        },
+        maxLength: 12,
+    });
+
+    // ── Render ──────────────────────────────────────────────────────────────
+
+    const screenTitle = () => {
+        switch (screen.kind) {
+            case 'login': return 'Админ-панель системы бронирования';
+            case 'register-phone': return 'Регистрация нового супер-админа';
+            case 'register-verify': return 'Подтверждение номера';
+            case 'forgot-phone': return 'Восстановление пароля';
+            case 'forgot-reset': return 'Сброс пароля';
+        }
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-white md:bg-slate-50 p-6">
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: "easeOut" }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
                 className="w-full max-w-[440px]"
             >
                 <div className="md:bg-white md:rounded-[32px] md:shadow-2xl md:p-10 md:border md:border-slate-100">
+                    {/* Logo */}
                     <div className="flex flex-col items-center mb-10 text-center">
                         <motion.div
                             initial={{ y: -20, opacity: 0 }}
@@ -189,22 +291,21 @@ export const LoginPage = () => {
                             <img src="/logo.png" alt="Логотип" className="w-full h-full object-contain" />
                         </motion.div>
                         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Ээлеп кал</h1>
-                        <p className="text-slate-500 mt-2 font-medium">
-                            {isVerifying ? 'Подтверждение почты' : isLogin ? 'Админ-панель системы бронирования' : 'Регистрация нового супер-админа'}
-                        </p>
+                        <p className="text-slate-500 mt-2 font-medium">{screenTitle()}</p>
                     </div>
 
-                    {!isVerifying && (
+                    {/* Tab bar – only on login / register-phone */}
+                    {(screen.kind === 'login' || screen.kind === 'register-phone') && (
                         <div className="flex p-1 bg-slate-100 rounded-2xl mb-8">
                             <button
-                                onClick={() => setIsLogin(true)}
-                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                onClick={() => setScreen({ kind: 'login' })}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${screen.kind === 'login' ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 Вход
                             </button>
                             <button
-                                onClick={() => setIsLogin(false)}
-                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${!isLogin ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                onClick={() => setScreen({ kind: 'register-phone' })}
+                                className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${screen.kind === 'register-phone' ? 'bg-white text-brand-primary shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                             >
                                 Регистрация
                             </button>
@@ -212,95 +313,49 @@ export const LoginPage = () => {
                     )}
 
                     <AnimatePresence mode="wait">
-                        {isVerifying ? (
-                            <motion.form
-                                key="otp"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                onSubmit={handleSubmitOtp(onOtpSubmit)}
-                                className="space-y-6"
-                            >
-                                <div className="text-center mb-6">
-                                    <p className="text-sm text-slate-500 font-medium">Мы отправили 4-значный код на <br /> <span className="font-bold text-slate-900">{getSignupValues().email}</span></p>
-                                </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Код из письма</label>
-                                    <input
-                                        {...registerOtp('otp')}
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]*"
-                                        onInput={(e) => {
-                                            e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '');
-                                        }}
-                                        maxLength={4}
-                                        placeholder="0000"
-                                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary rounded-2xl transition-all outline-none"
-                                    />
-                                    {otpErrors.otp && <p className="text-[10px] font-bold text-red-500 text-center mt-1">{otpErrors.otp.message}</p>}
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100"
-                                    isLoading={isLoading}
-                                >
-                                    Подтвердить
-                                </Button>
-
-                                <div className="text-center">
-                                    <button
-                                        type="button"
-                                        disabled={resendTimer > 0}
-                                        onClick={handleResendOtp}
-                                        className={`text-xs font-black uppercase tracking-widest transition-colors ${resendTimer > 0 ? 'text-slate-300' : 'text-brand-primary hover:text-brand-700'}`}
-                                    >
-                                        Отправить код повторно {resendTimer > 0 && `(${Math.floor(resendTimer / 60)}:${(resendTimer % 60).toString().padStart(2, '0')})`}
-                                    </button>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setIsVerifying(false)}
-                                    className="w-full text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
-                                >
-                                    Назад к регистрации
-                                </button>
-                            </motion.form>
-                        ) : isLogin ? (
+                        {/* ── LOGIN ─────────────────────────────────────────────────── */}
+                        {screen.kind === 'login' && (
                             <motion.form
                                 key="login"
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
-                                onSubmit={handleSubmitLogin(onLoginSubmit)}
+                                onSubmit={loginForm.handleSubmit(onLoginSubmit)}
                                 className="space-y-6"
                             >
+                                {/* Phone */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Номер телефона
+                                    </label>
                                     <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
-                                            {...registerLogin('email')}
-                                            type="email"
-                                            placeholder="example@mail.kg"
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${loginErrors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            {...loginForm.register('phoneNumber')}
+                                            {...phoneInputProps('phoneNumber')}
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${loginForm.formState.errors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>
-                                    {loginErrors.email && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{loginErrors.email.message}</p>}
+                                    {loginForm.formState.errors.phoneNumber && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {loginForm.formState.errors.phoneNumber.message}
+                                        </p>
+                                    )}
                                 </div>
 
+                                {/* Password */}
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Пароль</label>
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Пароль
+                                    </label>
                                     <div className="relative">
                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
-                                            {...registerLogin('password')}
+                                            {...loginForm.register('password')}
                                             type={showPassword ? 'text' : 'password'}
                                             placeholder="••••••••"
-                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${loginErrors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${loginForm.formState.errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                         <button
                                             type="button"
@@ -310,7 +365,11 @@ export const LoginPage = () => {
                                             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                         </button>
                                     </div>
-                                    {loginErrors.password && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{loginErrors.password.message}</p>}
+                                    {loginForm.formState.errors.password && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {loginForm.formState.errors.password.message}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <Button
@@ -320,80 +379,206 @@ export const LoginPage = () => {
                                 >
                                     Войти
                                 </Button>
+
+                                {/* Forgot password link */}
+                                <div className="text-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setScreen({ kind: 'forgot-phone' })}
+                                        className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-brand-primary transition-colors"
+                                    >
+                                        Забыли пароль?
+                                    </button>
+                                </div>
                             </motion.form>
-                        ) : (
+                        )}
+
+                        {/* ── REGISTER STEP 1: phone ───────────────────────────────── */}
+                        {screen.kind === 'register-phone' && (
                             <motion.form
-                                key="register"
+                                key="register-phone"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                onSubmit={handleSubmitSignup(onRegisterSubmit)}
+                                onSubmit={regPhoneForm.handleSubmit(onRegisterSendOtp)}
+                                className="space-y-6"
+                            >
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Номер телефона
+                                    </label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <input
+                                            {...regPhoneForm.register('phoneNumber')}
+                                            {...phoneInputProps('phoneNumber')}
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regPhoneForm.formState.errors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                    </div>
+                                    {regPhoneForm.formState.errors.phoneNumber && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {regPhoneForm.formState.errors.phoneNumber.message}
+                                        </p>
+                                    )}
+                                    <p className="text-[10px] text-slate-400 ml-1 mt-1">
+                                        Формат: 996XXXXXXXXX (без + и пробелов)
+                                    </p>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100 active:scale-[0.98] transition-transform"
+                                    isLoading={isLoading}
+                                    disabled={cooldownTimer > 0}
+                                >
+                                    {cooldownTimer > 0 ? `Подождите ${formatCooldown()}` : 'Получить код'}
+                                </Button>
+                            </motion.form>
+                        )}
+
+                        {/* ── REGISTER STEP 2: OTP + name + password ───────────────── */}
+                        {screen.kind === 'register-verify' && (
+                            <motion.form
+                                key="register-verify"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                onSubmit={regVerifyForm.handleSubmit(onRegisterVerify)}
                                 className="space-y-5"
                             >
+                                <div className="text-center mb-4">
+                                    <p className="text-sm text-slate-500 font-medium">
+                                        Мы отправили 4-значный SMS-код на <br />
+                                        <span className="font-bold text-slate-900">{screen.phone}</span>
+                                    </p>
+                                </div>
+
+                                {/* OTP */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Код из СМС
+                                    </label>
+                                    <input
+                                        {...regVerifyForm.register('otpCode')}
+                                        type="text"
+                                        inputMode="numeric"
+                                        onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ''); }}
+                                        maxLength={4}
+                                        placeholder="0000"
+                                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary rounded-2xl transition-all outline-none"
+                                    />
+                                    {regVerifyForm.formState.errors.otpCode && (
+                                        <p className="text-[10px] font-bold text-red-500 text-center mt-1">
+                                            {regVerifyForm.formState.errors.otpCode.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Full name */}
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">ФИО</label>
                                     <div className="relative">
                                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
-                                            {...registerSignup('fullName')}
+                                            {...regVerifyForm.register('fullName')}
                                             type="text"
                                             placeholder="Асан Асанов"
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.fullName ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regVerifyForm.formState.errors.fullName ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>
-                                    {registerErrors.fullName && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.fullName.message}</p>}
+                                    {regVerifyForm.formState.errors.fullName && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {regVerifyForm.formState.errors.fullName.message}
+                                        </p>
+                                    )}
                                 </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Email</label>
-                                    <div className="relative">
-                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                                        <input
-                                            {...registerSignup('email')}
-                                            type="email"
-                                            placeholder="example@mail.kg"
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
-                                        />
-                                    </div>
-                                    {registerErrors.email && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.email.message}</p>}
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Телефон</label>
-                                    <div className="relative">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                                            <Phone className="w-5 h-5 text-slate-400" />
-                                            <span className="text-base font-bold text-slate-900 border-r border-slate-200 pr-2">+996</span>
-                                        </div>
-                                        <input
-                                            {...registerSignup('phoneNumber')}
-                                            type="tel"
-                                            placeholder="770123456"
-                                            className={`w-full h-14 pl-24 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
-                                        />
-                                    </div>
-                                    {registerErrors.phoneNumber && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.phoneNumber.message}</p>}
-                                </div>
-
+                                {/* Password */}
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Пароль</label>
                                     <div className="relative">
                                         <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
-                                            {...registerSignup('password')}
-                                            type={showRegisterPassword ? 'text' : 'password'}
-                                            placeholder="••••••••"
-                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerErrors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            {...regVerifyForm.register('password')}
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Минимум 8 символов"
+                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regVerifyForm.formState.errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                         <button
                                             type="button"
-                                            onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                                            onClick={() => setShowPassword(!showPassword)}
                                             className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
                                         >
-                                            {showRegisterPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                         </button>
                                     </div>
-                                    {registerErrors.password && <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">{registerErrors.password.message}</p>}
+                                    {regVerifyForm.formState.errors.password && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {regVerifyForm.formState.errors.password.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100"
+                                    isLoading={isLoading}
+                                >
+                                    Зарегистрироваться
+                                </Button>
+
+                                {/* Resend */}
+                                <div className="text-center">
+                                    <button
+                                        type="button"
+                                        disabled={cooldownTimer > 0 || isLoading}
+                                        onClick={handleResendOtp}
+                                        className={`text-xs font-black uppercase tracking-widest transition-colors ${cooldownTimer > 0 || isLoading ? 'text-slate-300' : 'text-brand-primary hover:text-brand-700'}`}
+                                    >
+                                        Отправить код повторно {cooldownTimer > 0 && `(${formatCooldown()})`}
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setScreen({ kind: 'register-phone' })}
+                                    className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                                >
+                                    <ArrowLeft size={12} /> Назад к вводу номера
+                                </button>
+                            </motion.form>
+                        )}
+
+                        {/* ── FORGOT PASSWORD STEP 1: phone ─────────────────────────── */}
+                        {screen.kind === 'forgot-phone' && (
+                            <motion.form
+                                key="forgot-phone"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                onSubmit={forgotPhoneForm.handleSubmit(onForgotSendOtp)}
+                                className="space-y-6"
+                            >
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Номер телефона
+                                    </label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <input
+                                            {...forgotPhoneForm.register('phoneNumber')}
+                                            {...phoneInputProps('phoneNumber')}
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${forgotPhoneForm.formState.errors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                    </div>
+                                    {forgotPhoneForm.formState.errors.phoneNumber && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {forgotPhoneForm.formState.errors.phoneNumber.message}
+                                        </p>
+                                    )}
+                                    <p className="text-[10px] text-slate-400 ml-1 mt-1">
+                                        Введите номер, привязанный к вашему аккаунту
+                                    </p>
                                 </div>
 
                                 <Button
@@ -401,8 +586,112 @@ export const LoginPage = () => {
                                     className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100 active:scale-[0.98] transition-transform"
                                     isLoading={isLoading}
                                 >
-                                    Зарегистрироваться
+                                    Получить код
                                 </Button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setScreen({ kind: 'login' })}
+                                    className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                                >
+                                    <ArrowLeft size={12} /> Назад ко входу
+                                </button>
+                            </motion.form>
+                        )}
+
+                        {/* ── FORGOT PASSWORD STEP 2: OTP + new password ────────────── */}
+                        {screen.kind === 'forgot-reset' && (
+                            <motion.form
+                                key="forgot-reset"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                onSubmit={resetForm.handleSubmit(onResetPassword)}
+                                className="space-y-6"
+                            >
+                                <div className="text-center mb-4">
+                                    <p className="text-sm text-slate-500 font-medium">
+                                        Мы отправили 4-значный SMS-код на <br />
+                                        <span className="font-bold text-slate-900">{screen.phone}</span>
+                                    </p>
+                                </div>
+
+                                {/* OTP */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Код из СМС
+                                    </label>
+                                    <input
+                                        {...resetForm.register('otpCode')}
+                                        type="text"
+                                        inputMode="numeric"
+                                        onInput={(e) => { e.currentTarget.value = e.currentTarget.value.replace(/\D/g, ''); }}
+                                        maxLength={4}
+                                        placeholder="0000"
+                                        className="w-full h-16 text-center text-3xl font-black tracking-[0.5em] bg-slate-50 border-2 border-transparent focus:bg-white focus:border-brand-primary rounded-2xl transition-all outline-none"
+                                    />
+                                    {resetForm.formState.errors.otpCode && (
+                                        <p className="text-[10px] font-bold text-red-500 text-center mt-1">
+                                            {resetForm.formState.errors.otpCode.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* New password */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Новый пароль
+                                    </label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <input
+                                            {...resetForm.register('newPassword')}
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Минимум 8 символов"
+                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${resetForm.formState.errors.newPassword ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                    {resetForm.formState.errors.newPassword && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {resetForm.formState.errors.newPassword.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100"
+                                    isLoading={isLoading}
+                                >
+                                    Сбросить пароль
+                                </Button>
+
+                                {/* Resend */}
+                                <div className="text-center">
+                                    <button
+                                        type="button"
+                                        disabled={cooldownTimer > 0 || isLoading}
+                                        onClick={handleResendOtp}
+                                        className={`text-xs font-black uppercase tracking-widest transition-colors ${cooldownTimer > 0 || isLoading ? 'text-slate-300' : 'text-brand-primary hover:text-brand-700'}`}
+                                    >
+                                        Отправить код повторно {cooldownTimer > 0 && `(${formatCooldown()})`}
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setScreen({ kind: 'login' })}
+                                    className="w-full flex items-center justify-center gap-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest"
+                                >
+                                    <ArrowLeft size={12} /> Назад ко входу
+                                </button>
                             </motion.form>
                         )}
                     </AnimatePresence>
@@ -411,9 +700,3 @@ export const LoginPage = () => {
         </div>
     );
 };
-
-const CheckIcon = ({ className }: { className?: string }) => (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-);

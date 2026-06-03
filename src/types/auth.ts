@@ -1,8 +1,8 @@
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN';
 
 export interface SignInRequest {
-    email: string;
-    password?: string;
+    phoneNumber: string;
+    password: string;
 }
 
 export interface AuthResponse {
@@ -10,7 +10,8 @@ export interface AuthResponse {
     role: UserRole;
     venueId?: number;
     userId: number;
-    email: string;
+    phoneNumber?: string;
+    email?: string;
 }
 
 export interface ExceptionResponse {
@@ -18,14 +19,28 @@ export interface ExceptionResponse {
     debugMessage: string;
 }
 
-export interface SuperAdminRegistrationRequest {
-    fullName: string;
-    email: string;
-    password: string;
+export interface SimpleResponse {
+    status: string;
+    message: string;
+}
+
+export interface SendOtpSmsRequest {
     phoneNumber: string;
 }
 
-export interface VerifyEmailRequest {
-    email: string;
-    otp: string;
+export interface VerifyOtpRequest {
+    phoneNumber: string;
+    otpCode: string;
+    fullName?: string;
+    password?: string;
+}
+
+export interface ForgotPasswordRequest {
+    phoneNumber: string;
+}
+
+export interface ResetPasswordRequest {
+    phoneNumber: string;
+    otpCode: string;
+    newPassword: string;
 }

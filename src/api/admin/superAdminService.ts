@@ -16,8 +16,8 @@ export interface AddPersonalRequest {
     password: string;
 }
 
-export interface VerifyPersonalEmailRequest {
-    email: string;
+export interface VerifyPersonalOtpRequest {
+    phoneNumber: string;
     otp: string;
 }
 
@@ -43,12 +43,12 @@ export const superAdminService = {
     },
 
     addPersonal: async (data: AddPersonalRequest): Promise<{ httpStatus: string; message: string }> => {
-        const response = await apiClient.post('/api/super-admin/add-personal-email', data);
+        const response = await apiClient.post('/api/super-admin/add-personal-sms', data);
         return response.data;
     },
 
-    verifyPersonalEmail: async (data: VerifyPersonalEmailRequest): Promise<void> => {
-        await apiClient.post('/api/super-admin/add-personal-verify-email', data);
+    verifyPersonalOtp: async (data: VerifyPersonalOtpRequest): Promise<void> => {
+        await apiClient.post('/api/super-admin/add-personal-verify-sms', data);
     },
 
     claimVenueByLink: async (data: ClaimVenueByLinkRequest): Promise<ClaimVenueByLinkResponse> => {
