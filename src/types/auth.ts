@@ -25,6 +25,9 @@ export interface SimpleResponse {
 }
 
 export interface SendOtpSmsRequest {
+    fullName: string;
+    email: string;
+    password: string;
     phoneNumber: string;
 }
 
