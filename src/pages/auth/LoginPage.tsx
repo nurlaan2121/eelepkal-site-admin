@@ -134,10 +134,10 @@ export const LoginPage = () => {
                 password: data.password,
                 phoneNumber: data.phoneNumber,
             });
-            if (res?.status === 'OK' || res?.status === 'BAD_REQUEST' === false) {
+            const isError = res?.status === 'BAD_REQUEST' || res?.httpStatus === 'BAD_REQUEST';
+            if (!isError) {
                 toast.success(res?.message || 'OTP отправлен на ваш номер');
                 setScreen({ kind: 'register-verify', phone: data.phoneNumber });
-                setCooldownTimer(300); // 5 min cooldown
             } else {
                 toast.error(res?.message || 'Ошибка при отправке OTP');
             }
@@ -145,7 +145,7 @@ export const LoginPage = () => {
             const msg = error.response?.data?.message || error.message || 'Ошибка при отправке OTP';
             toast.error(msg);
             // cooldown error – lock the button
-            if (error.response?.status === 429) setCooldownTimer(300);
+            // if (error.response?.status === 429) setCooldownTimer(300);
         } finally {
             setIsLoading(false);
         }
@@ -192,11 +192,11 @@ export const LoginPage = () => {
             const res = await authService.forgotPassword({ phoneNumber: data.phoneNumber });
             toast.success(res?.message || 'OTP отправлен на ваш номер');
             setScreen({ kind: 'forgot-reset', phone: data.phoneNumber });
-            setCooldownTimer(300);
+            // setCooldownTimer(300);
         } catch (error: any) {
             const msg = error.response?.data?.message || error.message || 'Ошибка при отправке OTP';
             toast.error(msg);
-            if (error.response?.status === 429) setCooldownTimer(300);
+            // if (error.response?.status === 429) setCooldownTimer(300);
         } finally {
             setIsLoading(false);
         }

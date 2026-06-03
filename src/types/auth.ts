@@ -20,7 +20,8 @@ export interface ExceptionResponse {
 }
 
 export interface SimpleResponse {
-    status: string;
+    status?: string;
+    httpStatus?: string;
     message: string;
 }
 
