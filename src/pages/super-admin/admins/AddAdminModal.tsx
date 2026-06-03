@@ -28,7 +28,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
 
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!formData.fullName || !formData.phoneNumber || !formData.password) {
             toast.error('Заполните все обязательные поля');
             return;
@@ -48,7 +48,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
 
     const handleVerifyOtp = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!otp) {
             toast.error('Введите OTP код');
             return;
@@ -92,7 +92,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                         onClick={handleClose}
                         className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
                     />
-                    
+
                     {/* Modal */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
