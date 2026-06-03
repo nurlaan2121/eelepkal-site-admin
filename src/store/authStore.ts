@@ -5,7 +5,8 @@ export type UserRole = 'SUPER_ADMIN' | 'ADMIN';
 
 interface User {
     id: number;
-    email: string;
+    phoneNumber?: string;
+    email?: string;
     role: UserRole;
     venueId?: number;
 }

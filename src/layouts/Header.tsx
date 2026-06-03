@@ -49,7 +49,7 @@ export const Header = () => {
 
                 <div className="flex items-center space-x-3">
                     <div className="text-right hidden sm:block">
-                        <p className="text-sm font-semibold text-slate-900">{user?.email}</p>
+                        <p className="text-sm font-semibold text-slate-900">{user?.phoneNumber || user?.email || '—'}</p>
                         <p className="text-xs text-slate-500 capitalize">{user?.role === 'SUPER_ADMIN' ? 'Супер Админ' : 'Менеджер'}</p>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-primary">
