@@ -32,10 +32,15 @@ const registerPhoneSchema = z.object({
     phoneNumber: phoneField,
 });
 
+const registerFormSchema = z.object({
+    fullName: z.string().min(2, 'Минимум 2 символа'),
+    email: z.string().email('Неверный формат email'),
+    password: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
+    phoneNumber: phoneField,
+});
+
 const registerVerifySchema = z.object({
     otpCode: z.string().length(4, 'OTP должен состоять из 4 цифр'),
-    fullName: z.string().min(2, 'Минимум 2 символа'),
-    password: z.string().min(8, 'Пароль должен быть не менее 8 символов'),
 });
 
 const forgotPhoneSchema = z.object({
@@ -48,7 +53,7 @@ const resetPasswordSchema = z.object({
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
-type RegisterPhoneFormValues = z.infer<typeof registerPhoneSchema>;
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
 type RegisterVerifyFormValues = z.infer<typeof registerVerifySchema>;
 type ForgotPhoneFormValues = z.infer<typeof forgotPhoneSchema>;
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
@@ -118,12 +123,17 @@ export const LoginPage = () => {
 
     // ── Register – step 1 (send OTP) ────────────────────────────────────────
 
-    const regPhoneForm = useForm<RegisterPhoneFormValues>({ resolver: zodResolver(registerPhoneSchema) });
+    const registerForm = useForm<RegisterFormValues>({ resolver: zodResolver(registerFormSchema) });
 
-    const onRegisterSendOtp = async (data: RegisterPhoneFormValues) => {
+    const onRegisterSendOtp = async (data: RegisterFormValues) => {
         setIsLoading(true);
         try {
-            const res = await authService.sendOtpSms({ phoneNumber: data.phoneNumber });
+            const res = await authService.sendOtpSms({
+                fullName: data.fullName,
+                email: data.email,
+                password: data.password,
+                phoneNumber: data.phoneNumber,
+            });
             if (res?.status === 'OK' || res?.status === 'BAD_REQUEST' === false) {
                 toast.success(res?.message || 'OTP отправлен на ваш номер');
                 setScreen({ kind: 'register-verify', phone: data.phoneNumber });
@@ -152,8 +162,6 @@ export const LoginPage = () => {
             const response = await authService.verifyOtp({
                 phoneNumber: screen.phone,
                 otpCode: data.otpCode,
-                fullName: data.fullName,
-                password: data.password,
             });
             setAuth(
                 {
@@ -223,7 +231,14 @@ export const LoginPage = () => {
         if (screen.kind === 'register-verify') {
             setIsLoading(true);
             try {
-                await authService.sendOtpSms({ phoneNumber: screen.phone });
+                // Resend OTP using stored registration data
+                const formData = registerForm.getValues();
+                await authService.sendOtpSms({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                    phoneNumber: screen.phone,
+                });
                 toast.success('OTP отправлен повторно');
                 setCooldownTimer(300);
             } catch (error: any) {
@@ -393,16 +408,86 @@ export const LoginPage = () => {
                             </motion.form>
                         )}
 
-                        {/* ── REGISTER STEP 1: phone ───────────────────────────────── */}
+                        {/* ── REGISTER STEP 1: full form ───────────────────────────────── */}
                         {screen.kind === 'register-phone' && (
                             <motion.form
                                 key="register-phone"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
-                                onSubmit={regPhoneForm.handleSubmit(onRegisterSendOtp)}
+                                onSubmit={registerForm.handleSubmit(onRegisterSendOtp)}
                                 className="space-y-6"
                             >
+                                {/* Full name */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        ФИО
+                                    </label>
+                                    <div className="relative">
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <input
+                                            {...registerForm.register('fullName')}
+                                            type="text"
+                                            placeholder="Асан Асанов"
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerForm.formState.errors.fullName ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                    </div>
+                                    {registerForm.formState.errors.fullName && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {registerForm.formState.errors.fullName.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Email */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Email
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            {...registerForm.register('email')}
+                                            type="email"
+                                            placeholder="example@mail.com"
+                                            className={`w-full h-14 pl-4 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerForm.formState.errors.email ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                    </div>
+                                    {registerForm.formState.errors.email && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {registerForm.formState.errors.email.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Password */}
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
+                                        Пароль
+                                    </label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                                        <input
+                                            {...registerForm.register('password')}
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Минимум 8 символов"
+                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerForm.formState.errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
+                                        >
+                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                    {registerForm.formState.errors.password && (
+                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
+                                            {registerForm.formState.errors.password.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Phone */}
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
                                         Номер телефона
@@ -410,14 +495,14 @@ export const LoginPage = () => {
                                     <div className="relative">
                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                                         <input
-                                            {...regPhoneForm.register('phoneNumber')}
+                                            {...registerForm.register('phoneNumber')}
                                             {...phoneInputProps('phoneNumber')}
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regPhoneForm.formState.errors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
+                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${registerForm.formState.errors.phoneNumber ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
                                         />
                                     </div>
-                                    {regPhoneForm.formState.errors.phoneNumber && (
+                                    {registerForm.formState.errors.phoneNumber && (
                                         <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
-                                            {regPhoneForm.formState.errors.phoneNumber.message}
+                                            {registerForm.formState.errors.phoneNumber.message}
                                         </p>
                                     )}
                                     <p className="text-[10px] text-slate-400 ml-1 mt-1">
@@ -436,7 +521,7 @@ export const LoginPage = () => {
                             </motion.form>
                         )}
 
-                        {/* ── REGISTER STEP 2: OTP + name + password ───────────────── */}
+                        {/* ── REGISTER STEP 2: OTP only ───────────────────────────────── */}
                         {screen.kind === 'register-verify' && (
                             <motion.form
                                 key="register-verify"
@@ -474,57 +559,12 @@ export const LoginPage = () => {
                                     )}
                                 </div>
 
-                                {/* Full name */}
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">ФИО</label>
-                                    <div className="relative">
-                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                                        <input
-                                            {...regVerifyForm.register('fullName')}
-                                            type="text"
-                                            placeholder="Асан Асанов"
-                                            className={`w-full h-14 pl-12 pr-4 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regVerifyForm.formState.errors.fullName ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
-                                        />
-                                    </div>
-                                    {regVerifyForm.formState.errors.fullName && (
-                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
-                                            {regVerifyForm.formState.errors.fullName.message}
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Password */}
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Пароль</label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-                                        <input
-                                            {...regVerifyForm.register('password')}
-                                            type={showPassword ? 'text' : 'password'}
-                                            placeholder="Минимум 8 символов"
-                                            className={`w-full h-14 pl-12 pr-12 bg-slate-50 border-2 rounded-2xl text-base font-bold focus:bg-white focus:border-brand-primary transition-all outline-none ${regVerifyForm.formState.errors.password ? 'border-red-100 bg-red-50 text-red-900' : 'border-transparent'}`}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 active:text-brand-primary transition-colors"
-                                        >
-                                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                                        </button>
-                                    </div>
-                                    {regVerifyForm.formState.errors.password && (
-                                        <p className="text-[10px] font-bold text-red-500 ml-1 mt-1">
-                                            {regVerifyForm.formState.errors.password.message}
-                                        </p>
-                                    )}
-                                </div>
-
                                 <Button
                                     type="submit"
                                     className="w-full h-14 rounded-2xl text-sm font-black uppercase tracking-widest shadow-xl shadow-brand-100"
                                     isLoading={isLoading}
                                 >
-                                    Зарегистрироваться
+                                    Подтвердить
                                 </Button>
 
                                 {/* Resend */}
