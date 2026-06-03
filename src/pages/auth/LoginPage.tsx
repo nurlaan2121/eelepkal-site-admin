@@ -161,7 +161,7 @@ export const LoginPage = () => {
         try {
             const response = await authService.verifyOtp({
                 phoneNumber: screen.phone,
-                otpCode: data.otpCode,
+                otp: data.otpCode,
             });
             setAuth(
                 {

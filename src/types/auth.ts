@@ -33,7 +33,7 @@ export interface SendOtpSmsRequest {
 
 export interface VerifyOtpRequest {
     phoneNumber: string;
-    otpCode: string;
+    otp: string;
     fullName?: string;
     password?: string;
 }
