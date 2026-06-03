@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
-import { motion, AnimatePresence } from 'framer-motion';
 import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { Sidebar } from '../ui/Sidebar';
 
 const MENU_ITEMS = [
     { icon: LayoutDashboard, label: 'Панель управления', path: '/super-admin/dashboard' },
@@ -104,31 +104,7 @@ export const SuperAdminSidebar = () => {
             </div>
 
             {/* Mobile Drawer */}
-            <AnimatePresence>
-                {isMobileMenuOpen && (
-                    <div className="fixed inset-0 z-50 lg:hidden">
-                        {/* Backdrop */}
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={closeMobileMenu}
-                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
-                        />
-
-                        {/* Drawer */}
-                        <motion.div
-                            initial={{ x: "-100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "-100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="absolute left-0 top-0 bottom-0 w-64 bg-white"
-                        >
-                            {sidebarContent}
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <Sidebar open={isMobileMenuOpen} onClose={closeMobileMenu} content={sidebarContent} />
 
             <ConfirmDialog
                 isOpen={isLogoutConfirmOpen}
