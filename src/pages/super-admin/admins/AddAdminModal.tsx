@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, User, Phone, Lock, Shield, CheckCircle } from 'lucide-react';
+import { X, User, Phone, Lock, Shield, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { superAdminService, AddPersonalRequest, VerifyPersonalEmailRequest } from '../../../api/admin/superAdminService';
+import { superAdminService, AddPersonalRequest, VerifyPersonalOtpRequest } from '../../../api/admin/superAdminService';
 
 interface AddAdminModalProps {
     isOpen: boolean;
@@ -29,7 +29,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!formData.fullName || !formData.email || !formData.password) {
+        if (!formData.fullName || !formData.phoneNumber || !formData.password) {
             toast.error('Заполните все обязательные поля');
             return;
         }
@@ -37,7 +37,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
         setIsSubmitting(true);
         try {
             await superAdminService.addPersonal(formData);
-            toast.success('OTP отправлен на email');
+            toast.success('OTP отправлен на номер телефона');
             setStep('otp');
         } catch (error: any) {
             toast.error(error?.response?.data?.message || 'Ошибка при отправке OTP');
@@ -56,11 +56,11 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
 
         setIsSubmitting(true);
         try {
-            const verifyData: VerifyPersonalEmailRequest = {
-                email: formData.email,
+            const verifyData: VerifyPersonalOtpRequest = {
+                phoneNumber: formData.phoneNumber,
                 otp,
             };
-            await superAdminService.verifyPersonalEmail(verifyData);
+            await superAdminService.verifyPersonalOtp(verifyData);
             toast.success('Администратор успешно добавлен');
             onSuccess();
             handleClose();
@@ -108,7 +108,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                         <Shield size={20} className="text-brand-700" />
                                     </div>
                                     <h2 className="text-xl font-black text-slate-900">
-                                        {step === 'form' ? 'Добавить администратора' : 'Подтверждение email'}
+                                        {step === 'form' ? 'Добавить администратора' : 'Подтверждение номера'}
                                     </h2>
                                 </div>
                                 <button
@@ -142,29 +142,10 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                             </div>
                                         </div>
 
-                                        {/* Email */}
+                                        {/* Phone Number (required) */}
                                         <div>
                                             <label className="block text-sm font-bold text-slate-700 mb-2">
-                                                Email <span className="text-red-500">*</span>
-                                            </label>
-                                            <div className="relative">
-                                                <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                                                <input
-                                                    type="email"
-                                                    name="email"
-                                                    value={formData.email}
-                                                    onChange={handleInputChange}
-                                                    placeholder="admin@venue.kg"
-                                                    className="w-full h-12 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Phone Number */}
-                                        <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-2">
-                                                Телефон
+                                                Номер телефона <span className="text-red-500">*</span>
                                             </label>
                                             <div className="relative">
                                                 <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -172,8 +153,30 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                                     type="tel"
                                                     name="phoneNumber"
                                                     value={formData.phoneNumber}
+                                                    onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value.replace(/\D/g, '') }))}
+                                                    placeholder="996700123456"
+                                                    className="w-full h-12 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
+                                                    inputMode="numeric"
+                                                    maxLength={12}
+                                                    required
+                                                />
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-1">Формат: 996XXXXXXXXX (без + и пробелов)</p>
+                                        </div>
+
+                                        {/* Email (optional) */}
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-2">
+                                                Email
+                                            </label>
+                                            <div className="relative">
+                                                <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                                <input
+                                                    type="email"
+                                                    name="email"
+                                                    value={formData.email}
                                                     onChange={handleInputChange}
-                                                    placeholder="+998 90 123 45 67"
+                                                    placeholder="admin@venue.kg"
                                                     className="w-full h-12 pl-10 pr-4 bg-slate-50 rounded-xl text-sm font-medium border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all"
                                                 />
                                             </div>
@@ -213,11 +216,11 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                         {/* Info */}
                                         <div className="bg-brand-50 border border-brand-100 rounded-2xl p-4">
                                             <div className="flex items-start gap-3">
-                                                <Mail size={20} className="text-brand-700 flex-shrink-0 mt-0.5" />
+                                                <Phone size={20} className="text-brand-700 flex-shrink-0 mt-0.5" />
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-900">OTP отправлен</p>
                                                     <p className="text-xs text-slate-600 mt-1">
-                                                        Мы отправили код подтверждения на <strong>{formData.email}</strong>
+                                                        Мы отправили код подтверждения на <strong>{formData.phoneNumber}</strong>
                                                     </p>
                                                 </div>
                                             </div>
@@ -248,7 +251,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({ isOpen, onClose, o
                                             disabled={isSubmitting}
                                             className="w-full h-12 bg-brand-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-100 hover:bg-brand-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            {isSubmitting ? 'Проверка...' : 'Подтвердить email'}
+                                            {isSubmitting ? 'Проверка...' : 'Подтвердить номер'}
                                         </button>
 
                                         {/* Back Button */}
