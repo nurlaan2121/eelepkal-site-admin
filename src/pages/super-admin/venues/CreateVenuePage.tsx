@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronRight, ChevronLeft, Store, Info, Share2 } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import {
     basicInfoSchema,
     detailsSchema,
@@ -13,7 +13,7 @@ import {
     BasicInfoData,
     DetailsData,
     SocialData
-} from '../../../schemas/venueSchema';
+} from '@/schemas/venueSchema';
 
 const STEPS = [
     { id: 1, title: 'Основная информация', icon: Store },

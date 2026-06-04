@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Search, Filter, Clock, User, Phone, Check, X, MoreHorizontal, MoreVertical, Hash, Loader2 } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
+import { Calendar, Search, Clock, User, Check, X, MoreVertical, Hash, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminBookingService, BookingResponse, BookingDetail } from '../../../api/booking/adminBookingService';
+import { adminBookingService, BookingResponse } from '@/api/booking/adminBookingService';
 import { toast } from 'sonner';
 
 export const AdminBookingsPage: React.FC = () => {

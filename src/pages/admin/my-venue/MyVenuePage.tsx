@@ -7,8 +7,8 @@ import {
     User, Building2, AlertCircle, Layers, MessageSquare
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { adminVenueService, AdminVenueBasic, AdminVenueDetails, AdminVenueWorkingHours, AdminVenueAmenities, AdminVenueContacts, AdminVenuePublicAdmin, AdminVenueFeedback } from '../../../api/admin/adminVenueService';
-import { Button } from '../../../components/ui/Button';
+import { adminVenueService, AdminVenueBasic, AdminVenueDetails, AdminVenueWorkingHours, AdminVenueAmenities, AdminVenueContacts, AdminVenuePublicAdmin, AdminVenueFeedback } from '@/api/admin/adminVenueService';
+import { Button } from '@/components/ui/Button';
 
 
 // ─────────── Skeleton Loader ───────────

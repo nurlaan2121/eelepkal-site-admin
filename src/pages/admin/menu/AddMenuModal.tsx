@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Upload, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminMenuService, CreateMenuRequest, MenuStatus, MenuCategorySimple, MenuUnit } from '../../../api/admin/adminMenuService';
-import { Button } from '../../../components/ui/Button';
+import { adminMenuService, CreateMenuRequest, MenuStatus, MenuCategorySimple, MenuUnit } from '@/api/admin/adminMenuService';
+import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 
 interface AddMenuModalProps {

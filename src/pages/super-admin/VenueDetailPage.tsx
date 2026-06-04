@@ -11,23 +11,23 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { superAdminVenueService } from '../../api/venue/superAdminVenueService';
-import { Button } from '../../components/ui/Button';
+import { superAdminVenueService } from '@/api/venue/superAdminVenueService';
+import { Button } from '@/components/ui/Button';
 import {
     BasicInfoData,
     VenueDetailsData,
     VenueWorkingHours,
     VenueContactData
-} from '../../types/venue';
-import { VenueHero } from './components/VenueHero';
-import { VenueInfoCard } from './components/VenueInfoCard';
-import { VenueSkeleton } from './components/VenueSkeletons';
-import { VenueAmenityGrid } from './components/VenueAmenityGrid';
-import { VenueHoursModal } from './components/VenueHoursModal';
-import { VenueAmenitiesModal } from './components/VenueAmenitiesModal';
-import { VenueContactsModal } from './components/VenueContactsModal';
-import { VenueDescModal } from './components/VenueDescModal';
-import { VenueDetailsModal } from './components/VenueDetailsModal';
+} from '@/types/venue';
+import { VenueHero } from './venues/components/VenueHero';
+import { VenueInfoCard } from './venues/components/VenueInfoCard';
+import { VenueSkeleton } from './venues/components/VenueSkeletons';
+import { VenueAmenityGrid } from './venues/components/VenueAmenityGrid';
+import { VenueHoursModal } from './venues/components/VenueHoursModal';
+import { VenueAmenitiesModal } from './venues/components/VenueAmenitiesModal';
+import { VenueContactsModal } from './venues/components/VenueContactsModal';
+import { VenueDescModal } from './venues/components/VenueDescModal';
+import { VenueDetailsModal } from './venues/components/VenueDetailsModal';
 
 export const VenueDetailPage: React.FC = () => {
     const { venueId } = useParams<{ venueId: string }>();
@@ -307,7 +307,7 @@ export const VenueDetailPage: React.FC = () => {
 
                 <div className="px-4 sm:px-0 space-y-6">
                     <VenueInfoCard onEdit={() => setIsDetailsModalOpen(true)} className="!p-0">
-                        <div className="p-6 space-y-6">
+                        <div className="space-y-6">
                             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{(basicData as any)?.name || basicData?.nameVenue || 'Без названия'}</h1>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4 text-slate-600">
@@ -407,7 +407,7 @@ export const VenueDetailPage: React.FC = () => {
 
                     <VenueInfoCard title="Администратор" icon={<UserCog size={20} />} onEdit={() => navigate('/super-admin/venues')}>
                         {publicAdminData ? (
-                            <div className="flex items-center gap-4"><div className="w-14 h-14 rounded-2xl bg-brand-primary flex items-center justify-center text-black font-black text-xl shadow-lg shadow-brand-primary/20">{(publicAdminData.fullName || 'A').charAt(0)}</div><div><h4 className="font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</h4><p className="text-xs text-slate-500 font-medium">{publicAdminData.email}</p></div></div>
+                            <div className="flex items-center gap-4"><div className="w-14 h-14 rounded-2xl bg-brand-primary flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-primary/20">{(publicAdminData.fullName || 'A').charAt(0)}</div><div><h4 className="font-black text-slate-900">{publicAdminData.fullName || 'Имя не указано'}</h4><p className="text-xs text-slate-500 font-medium">{publicAdminData.email}</p></div></div>
                         ) : (<div className="p-4 text-center border-2 border-dashed border-slate-100 rounded-2xl"><p className="text-sm text-slate-400 font-medium italic">Администратор не назначен</p></div>)}
                     </VenueInfoCard>
 

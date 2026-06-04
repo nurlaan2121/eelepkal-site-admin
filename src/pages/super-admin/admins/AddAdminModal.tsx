@@ -6,8 +6,9 @@ import {
   superAdminService,
   AddPersonalRequest,
   VerifyPersonalOtpRequest,
-} from "../../../api/admin/superAdminService";
-import {Modal} from "../../../components/ui/Modal";
+} from "@/api/admin/superAdminService";
+import {Modal} from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
 
 interface AddAdminModalProps {
   isOpen: boolean;
@@ -198,13 +199,13 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-brand-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-brand-100 hover:bg-brand-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full mt-6"
             >
               {isSubmitting ? "Отправка..." : "Добавить и получить OTP"}
-            </button>
+            </Button>
           </form>
         ) : (
           <form onSubmit={handleVerifyOtp} className="space-y-6">

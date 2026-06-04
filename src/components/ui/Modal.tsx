@@ -4,6 +4,7 @@ import {type ReactNode} from "react";
 import {tv} from "tailwind-variants";
 import {Portal} from "./portal/Portal";
 import {useLockScreen} from "../../hooks/useLockScreen";
+import {cn} from "@/utils/cn";
 
 const modal = tv({
   slots: {
@@ -16,19 +17,23 @@ const modal = tv({
     title: "text-xl font-black text-slate-900",
     closeButton:
       "w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors",
-    content: "p-6 space-y-4",
+    content: "p-6 space-y-4 overflow-y-auto",
   },
 });
 
 export const Modal = ({
+  className,
   open,
   header,
   content,
+  footer,
   onClose,
 }: {
+  className?: string;
   open: boolean;
-  header: {title: string; icon: ReactNode};
+  header: {title: string; icon: ReactNode; description?: ReactNode};
   content: ReactNode;
+  footer?: ReactNode;
   onClose: () => void;
 }) => {
   const styles = modal();
@@ -52,14 +57,21 @@ export const Modal = ({
                 initial={{opacity: 0, scale: 0.95, y: 20}}
                 animate={{opacity: 1, scale: 1, y: 0}}
                 exit={{opacity: 0, scale: 0.95, y: 20}}
-                className={styles.panel()}
+                className={cn(styles.panel(), className)}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <div className={styles.header()}>
                   <div className={styles.titleGroup()}>
                     <div className={styles.icon()}>{header.icon}</div>
-                    <h2 className={styles.title()}>{header.title}</h2>
+                    <div>
+                      <h2 className={styles.title()}>{header.title}</h2>
+                      {header.description && (
+                        <p className="text-xs text-slate-500 font-medium">
+                          {header.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <button onClick={onClose} className={styles.closeButton()}>
                     <X size={18} />
@@ -68,6 +80,11 @@ export const Modal = ({
 
                 {/* Content */}
                 <div className={styles.content()}>{content}</div>
+                {footer && (
+                  <div className="border-t border-slate-100 p-6">
+                    {footer}
+                  </div>
+                )}
               </motion.div>
             </motion.div>
           </>

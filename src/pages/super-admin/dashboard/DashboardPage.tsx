@@ -8,13 +8,14 @@ import {
   ArrowUpRight,
   Link,
 } from "lucide-react";
-import {AnalyticsCard} from "../../../components/ui/AnalyticsCard";
+import {AnalyticsCard} from "@/components/ui/AnalyticsCard";
 import {motion} from "framer-motion";
-import {updateSEO, PAGE_SEO} from "../../../utils/seo";
+import {updateSEO, PAGE_SEO} from "@/utils/seo";
 import {useMutation} from "@tanstack/react-query";
 import {toast} from "sonner";
-import {superAdminService} from "../../../api/admin/superAdminService";
-import {Modal} from "../../../components/ui/Modal";
+import {superAdminService} from "@/api/admin/superAdminService";
+import {Modal} from "@/components/ui/Modal";
+import {Button} from "@/components/ui/Button";
 
 export const SuperAdminDashboard: React.FC = () => {
   // Prevent indexing of admin pages
@@ -172,12 +173,13 @@ export const SuperAdminDashboard: React.FC = () => {
             </motion.div>
           </div>
 
-          <button
+          <Button
             onClick={() => setIsClaimModalOpen(true)}
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform shadow-xl shadow-slate-200"
+            variant="gradient"
+            className="w-full"
           >
             Отправить запрос
-          </button>
+          </Button>
         </div>
 
         {/* Claim Venue Modal */}
