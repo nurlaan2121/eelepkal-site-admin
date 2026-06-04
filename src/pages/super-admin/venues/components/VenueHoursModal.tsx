@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, AlertCircle, Save, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '../../../components/ui/Button';
-import { VenueWorkingHours } from '../../../types/venue';
+import { Button } from '@/components/ui/Button';
+import { VenueWorkingHours } from '@/types/venue';
 
 interface VenueHoursModalProps {
     isOpen: boolean;
@@ -191,13 +191,13 @@ export const VenueHoursModal: React.FC<VenueHoursModalProps> = ({
 
                     {/* Footer */}
                     <div className="p-6 border-t border-slate-50 bg-slate-50/50 flex gap-3">
-                        <Button variant="ghost" onClick={onClose} className="flex-1 h-12 rounded-2xl font-black text-slate-500 border border-slate-200">
+                        <Button variant="ghost" onClick={onClose} className="flex-1 rounded-2xl ">
                             Отмена
                         </Button>
                         <Button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="flex-[2] h-12 rounded-2xl font-black bg-slate-900 text-brand-primary hover:bg-black shadow-xl shadow-slate-900/10"
+                            className="flex-[2] rounded-2xl"
                         >
                             {isSaving ? <Loader2 className="animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
                             Сохранить изменения

@@ -6,10 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Lock, Phone, User, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
-import { authService } from '../../api/auth/authService';
-import { useAuthStore } from '../../store/authStore';
-import { updateSEO, PAGE_SEO } from '../../utils/seo';
+import { Button } from '@/components/ui/Button';
+import { authService } from '@/api/auth/authService';
+import { useAuthStore } from '@/store/authStore';
+import { updateSEO, PAGE_SEO } from '@/utils/seo';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Upload, Image as ImageIcon, Loader2, Save } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminTableService, TableDetail, UpdateTableBasicRequest } from '../../../api/admin/adminTableService';
-import { Button } from '../../../components/ui/Button';
+import { adminTableService, TableDetail, UpdateTableBasicRequest } from '@/api/admin/adminTableService';
+import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 
 interface EditTableModalProps {

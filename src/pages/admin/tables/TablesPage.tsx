@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Users, LayoutGrid, Info, Trash2, Edit2, Settings2, Calendar, MoreVertical, AlertTriangle, Loader2 } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminTableService, TableResponse } from '../../../api/admin/adminTableService';
+import { adminTableService, TableResponse } from '@/api/admin/adminTableService';
 import { AddTableModal } from './AddTableModal';
 import { EditTableModal } from './EditTableModal';
 import { EditTableTypeModal } from './EditTableTypeModal';

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { X, Upload, Image as ImageIcon, Loader2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { adminMenuService, CreateMenuRequest, MenuCategorySimple, MenuUnit, MenuItemFull, MenuStatus } from '../../../api/admin/adminMenuService';
-import { Button } from '../../../components/ui/Button';
+import { adminMenuService, CreateMenuRequest, MenuCategorySimple, MenuUnit, MenuItemFull, MenuStatus } from '@/api/admin/adminMenuService';
+import { Button } from '@/components/ui/Button';
 import { toast } from 'sonner';
 
 interface EditMenuModalProps {

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Bell, User, Search, Menu, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
-import { NotificationModal } from '../components/ui/NotificationModal';
+import { NotificationModal } from '@/components/ui/NotificationModal';
 import { createPortal } from 'react-dom';
 
 export const Header = () => {

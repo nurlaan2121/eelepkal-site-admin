@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Phone, Mail, Instagram, MessageCircle, Send, Facebook, Globe, Laptop } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { VenueContactData, SocialLinks } from '../../../types/venue';
+import { Button } from '@/components/ui/Button';
+import { VenueContactData, SocialLinks } from '@/types/venue';
 
 interface VenueContactsModalProps {
     isOpen: boolean;
@@ -137,7 +137,8 @@ export const VenueContactsModal: React.FC<VenueContactsModalProps> = ({
                             <Button
                                 onClick={() => onSave(formData)}
                                 disabled={isSaving}
-                                className="w-full h-14 rounded-2xl font-black text-sm uppercase tracking-widest"
+                                size="lg"
+                                className="w-full rounded-2xl font-black uppercase tracking-widest"
                             >
                                 {isSaving ? 'Сохранение...' : 'Сохранить контакты'}
                             </Button>

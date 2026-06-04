@@ -1,9 +1,9 @@
 import React from 'react';
 import { LayoutGrid, Calendar, Wallet, Star, ArrowUpRight, MessageSquare, Clock, Users } from 'lucide-react';
-import { AnalyticsCard } from '../../../components/ui/AnalyticsCard';
-import { Button } from '../../../components/ui/Button';
+import { AnalyticsCard } from '@/components/ui/AnalyticsCard';
+import { Button } from '@/components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { updateSEO, PAGE_SEO } from '../../../utils/seo';
+import { updateSEO, PAGE_SEO } from '@/utils/seo';
 
 export const AdminDashboard: React.FC = () => {
     // Prevent indexing of admin pages
