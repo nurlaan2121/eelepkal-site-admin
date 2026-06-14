@@ -1,5 +1,5 @@
-import {useAuthStore} from "@/app/store/authStore";
 import axios from "axios";
+import {useAuthStore} from "../../app/store/authStore";
 
 // All frontend requests go through the serverless proxy to bypass CORS
 const PROXY_URL = "/api/proxy";
