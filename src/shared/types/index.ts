@@ -1,3 +1,4 @@
+// Superadmin Venue
 export interface City {
   id: number;
   title: string;
@@ -27,4 +28,8 @@ export interface SocialLinks {
   telegram?: string;
   facebook?: string;
   website?: string;
+}
+
+export interface EventType {
+  [key: string]: number;
 }

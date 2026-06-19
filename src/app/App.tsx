@@ -1,45 +1,24 @@
 import {Routes, Route, Navigate} from "react-router-dom";
 import {Toaster} from "sonner";
-import {useAuthStore} from "./store/authStore";
-import {LoginPage} from "../core/pages/auth/LoginPage";
-import {SuperAdminLayout} from "../roles/super-admin/layouts/SuperAdminLayout";
-import {AdminLayout} from "../roles/admin/layouts/AdminLayout";
-import {SuperAdminDashboard} from "@/roles/super-admin/pages/dashboard";
-import {AdminDashboard} from "@/roles/admin/pages/dashboard";
-import {SuperAdminVenuesPage} from "@/roles/super-admin/pages/venues/list";
-import {AdminTablesPage} from "../core/pages/admin/tables/TablesPage";
-import {AdminMenuPage} from "../core/pages/admin/menu/MenuPage";
-import {AdminBookingsPage} from "../core/pages/admin/bookings/BookingsPage";
-import {CreateVenueWizard} from "../roles/super-admin/pages/venues/create/CreateVenueWizard";
-import {AdminMyVenuePage} from "../core/pages/admin/my-venue/MyVenuePage";
-import {VenueDetailPage} from "@/roles/super-admin/pages/venues/detail";
-import {SuperAdminBookingsPage} from "@/roles/super-admin/pages/booking/BookingsPage";
-import { SuperAdminAdminsPage } from "@/roles/super-admin/pages/administratiors";
-
-const ProtectedRoute = ({
-  children,
-  allowedRole,
-}: {
-  children: React.ReactNode;
-  allowedRole: "SUPER_ADMIN" | "ADMIN";
-}) => {
-  const {user} = useAuthStore();
-
-  if (!user) return <Navigate to="/auth/login" replace />;
-  if (user.role !== allowedRole)
-    return (
-      <Navigate
-        to={
-          user.role === "SUPER_ADMIN"
-            ? "/super-admin/dashboard"
-            : "/admin/dashboard"
-        }
-        replace
-      />
-    );
-
-  return <>{children}</>;
-};
+import {LoginPage} from "@/pages/auth";
+import {SuperAdminLayout} from "@/pages/super-admin/layouts";
+import {AdminLayout} from "@/pages/admin/layouts";
+import {
+  AdminDashboard,
+  AdminMyVenuePage,
+  AdminBookingsPage,
+  AdminMenuPage,
+  AdminTablesPage,
+} from "@/pages/admin/routes";
+import {
+  SuperAdminVenuesPage,
+  SuperAdminAdminsPage,
+  SuperAdminBookingsPage,
+  SuperAdminDashboard,
+  CreateVenueWizard,
+  VenueDetailPage,
+} from "@/pages/super-admin/routes";
+import {ProtectedRoute} from "./router/ProtectedRoute";
 
 export const App = () => {
   return (

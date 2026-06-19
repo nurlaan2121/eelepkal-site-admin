@@ -16,7 +16,7 @@ export const PageLayout = ({
 }) => {
   return (
     <div className={cn("space-y-6 md:space-y-8 pb-10", className)}>
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-3 px-1 md:px-0">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 px-1 md:px-0">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
             {title}

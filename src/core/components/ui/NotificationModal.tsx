@@ -3,7 +3,7 @@ import {X, Bell, Calendar} from "lucide-react";
 import {
   adminNotificationService,
   AdminNotification,
-} from "../../../api/admin/adminNotificationService";
+} from "@/api/admin/notification";
 
 interface NotificationModalProps {
   isOpen: boolean;

@@ -3,14 +3,12 @@ import {persist} from "zustand/middleware";
 import {
   BasicInfoData,
   VenueDetailsData,
-  VenueHoursData,
   VenueCuisinesData,
   VenueAmenitiesData,
   VenueContactData,
   VenueConditionsData,
-  DayOfWeek,
-  VenueWorkingHours,
-} from "@/features/super-admin/venue";
+} from "@/api/super-admin/venue";
+import { VenueWorkingHoursType } from "@/features/venue";
 
 interface VenueCreationState {
   // Core state
@@ -20,7 +18,7 @@ interface VenueCreationState {
   // Step data
   basicInfo: Partial<BasicInfoData>;
   details: Partial<VenueDetailsData>;
-  hours: Partial<VenueHoursData>;
+  hours: VenueWorkingHoursType;
   cuisines: Partial<VenueCuisinesData>;
   amenities: Partial<VenueAmenitiesData>;
   contacts: Partial<VenueContactData>;
@@ -31,7 +29,7 @@ interface VenueCreationState {
   setCurrentStep: (step: number) => void;
   setBasicInfo: (data: Partial<BasicInfoData>) => void;
   setDetails: (data: Partial<VenueDetailsData>) => void;
-  setHours: (data: Partial<VenueHoursData>) => void;
+  setHours: (data: VenueWorkingHoursType) => void;
   setCuisines: (data: Partial<VenueCuisinesData>) => void;
   setAmenities: (data: Partial<VenueAmenitiesData>) => void;
   setContacts: (data: Partial<VenueContactData>) => void;
@@ -41,31 +39,14 @@ interface VenueCreationState {
   resetCreation: () => void;
 }
 
-const defaultHours: VenueWorkingHours = {
-  mondayOpen: "09:00",
-  mondayClose: "23:00",
-  tuesdayOpen: "09:00",
-  tuesdayClose: "23:00",
-  wednesdayOpen: "09:00",
-  wednesdayClose: "23:00",
-  thursdayOpen: "09:00",
-  thursdayClose: "23:00",
-  fridayOpen: "09:00",
-  fridayClose: "23:00",
-  saturdayOpen: "09:00",
-  saturdayClose: "23:00",
-  sundayOpen: "09:00",
-  sundayClose: "23:00",
-};
-
-const defaultIsDayOff: Record<DayOfWeek, boolean> = {
-  monday: false,
-  tuesday: false,
-  wednesday: false,
-  thursday: false,
-  friday: false,
-  saturday: false,
-  sunday: false,
+const defaultHours: VenueWorkingHoursType = {
+  monday: {open: "09:00", close: "23:00", isOff: false},
+  tuesday: {open: "09:00", close: "23:00", isOff: false},
+  wednesday: {open: "09:00", close: "23:00", isOff: false},
+  thursday: {open: "09:00", close: "23:00", isOff: false},
+  friday: {open: "09:00", close: "23:00", isOff: false},
+  saturday: {open: "09:00", close: "23:00", isOff: false},
+  sunday: {open: "09:00", close: "23:00", isOff: false},
 };
 
 export const useVenueCreationStore = create<VenueCreationState>()(
@@ -76,10 +57,7 @@ export const useVenueCreationStore = create<VenueCreationState>()(
       currentStep: 1,
       basicInfo: {},
       details: {},
-      hours: {
-        hours: defaultHours,
-        isDayOff: defaultIsDayOff,
-      },
+      hours: defaultHours,
       cuisines: {},
       amenities: {},
       contacts: {},
@@ -124,10 +102,7 @@ export const useVenueCreationStore = create<VenueCreationState>()(
           currentStep: 1,
           basicInfo: {},
           details: {},
-          hours: {
-            hours: defaultHours,
-            isDayOff: defaultIsDayOff,
-          },
+          hours: defaultHours,
           cuisines: {},
           amenities: {},
           contacts: {},

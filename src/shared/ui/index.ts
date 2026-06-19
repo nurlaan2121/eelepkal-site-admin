@@ -8,3 +8,4 @@ export {Input as Input2} from "./Input";
 export {Input} from "./input/Input";
 export {TextArea} from "./TextArea";
 export {Select} from "./Select";
+export {Accordion, AccordionContent, AccordionTrigger} from "./Accordion";
