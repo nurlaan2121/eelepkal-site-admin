@@ -1,15 +1,13 @@
 import {devService} from "@/api/dev";
-import {
-  GetAdminForVenue,
-  GetBasicInfoData,
-  superAdminVenueService,
-} from "@/api/super-admin/venue";
+import {superAdminVenueService} from "@/api/super-admin/venue";
 import {
   AmenitiesDataType,
   ContactsDataType,
+  GetAdminForVenue,
+  GetBasicInfoData,
   GetVenueWorkingHours,
   VenueDetailsType,
-} from "@/features/venue";
+} from "@/features/venue-detail";
 import {Amenity, City} from "@/shared/types";
 import {useQueries} from "@tanstack/react-query";
 import {useMemo} from "react";

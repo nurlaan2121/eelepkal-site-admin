@@ -10,7 +10,7 @@ const buttonVariants = tv({
         "bg-brand-primary text-white shadow-lg shadow-brand-100 hover:bg-brand-800",
       secondary: "bg-orange-100 text-orange-600 hover:bg-orange-200",
       gradient:
-        "bg-gradient-to-r from-brand-700 to-brand-900 hover:from-brand-600 hover:to-brand-800 text-white font-black shadow-xl shadow-brand-900/30 border-2 border-brand-600",
+        "bg-gradient-to-r from-brand-700 to-brand-900 hover:from-brand-600 hover:to-brand-800 text-white font-black shadow-lg shadow-brand-900/30 border-2 border-brand-600",
       outline:
         "border border-slate-200 bg-transparent hover:bg-slate-50 text-slate-700",
       ghost:

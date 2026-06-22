@@ -1,9 +1,9 @@
-import React, {useState} from "react";
+import {useState} from "react";
 import {Bell, User, Search, Menu, X} from "lucide-react";
 import {useAuthStore} from "../../../app/store/authStore";
 import {useUIStore} from "../../../app/store/uiStore";
-import {NotificationModal} from "@/core/components/ui/NotificationModal";
-import {createPortal} from "react-dom";
+import {Input} from "@/shared/ui";
+import {NotificationModal} from "./NotificationModal";
 
 export const Header = () => {
   const {user} = useAuthStore();
@@ -12,7 +12,7 @@ export const Header = () => {
 
   return (
     <>
-      <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between">
+      <header className="h-16 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-6 flex items-center justify-between gap-6">
         <div className="flex items-center gap-3">
           <button
             onClick={toggleMobileMenu}
@@ -31,15 +31,15 @@ export const Header = () => {
               Ээлеп кал
             </span>
           </div>
-
-          <div className="relative w-64 hidden lg:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Поиск..."
-              className="w-full pl-10 pr-4 py-2 bg-slate-50 border-transparent focus:bg-white focus:border-brand-primary/20 rounded-xl text-sm transition-all outline-none"
-            />
-          </div>
+        </div>
+        <div className="flex-1 hidden lg:block">
+          <Input
+            size="sm"
+            icon={<Search size={16} />}
+            variant="outline"
+            placeholder="Поиск..."
+            name="search"
+          />
         </div>
 
         <div className="flex items-center space-x-4">
@@ -69,14 +69,10 @@ export const Header = () => {
         </div>
       </header>
 
-      {/* Render modal outside header to avoid z-index stacking context issues */}
-      {createPortal(
-        <NotificationModal
-          isOpen={isNotificationModalOpen}
-          onClose={() => setIsNotificationModalOpen(false)}
-        />,
-        document.body,
-      )}
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+      />
     </>
   );
 };

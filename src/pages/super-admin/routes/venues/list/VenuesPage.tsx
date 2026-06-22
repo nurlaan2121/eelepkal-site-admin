@@ -1,49 +1,29 @@
-import {useEffect, useState} from "react";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import {useInView} from "react-intersection-observer";
+import {useState} from "react";
 import {Plus, Search, Store} from "lucide-react";
 import {Button, Input} from "@/shared/ui";
 import {useNavigate} from "react-router-dom";
-import {toast} from "sonner";
-import {superAdminVenueService} from "@/api/super-admin/venue";
 import {PageLayout} from "@/shared/layouts";
 import {VenueSkeleton, VenueCard} from "./ui/card";
+import {useVenuesPage} from "./hooks/useVenuesPage";
+import {useInfiniteScroll} from "@/shared/hooks/useInfiniteScroll";
 
 // ─────────── Main Page ───────────
 export const SuperAdminVenuesPage = () => {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const {ref, inView} = useInView({threshold: 0.1});
   const [searchTerm, setSearchTerm] = useState("");
+  const {
+    venues,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    isLoading,
+    deleteMutation,
+  } = useVenuesPage();
 
-  const {data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading} =
-    useInfiniteQuery({
-      queryKey: ["super-admin-venues"],
-      queryFn: ({pageParam = 0}) =>
-        superAdminVenueService.getAllVenues(pageParam, 10),
-      getNextPageParam: (lastPage, allPages) =>
-        lastPage.length === 10 ? allPages.length * 10 : undefined,
-      initialPageParam: 0,
-    });
-
-  const venues = data?.pages.flatMap((page) => page || []) || [];
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) fetchNextPage();
-  }, [inView, hasNextPage, fetchNextPage, isFetchingNextPage]);
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => superAdminVenueService.deleteVenue(id),
-    onSuccess: () => {
-      toast.success("Заведение удалено");
-      queryClient.invalidateQueries({queryKey: ["super-admin-venues"]});
-    },
-    onError: (e: any) =>
-      toast.error(e?.response?.data?.message || "Ошибка удаления"),
+  const {ref} = useInfiniteScroll({
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
   });
 
   const filteredVenues = venues.filter(

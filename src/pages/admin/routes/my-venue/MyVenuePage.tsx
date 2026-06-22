@@ -1,17 +1,22 @@
-import {Clock, Star, Wallet, Users, Building2, AlertCircle} from "lucide-react";
-import {motion} from "framer-motion";
+import {Building2, AlertCircle} from "lucide-react";
 import {Button} from "@/shared/ui";
 import {MyVenuePageSkeleton} from "./ui/MyVenuePageSkeleton";
 import {useAdminVenuePage} from "./hooks/useVenuePage";
 import {
   AmenitySectionCard,
   ContactsSectionCard,
+  DescriptionSectionCard,
   FeedbackSectionCard,
-  VenueSectionCard,
-} from "@/features/venue";
-import {QuickInfoGrid} from "./ui/QuickInfoGrid";
-import {WorkingHoursSectionCard} from "@/features/venue/ui/WorkingHoursSectionCard";
-import {CuisinesSectionCard} from "@/features/venue/ui/CuisinesSectionCard";
+  VenueAdminCard,
+  VenueDetailLayout,
+  VenueDetailsSectionCard,
+  VenueHeroSection,
+  VenuePromoSection,
+} from "@/features/venue-detail";
+import {WorkingHoursSectionCard} from "@/features/venue-detail/ui/WorkingHoursSectionCard";
+import {CuisinesSectionCard} from "@/features/venue-detail/ui/CuisinesSectionCard";
+import {CapacitiesSectionCard} from "../../../../features/venue-detail/ui/CapacitiesSectionCard";
+import {getImageData} from "@/api/super-admin/venue";
 
 // ─────────── Main Page ───────────
 export const AdminMyVenuePage = () => {
@@ -24,14 +29,12 @@ export const AdminMyVenuePage = () => {
     contactsData,
     publicAdminData,
     descriptionText,
-    images,
-    mainImage,
     amenitiesData,
     capacitiesList,
   } = useAdminVenuePage();
 
   const venueId = basicData?.venueId;
-
+  const images = getImageData(basicData?.images);
   if (isLoading) {
     return <MyVenuePageSkeleton />;
   }
@@ -58,121 +61,47 @@ export const AdminMyVenuePage = () => {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-            Моё заведение
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Управление информацией о заведении
-          </p>
-        </div>
-      </div>
-
-      {/* Hero Image */}
-      {mainImage && (
-        <motion.div
-          initial={{opacity: 0, y: 20}}
-          animate={{opacity: 1, y: 0}}
-          className="relative h-64 md:h-80 rounded-3xl overflow-hidden shadow-2xl shadow-brand-100"
-        >
-          <img
-            src={mainImage}
-            alt={basicData?.name}
-            className="w-full h-full object-cover"
+    <div className="space-y-6">
+      <VenueDetailLayout
+        title="Моё заведение"
+        description="Управление информацией о заведении"
+        className="max-w-7xl mx-auto"
+        heroSection={<VenueHeroSection basicData={basicData} images={images} />}
+        promoSection={
+          <VenuePromoSection
+            basicData={basicData}
+            imageUrl={images[0].url}
+            delay={0.03}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h2 className="text-3xl md:text-4xl font-black mb-2">
-              {basicData?.name}
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
-                <Star
-                  size={16}
-                  fill="currentColor"
-                  className="text-amber-400"
-                />
-                {basicData?.rating.toFixed(1)}
-              </span>
-              <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
-                <Wallet size={16} />≈ {basicData?.averageCheck} сом
-              </span>
-              <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
-                <Clock size={16} />
-                {basicData?.todayWorkingHours}
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Quick Info Grid */}
-      <QuickInfoGrid basicData={basicData} publicAdminData={publicAdminData} />
-      {/* Description */}
-      {descriptionText && (
-        <VenueSectionCard
-          title="О заведении"
-          icon={Building2}
-          transition={{delay: 0.3}}
-        >
-          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
-            {descriptionText}
-          </p>
-        </VenueSectionCard>
-      )}
-
-      {/* Details Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Working Hours */}
-        <WorkingHoursSectionCard hours={hoursData} delay={0.35} />
-
-        {/* Capacities & Cuisines */}
-        <div className="flex flex-col gap-4">
-          {/* Capacities */}
-          <VenueSectionCard
-            title="Вместимость"
-            icon={Users}
-            transition={{delay: 0.4, ease: "linear"}}
-          >
-            <div className="grid grid-cols-2 gap-3">
-              {capacitiesList?.map(([title, value]) => (
-                <div
-                  key={title}
-                  className="bg-gradient-to-br from-brand-50 to-white rounded-xl p-4 border border-brand-100"
-                >
-                  <p className="text-xs font-bold text-slate-500 mb-1">
-                    {title}
-                  </p>
-                  <p className="text-2xl font-black text-brand-700">
-                    {String(value)}{" "}
-                    <span className="text-sm font-bold text-slate-400">
-                      мест
-                    </span>
-                  </p>
-                </div>
-              ))}
-            </div>
-          </VenueSectionCard>
-
-          {/* Cuisines */}
-          <CuisinesSectionCard
-            className="flex-1"
-            detailsData={detailsData}
-            delay={0.4}
+        }
+        detailSection={
+          <VenueDetailsSectionCard delay={0.05} basicData={basicData} />
+        }
+        capacitiesCard={
+          <CapacitiesSectionCard capacities={capacitiesList} delay={0.1} />
+        }
+        adminCard={<VenueAdminCard adminData={publicAdminData} delay={0.15} />}
+        descriptionCard={
+          <DescriptionSectionCard
+            descriptionText={descriptionText}
+            delay={0.2}
           />
-        </div>
-      </div>
-
-      {/* Amenities */}
-      <AmenitySectionCard amenities={amenitiesData} delay={0.45} />
-
-      {/* Contacts */}
-      <ContactsSectionCard contactsData={contactsData} delay={0.5} />
-
-      {/* Image Gallery */}
+        }
+        hoursCard={<WorkingHoursSectionCard hours={hoursData} delay={0.25} />}
+        cuisinesCard={
+          <CuisinesSectionCard detailsData={detailsData} delay={0.3} />
+        }
+        amenitiesCard={
+          <AmenitySectionCard amenities={amenitiesData} delay={0.35} />
+        }
+        contactsCard={
+          <ContactsSectionCard contactsData={contactsData} delay={0.5} />
+        }
+        feedbackSection={
+          <FeedbackSectionCard delay={0.6} venueId={venueId} service="ADMIN" />
+        }
+      />
+      {/* Image Gallery
       {images && images.length > 1 && (
         <VenueSectionCard
           title="Фотогалерея"
@@ -185,26 +114,21 @@ export const AdminMyVenuePage = () => {
           }
         >
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {images.slice(1).map((img, index) => (
+            {images.slice(1).map((img) => (
               <div
-                key={index}
+                key={img.id}
                 className="aspect-square rounded-xl overflow-hidden bg-slate-100 hover:shadow-lg transition-shadow cursor-pointer group"
               >
                 <img
-                  src={img}
-                  alt={`Фото ${index + 2}`}
+                  src={img.url}
+                  alt={`Фото ${img.id + 2}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               </div>
             ))}
           </div>
         </VenueSectionCard>
-      )}
-
-      {/* Feedbacks Section */}
-      {venueId && (
-        <FeedbackSectionCard delay={0.6} venueId={venueId} service="ADMIN" />
-      )}
+      )} */}
     </div>
   );
 };

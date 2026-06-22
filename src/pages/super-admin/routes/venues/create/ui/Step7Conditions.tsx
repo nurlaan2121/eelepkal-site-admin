@@ -1,5 +1,5 @@
 import {useVenueCreationStore} from "@/app/store/venueCreationStore";
-import {Input, Input2} from "@/shared/ui";
+import {Input} from "@/shared/ui";
 
 export const Step7Conditions: React.FC = () => {
   const {conditions, setConditions} = useVenueCreationStore();

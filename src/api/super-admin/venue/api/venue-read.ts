@@ -1,16 +1,14 @@
 import {apiClient} from "@/shared/api";
-import {
-  GetAdminForVenue,
-  GetBasicInfoData,
-  VenueListItem,
-} from "../types/venue.types";
+import {VenueListItem} from "../types/venue.types";
 import {
   AmenitiesDataType,
   ContactsDataType,
+  GetAdminForVenue,
+  GetBasicInfoData,
   GetVenueWorkingHours,
   VenueDetailsType,
   VenueFeedbackData,
-} from "@/features/venue";
+} from "@/features/venue-detail";
 
 export const createVenueReadApi = () => {
   return {

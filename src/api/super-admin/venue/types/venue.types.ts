@@ -91,17 +91,4 @@ export interface VenueFeedback {
   createdAt: string;
 }
 
-export interface GetBasicInfoData {
-  address: string;
-  averageCheck: number;
-  images: Record<number, string>;
-  name: string;
-  promosRes: [];
-  rating: number;
-  todayWorkingHours: string;
-  venueId: number;
-}
-export interface GetAdminForVenue {
-  fullName: string;
-  phoneNumber: string;
-}
+

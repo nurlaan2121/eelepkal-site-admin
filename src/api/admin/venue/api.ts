@@ -1,19 +1,17 @@
 import {apiClient} from "@/shared/api";
 import {
-  AdminVenueBasic,
-  AdminVenuePublicAdmin,
-} from "./types";
-import {
   GetVenueWorkingHours,
   VenueDetailsType,
   AmenitiesDataType,
   ContactsDataType,
   VenueFeedbackData,
-} from "@/features/venue";
+  GetBasicInfoData,
+  GetAdminForVenue,
+} from "@/features/venue-detail";
 
 export const adminVenueService = {
-  getBasic: async (): Promise<AdminVenueBasic> => {
-    const response = await apiClient.get<AdminVenueBasic>(
+  getBasic: async (): Promise<GetBasicInfoData> => {
+    const response = await apiClient.get<GetBasicInfoData>(
       "/api/admin-venue/get-basic",
     );
     return response.data;
@@ -47,8 +45,8 @@ export const adminVenueService = {
     return response.data;
   },
 
-  getPublicAdmin: async (): Promise<AdminVenuePublicAdmin> => {
-    const response = await apiClient.get<AdminVenuePublicAdmin>(
+  getPublicAdmin: async (): Promise<GetAdminForVenue> => {
+    const response = await apiClient.get<GetAdminForVenue>(
       "/api/admin-venue/get-public-admin",
     );
     return response.data;

@@ -1,5 +1,5 @@
 import {adminVenueService} from "@/api/admin/venue";
-import {WorkingHoursSchema} from "@/features/venue/utils/venueParsers";
+import {WorkingHoursSchema} from "@/features/venue-detail/utils/venueParsers";
 import {useQueries} from "@tanstack/react-query";
 import {useMemo} from "react";
 
@@ -48,22 +48,18 @@ export const useAdminVenuePage = () => {
     )
       return null;
 
-    const basicData = basic.data;
     const detailsData = details.data;
-    const images = Object.values(basicData.images);
     const amenitiesData = amenities.data;
     const hoursData = WorkingHoursSchema.parse(hours.data);
 
     return {
-      basicData,
-      detailsData,
+      basicData: basic.data,
+      detailsData: details.data,
       hoursData,
       contactsData: contacts.data,
       publicAdminData: publicAdmin.data,
       descriptionText: description.data || "",
       amenitiesData,
-      images,
-      mainImage: images[0] || "",
       capacitiesList: Object.entries(detailsData.capacities),
     };
   }, [

@@ -1,1 +1,1 @@
-export {PaymentModal} from './PaymentDetails'
+export {PaymentModal} from './PaymentModal'

@@ -11,11 +11,11 @@ import {
   Hash,
   Loader2,
 } from "lucide-react";
-import {Button} from "@/shared/ui";
-import {Input} from "@/shared/ui/Input";
+import {Button, Input} from "@/shared/ui";
 import {motion, AnimatePresence} from "framer-motion";
 import {adminBookingService, BookingResponse} from "@/api/admin/booking";
 import {toast} from "sonner";
+import {PageLayout} from "@/shared/layouts";
 
 export const AdminBookingsPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -139,25 +139,19 @@ export const AdminBookingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            Бронирования
-          </h1>
-          <p className="text-gray-500 text-sm md:text-base">
-            Управление резервами на сегодня
-          </p>
-        </div>
-        <Button className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100">
+    <PageLayout
+      title="Бронирования"
+      description="Управление резервами на сегодня"
+      actions={
+        <Button variant="gradient" onClick={() => console.log("hi")} className="w-full md:w-auto md:px-8 gap-2 rounded-2xl">
           <Calendar size={20} />
           <span>Новая бронь</span>
         </Button>
-      </div>
-
+      }
+    >
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between bg-gray-50/30">
-          <div className="flex gap-2 w-full md:w-auto overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 flex-shrink-0 w-full md:w-auto overflow-x-auto no-scrollbar">
             <button
               onClick={() => setActiveTab("ACTIVE")}
               className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${
@@ -179,18 +173,16 @@ export const AdminBookingsPage: React.FC = () => {
               История
             </button>
           </div>
-          <div className="relative w-full md:w-80">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={16}
-            />
-            <Input
-              placeholder="Поиск клиента..."
-              className="pl-10 h-11 bg-white"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+          <Input
+            containerClassName="w-full md:w-[30%]"
+            variant="outline"
+            size="sm"
+            icon={<Search size={16} />}
+            type="text"
+            placeholder="Поиск кухни..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
 
         {/* Status Filter */}
@@ -676,6 +668,6 @@ export const AdminBookingsPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </PageLayout>
   );
 };

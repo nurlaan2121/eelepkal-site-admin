@@ -3,7 +3,7 @@ import {Phone, Mail, Globe} from "lucide-react";
 import {Button, Input, Modal} from "@/shared/ui";
 import {VenueContactData} from "@/api/super-admin/venue";
 import {SocialLinks} from "@/shared/types";
-import {ContactsDataType} from "@/features/venue";
+import {ContactsDataType} from "@/features/venue-detail";
 import {Facebook, Instagram, Telegram, Whatsapp} from "@/shared/assets";
 
 const normalizeContacts = (contacts: ContactsDataType): VenueContactData => ({
