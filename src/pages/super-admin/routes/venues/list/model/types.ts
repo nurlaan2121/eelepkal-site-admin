@@ -1,1 +1,6 @@
-export type ModalType = "replace-admin" | "conditions" | "payment" | "cuisines" | null;
+export type ModalType =
+  | "replace-admin"
+  | "conditions"
+  | "payment"
+  | "cuisines"
+  | null;

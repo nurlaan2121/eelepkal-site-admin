@@ -8,7 +8,7 @@ import {
   VenueContactData,
   VenueConditionsData,
 } from "@/api/super-admin/venue";
-import { VenueWorkingHoursType } from "@/features/venue";
+import {VenueWorkingHoursType} from "@/features/venue-detail";
 
 interface VenueCreationState {
   // Core state

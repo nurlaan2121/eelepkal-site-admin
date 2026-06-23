@@ -16,7 +16,7 @@ import {
 import {useAuthStore} from "../../../app/store/authStore";
 import {useUIStore} from "../../../app/store/uiStore";
 import {motion, AnimatePresence} from "framer-motion";
-import {ConfirmDialog} from "../../../core/components/ui/ConfirmDialog";
+import {ConfirmDialog} from "../../../shared/ui/ConfirmDialog";
 
 const MENU_ITEMS = [
   {

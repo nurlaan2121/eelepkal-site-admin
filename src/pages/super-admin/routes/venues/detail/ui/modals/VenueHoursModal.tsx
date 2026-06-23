@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react";
 import {Clock, AlertCircle, Save, Loader2} from "lucide-react";
 import {Button, Modal} from "@/shared/ui";
-import {VenueWorkingHoursType, DAYS} from "@/features/venue";
+import {VenueWorkingHoursType, DAYS} from "@/features/venue-detail";
 
 interface VenueHoursModalProps {
   isOpen: boolean;

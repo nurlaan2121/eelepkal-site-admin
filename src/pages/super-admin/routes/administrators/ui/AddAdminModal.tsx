@@ -31,6 +31,8 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {name, value} = e.target;
+    console.log(name);
+    
     setFormData((prev) => ({...prev, [name]: value}));
   };
 
@@ -217,6 +219,7 @@ export const AddAdminModal: React.FC<AddAdminModalProps> = ({
             label="ОТР код"
             labelIcon={<CheckCircle size={14} />}
             type="text"
+            name="otp-code"
             value={otp}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
             placeholder="Введите 6-значный код"

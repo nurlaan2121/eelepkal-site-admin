@@ -1,2 +1,1 @@
-export {adminVenueService} from './api'
-export * from './types'
+export {adminVenueService} from "./api";

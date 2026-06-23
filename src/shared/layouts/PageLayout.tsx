@@ -9,26 +9,28 @@ export const PageLayout = ({
   children,
 }: {
   className?: string;
-  title: string;
+  title?: string;
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
 }) => {
   return (
     <div className={cn("space-y-6 md:space-y-8 pb-10", className)}>
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
-            {title}
-          </h1>
-          {description && (
-            <p className="text-gray-500 text-sm md:text-base font-medium">
-              {description}
-            </p>
-          )}
+      {title && (
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 px-1 md:px-0">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">
+              {title}
+            </h1>
+            {description && (
+              <p className="text-gray-500 text-sm md:text-base font-medium">
+                {description}
+              </p>
+            )}
+          </div>
+          {actions && actions}
         </div>
-        {actions && actions}
-      </div>
+      )}
       {children}
     </div>
   );

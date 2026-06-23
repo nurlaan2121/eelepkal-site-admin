@@ -8,7 +8,8 @@ import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {toast} from "sonner";
 
 export const usePaymentModal = (
-  venue: VenueListItem,
+  venueId: number,
+  venueTitle: string,
   handleClose: () => void,
   qrCodeUrl: string,
   isUploading: boolean,
@@ -22,7 +23,7 @@ export const usePaymentModal = (
     onSuccess: () => {
       toast.success("Реквизиты удалены");
       queryClient.invalidateQueries({
-        queryKey: ["payment-details", venue.venueId],
+        queryKey: ["payment-details", venueId],
       });
     },
     onError: (e: any) =>
@@ -31,11 +32,11 @@ export const usePaymentModal = (
 
   const addMutation = useMutation({
     mutationFn: (newPayment: PaymentDetail) =>
-      superAdminVenueService.addPaymentDetail(venue.venueId, newPayment),
+      superAdminVenueService.addPaymentDetail(venueId, newPayment),
     onSuccess: () => {
       toast.success("Реквизиты успешно добавлены!");
       queryClient.invalidateQueries({
-        queryKey: ["payment-details", venue.venueId],
+        queryKey: ["payment-details", venueId],
       });
       handleClose();
     },
@@ -54,7 +55,7 @@ export const usePaymentModal = (
     onSuccess: () => {
       toast.success("Реквизиты успешно обновлены!");
       queryClient.invalidateQueries({
-        queryKey: ["payment-details", venue.venueId],
+        queryKey: ["payment-details", venueId],
       });
       handleClose();
     },
@@ -84,7 +85,7 @@ export const usePaymentModal = (
 
     try {
       const paymentObject: PaymentDetail = {
-        venueTitle: venue.name,
+        venueTitle,
         bankAccountNumber,
         bankName,
         taxIdentificationNumber,

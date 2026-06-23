@@ -1,5 +1,5 @@
 import {useVenueCreationStore} from "@/app/store/venueCreationStore";
-import {VenueWorkingHoursType, DAYS} from "@/features/venue";
+import {VenueWorkingHoursType, DAYS} from "@/features/venue-detail";
 
 export const Step3Hours = () => {
   const {hours, setHours} = useVenueCreationStore();

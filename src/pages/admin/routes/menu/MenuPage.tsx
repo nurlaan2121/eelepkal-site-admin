@@ -16,6 +16,7 @@ import {AddMenuModal} from "./AddMenuModal";
 import {EditMenuModal} from "./EditMenuModal";
 import {toast} from "sonner";
 import {devService} from "@/api/dev";
+import {PageLayout} from "@/shared/layouts";
 
 // ─────────── Skeleton Loader ───────────
 const MenuCardSkeleton: React.FC = () => (
@@ -57,14 +58,21 @@ const EmptyState: React.FC<{status: MenuStatus}> = ({status}) => (
 );
 
 // ─────────── Menu Card ───────────
-const MenuCard: React.FC<{
+const MenuCard = ({
+  item,
+  onMove,
+  onEdit,
+  onDelete,
+  isMoving,
+  isDeleting,
+}: {
   item: MenuItem;
   onMove: (id: number) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number, title: string) => void;
   isMoving: boolean;
   isDeleting: boolean;
-}> = ({item, onMove, onEdit, onDelete, isMoving, isDeleting}) => {
+}) => {
   return (
     <motion.div
       layout
@@ -145,7 +153,7 @@ const MenuCard: React.FC<{
 };
 
 // ─────────── Main Page ───────────
-export const AdminMenuPage: React.FC = () => {
+export const AdminMenuPage = () => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<MenuStatus>("ACTIVE");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -286,26 +294,20 @@ export const AdminMenuPage: React.FC = () => {
   const totalPages = Math.ceil(totalMenus / pageSize);
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-            Меню
-          </h1>
-          <p className="text-slate-400 text-sm mt-0.5">
-            Управление блюдами и стоп-листами
-          </p>
-        </div>
+    <PageLayout
+      title="Меню"
+      description="Управление блюдами и стоп-листами"
+      actions={
         <Button
           onClick={handleAddMenu}
-          className="flex items-center justify-center gap-2 h-12 md:h-11 px-6 w-full md:w-auto shadow-lg shadow-brand-100 font-bold uppercase tracking-widest text-xs"
+          variant="gradient"
+          className="w-full md:w-auto gap-2 rounded-2xl"
         >
           <Plus size={20} />
-          <span>Добавить блюдо</span>
+          Добавить блюдо
         </Button>
-      </div>
-
+      }
+    >
       {/* Status Tabs */}
       <div className="bg-white rounded-2xl p-1.5 border border-slate-100 shadow-sm">
         <div className="grid grid-cols-2 gap-1">
@@ -577,6 +579,6 @@ export const AdminMenuPage: React.FC = () => {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </PageLayout>
   );
 };

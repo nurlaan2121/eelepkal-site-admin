@@ -1,8 +1,8 @@
-import React, {useState, useEffect} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import {Search, CheckCircle2, LayoutGrid} from "lucide-react";
-import {Button, Modal} from "@/shared/ui";
+import {Button, Input, Modal} from "@/shared/ui";
 import {Amenity} from "@/shared/types";
-import {AmenitiesDataType} from "@/features/venue";
+import {AmenitiesDataType} from "@/features/venue-detail";
 
 interface VenueAmenitiesModalProps {
   isOpen: boolean;
@@ -21,18 +21,18 @@ export const VenueAmenitiesModal: React.FC<VenueAmenitiesModalProps> = ({
   onSave,
   isSaving,
 }) => {
-  const initialSelectedIds = Object.keys(initialAmenities)
-    .map(Number)
-    .filter((id) => !Number.isNaN(id));
-
-  const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(initialSelectedIds);
+      setSelectedIds(
+        Object.keys(initialAmenities)
+          .map(Number)
+          .filter((id) => !Number.isNaN(id)),
+      );
     }
-  }, [isOpen, initialSelectedIds]);
+  }, [isOpen, initialAmenities]);
 
   const filteredAmenities =
     allAmenities?.filter((a) =>
@@ -69,21 +69,16 @@ export const VenueAmenitiesModal: React.FC<VenueAmenitiesModalProps> = ({
       }
     >
       {/* Search */}
-      <div className="pb-4 bg-slate-50/50 border-b border-slate-100">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-            size={16}
-          />
-          <input
-            type="text"
-            placeholder="Поиск по названию..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-12 pl-10 pr-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold focus:outline-none focus:border-brand-primary transition-all shadow-sm"
-          />
-        </div>
-      </div>
+      <Input
+        variant="outline"
+        size="sm"
+        icon={<Search size={16} />}
+        type="text"
+        placeholder="Поиск удобства..."
+        name="amenities-search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       {/* Amenities Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

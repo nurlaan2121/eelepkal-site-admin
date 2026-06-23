@@ -7,7 +7,7 @@ import {
   VenueCuisinesData,
   VenueDetailsData,
 } from "../types/venue.types";
-import { VenueWorkingHoursType } from "@/features/venue";
+import {VenueWorkingHoursType} from "@/features/venue-detail";
 
 export const createVenueCrudApi = () => {
   return {

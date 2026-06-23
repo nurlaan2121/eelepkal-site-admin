@@ -9,16 +9,16 @@ import {useState} from "react";
 import {toast} from "sonner";
 import {motion} from "framer-motion";
 import {Settings2, Wallet, X} from "lucide-react";
+import {ModalProps} from "../../shared/types";
 
 export const BookingConditionsModal = ({
-  venue,
+  isOpen,
+  venueId,
+  description,
   onClose,
-}: {
-  venue: VenueListItem;
-  onClose: () => void;
-}) => {
+}: ModalProps) => {
   const [form, setForm] = useState<VenueCondition>({
-    venueId: venue.venueId,
+    venueId: venueId,
     deposit: 0,
     cancelAllowed: true,
     cancellationDeadline: "03:00",
@@ -27,10 +27,10 @@ export const BookingConditionsModal = ({
   });
 
   const {isLoading, isFetching} = useQuery({
-    queryKey: ["venue-conditions", venue.venueId],
+    queryKey: ["venue-conditions", venueId],
     queryFn: async () => {
       const data = await superAdminVenueService.getVenueConditions(
-        venue.venueId,
+        venueId,
       );
 
       const formatTimeArray = (arr: number[]) => {
@@ -39,7 +39,7 @@ export const BookingConditionsModal = ({
       };
 
       const mapped: VenueCondition = {
-        venueId: venue.venueId,
+        venueId: venueId,
         deposit: data.deposit || 0,
         cancelAllowed: data.cancellationAllowed,
         cancellationDeadline: formatTimeArray(data.cancellationDeadline),
@@ -67,11 +67,11 @@ export const BookingConditionsModal = ({
     <Modal
       className=" md:max-w-2xl"
       onClose={onClose}
-      open
+      open={isOpen}
       isShaded
       header={{
         title: "Условия бронирования",
-        description: venue.name,
+        description,
         icon: <Settings2 size={20} />,
       }}
       footer={

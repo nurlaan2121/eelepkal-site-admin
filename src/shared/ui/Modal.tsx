@@ -32,6 +32,14 @@ const modal = tv({
         panel: "max-w-xl rounded-3xl",
       },
     },
+    tone: {
+      danger: {
+        header: "bg-red-50",
+        icon: "bg-red-100 text-red-600",
+        title: 'text-slate-800',
+        closeButton: "hover:bg-red-100 text-slate-500",
+      },
+    },
   },
 });
 
@@ -43,6 +51,7 @@ export const Modal = ({
   children,
   footer,
   onClose,
+  tone,
 }: {
   className?: string;
   open: boolean;
@@ -56,8 +65,9 @@ export const Modal = ({
   children: ReactNode;
   footer?: ReactNode;
   onClose: () => void;
+  tone?: "danger" | undefined;
 }) => {
-  const styles = modal();
+  const styles = modal({tone});
   useLockScreen(open);
 
   useCloseOnEscape(open, onClose);
@@ -89,13 +99,15 @@ export const Modal = ({
                   },
                   opacity: {duration: 0.08},
                 }}
-                className={cn(styles.panel({isShaded}), className)}
+                className={cn(styles.panel({isShaded, tone}), className)}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <div className={styles.header()}>
                   <div className={styles.titleGroup()}>
-                    <div className={cn(styles.icon(), header.iconClassName)}>
+                    <div
+                      className={cn(styles.icon(), header.iconClassName)}
+                    >
                       {header.icon}
                     </div>
                     <div>

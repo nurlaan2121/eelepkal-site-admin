@@ -4,7 +4,6 @@ import {
   Plus,
   Users,
   LayoutGrid,
-  Info,
   Trash2,
   Edit2,
   Settings2,
@@ -22,6 +21,7 @@ import {EditTableTypeModal} from "./EditTableTypeModal";
 import {EditTableServicesModal} from "./EditTableServicesModal";
 import {EditTableEventsModal} from "./EditTableEventsModal";
 import {toast} from "sonner";
+import {PageLayout} from "@/shared/layouts";
 
 export const AdminTablesPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -181,34 +181,26 @@ export const AdminTablesPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1 md:px-0">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            Схема столов
-          </h1>
-          <p className="text-gray-500 text-sm md:text-base">
-            Мониторинг залов в реальном времени
-          </p>
-        </div>
+    <PageLayout
+      title=" Схема столов"
+      description="Мониторинг залов в реальном времени"
+      actions={
         <div className="flex gap-2 w-full md:w-auto">
-          <Button
-            variant="outline"
-            className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl font-bold"
-          >
+          <Button variant="outline" className="gap-2 rounded-2xl">
             <LayoutGrid size={20} />
-            <span className="hidden md:inline">Схема зала</span>
+            Схема зала
           </Button>
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex-1 md:flex-none gap-2 h-12 md:h-11 rounded-xl shadow-lg shadow-brand-100 font-bold uppercase tracking-wider text-xs"
+            variant="gradient"
+            className="gap-2 rounded-2xl"
           >
             <Plus size={20} />
             <span>Добавить стол</span>
           </Button>
         </div>
-      </div>
-
+      }
+    >
       {/* Filters */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 px-1 md:px-0 pb-2">
         {[
@@ -597,6 +589,6 @@ export const AdminTablesPage: React.FC = () => {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </PageLayout>
   );
 };

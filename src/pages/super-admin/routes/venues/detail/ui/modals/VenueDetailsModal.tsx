@@ -13,14 +13,16 @@ import {Modal} from "@/shared/ui";
 import {VenueDetailsData} from "@/api/super-admin/venue";
 import {Capacity, City} from "@/shared/types";
 
+interface InitialDetailsType {
+  address?: string;
+  averageCheck?: number;
+  capacities: Record<string, number>;
+}
+
 interface VenueDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialDetails: VenueDetailsData;
-  basicInfo: {
-    address?: string;
-    averageCheck?: number;
-  };
+  initialDetails: InitialDetailsType;
   cities: City[];
   onSave: (details: VenueDetailsData) => void;
   isSaving: boolean;
@@ -30,7 +32,6 @@ export const VenueDetailsModal = ({
   isOpen,
   onClose,
   initialDetails,
-  basicInfo,
   cities,
   onSave,
   isSaving,
@@ -44,14 +45,13 @@ export const VenueDetailsModal = ({
     if (isOpen) {
       // address and averageCheck come from basicInfo API
       // cityId and capacities come from details API
-      setCityId(initialDetails?.cityId || 0);
-      setAddress(basicInfo?.address || initialDetails?.address || "");
-      setAverageCheck(
-        basicInfo?.averageCheck || initialDetails?.averageCheck || 0,
-      );
+      setCityId(0);
+      setAddress(initialDetails?.address || "");
+      setAverageCheck(initialDetails?.averageCheck || 0);
 
       // Handle capacities - could be array or object
       const capacitiesData = initialDetails?.capacities;
+
       if (Array.isArray(capacitiesData)) {
         setCapacities(capacitiesData);
       } else if (capacitiesData && typeof capacitiesData === "object") {
@@ -67,7 +67,7 @@ export const VenueDetailsModal = ({
         setCapacities([]);
       }
     }
-  }, [isOpen, initialDetails, basicInfo]);
+  }, [isOpen, initialDetails]);
 
   const addCapacity = () => {
     setCapacities([...capacities, {title: "", value: 0}]);

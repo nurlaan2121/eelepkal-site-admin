@@ -1,30 +1,13 @@
 import {useState} from "react";
 import {useParams, useNavigate} from "react-router-dom";
-import {
-  ChevronLeft,
-  MapPin,
-  Clock,
-  FileText,
-  UserCog,
-  Star,
-  Users,
-  Wallet,
-  AlertCircle,
-  Layers,
-  Sofa,
-  LayoutGrid,
-  Edit3,
-} from "lucide-react";
+import {ChevronLeft, FileText, UserCog, AlertCircle, Edit3} from "lucide-react";
 import {Button} from "@/shared/ui";
 import {useVenueDetailMutations} from "./hooks/useVenueDetailMutation";
 import {
   getImageData,
-  getTodayStatus,
   WorkingHoursSchema,
-} from "@/features/venue/utils/venueParsers";
+} from "@/features/venue-detail/utils/venueParsers";
 import {useVenueDetails} from "./hooks/useVenueDetails";
-import {VenueHero} from "./ui/VenueHero";
-import {VenueInfoCard} from "./ui/VenueInfoCard";
 import {VenueSkeleton} from "./ui/VenueSkeletons";
 import {VenueHoursModal} from "./ui/modals/VenueHoursModal";
 import {VenueDetailsModal} from "./ui/modals/VenueDetailsModal";
@@ -37,7 +20,17 @@ import {
   AmenitySectionCard,
   ContactsSectionCard,
   FeedbackSectionCard,
-} from "@/features/venue";
+  VenueSectionCard,
+  VenueHeroSection,
+  CapacitiesSectionCard,
+  VenueDetailLayout,
+  VenuePromoSection,
+  DescriptionSectionCard,
+  VenueAdminCard,
+} from "@/features/venue-detail";
+import {ReplaceAdminModal} from "../shared/ReplaceAdminModal";
+import {CuisinesModal} from "../shared/CuisinesModal";
+import {VenueDetailsSectionCard} from "../../../../../features/venue-detail/ui/VenueDetailsSectionCard";
 
 type ModalType =
   | null
@@ -46,9 +39,10 @@ type ModalType =
   | "amenities"
   | "cuisines"
   | "contacts"
-  | "description";
+  | "description"
+  | "replace-admin";
 
-const EditButton = ({onClick}: {onClick: () => void}) => {
+export const EditButton = ({onClick}: {onClick: () => void}) => {
   return (
     <button
       onClick={onClick}
@@ -130,13 +124,9 @@ export const VenueDetailPage = () => {
     typeof descriptionData === "string"
       ? descriptionData
       : descriptionData?.description || "";
-
   const venueHours = WorkingHoursSchema.parse(hoursDataRaw);
-
-  const today = getTodayStatus(venueHours);
-  const imageData = getImageData(basicData);
-
-  const isEmpty = publicAdminData && Object.keys(publicAdminData).length === 0;
+  const capacities = detailsData ? Object.entries(detailsData?.capacities) : [];
+  const imageData = getImageData(basicData?.images);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -154,261 +144,110 @@ export const VenueDetailPage = () => {
           <div className="w-10" />
         </div>
       </header>
-
-      <div className="space-y-6 sm:pt-8 overflow-x-hidden">
-        <VenueHero
-          images={imageData}
-          onDeleteImage={(id) => deleteImageMutation.mutate(id)}
-          onAddImage={(file) => addImageMutation.mutate(file)}
-          isProcessing={
-            addImageMutation.isPending || deleteImageMutation.isPending
-          }
-        />
-
-        <div className="space-y-6">
-          <VenueInfoCard
-            onEdit={() => setActiveModal("details")}
-            title={
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                {basicData?.name || "Без названия"}
-              </h1>
+      <VenueDetailLayout
+        heroSection={
+          <VenueHeroSection
+            basicData={basicData}
+            images={imageData}
+            onDeleteImage={(id) => deleteImageMutation.mutate(id)}
+            onAddImage={(file) => addImageMutation.mutate(file)}
+            isProcessing={
+              addImageMutation.isPending || deleteImageMutation.isPending
             }
-          >
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 text-slate-600">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
-                    <Clock size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      График:
-                    </p>
-                    <p className="font-bold text-sm tracking-tight">
-                      {today.isOff ? "Выходной" : today.hours}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-slate-600">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
-                    <MapPin size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Адрес:
-                    </p>
-                    <p className="font-bold text-sm tracking-tight">
-                      {basicData?.address || "Адрес не указан"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-slate-600">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
-                    <Wallet size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Средний чек:
-                    </p>
-                    <p className="font-bold text-sm tracking-tight">
-                      {basicData?.averageCheck || 0}
-                      сом
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-slate-600">
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-orange-500">
-                    <Star size={18} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Рейтинг:
-                    </p>
-                    <div className="flex items-center gap-1.5 font-bold text-sm">
-                      {basicData?.rating || 5.0}
-                      <Star
-                        size={14}
-                        className="fill-orange-500 text-orange-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </VenueInfoCard>
-
-          {Array.isArray(basicData?.promosRes) &&
-            basicData.promosRes.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-black text-slate-900 px-2">
-                  Акции и скидки
-                </h3>
-                {basicData.promosRes.map((promo: any, idx: number) => (
-                  <VenueInfoCard
-                    key={idx}
-                    onEdit={() => console.log("Edit Promo")}
-                    noPadding
-                    className={"border-orange-100 bg-orange-50/20"}
-                  >
-                    <div className="flex h-32">
-                      <div className="w-32 bg-slate-100 relative overflow-hidden">
-                        <img
-                          src={imageData[0]?.url}
-                          className="w-full h-full object-cover"
-                          alt=""
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-1 bg-rose-500 text-white text-[10px] font-black rounded-lg">
-                          -{promo.discount || 20}%
-                        </div>
-                      </div>
-                      <div className="flex-1 p-4 flex flex-col justify-center">
-                        <h4 className="font-black text-slate-900 leading-tight mb-1">
-                          {promo.title || "Специальное предложение"}
-                        </h4>
-                        <p className="text-xs text-slate-500 line-clamp-2">
-                          {promo.description ||
-                            "Успейте воспользоваться выгодным предложением от нашего заведения"}
-                        </p>
-                      </div>
-                    </div>
-                  </VenueInfoCard>
-                ))}
-              </div>
-            )}
-
-          <VenueInfoCard
-            title={<h2>Детали заведения</h2>}
-            icon={<LayoutGrid size={20} />}
-            onEdit={() => setActiveModal("details")}
-          >
-            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                  <Layers size={20} />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase text-slate-400">
-                    Этаж
-                  </p>
-                  <p className="font-bold text-sm">1 этаж</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                  <Sofa size={20} />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black uppercase text-slate-400">
-                    Кабины
-                  </p>
-                  <p className="font-bold text-sm">Есть VIP</p>
-                </div>
-              </div>
-              {detailsData?.capacities &&
-                typeof detailsData.capacities === "object" &&
-                !Array.isArray(detailsData.capacities) &&
-                Object.entries(detailsData.capacities).map(
-                  ([title, value], i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-                        <Users size={20} />
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-black uppercase text-slate-400">
-                          {title}
-                        </p>
-                        <p className="font-bold text-sm">
-                          {String(value)} чел.
-                        </p>
-                      </div>
-                    </div>
-                  ),
-                )}
-            </div>
-          </VenueInfoCard>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <WorkingHoursSectionCard
-              className="p-8"
-              variant="orange"
-              hours={venueHours}
-              delay={0.2}
-              actions={<EditButton onClick={() => setActiveModal("hours")} />}
-            />
-            <CuisinesSectionCard
-              variant="orange"
-              className="p-8"
-              detailsData={detailsData}
-              actions={
-                <EditButton onClick={() => setActiveModal("cuisines")} />
-              }
-              delay={0.25}
-            />
-          </div>
-
+          />
+        }
+        promoSection={
+          <VenuePromoSection
+            actions={<EditButton onClick={() => console.log("hi")} />}
+            imageUrl={imageData[0].url}
+            basicData={basicData}
+            delay={0.05}
+          />
+        }
+        detailSection={
+          <VenueDetailsSectionCard
+            basicData={basicData}
+            capacities={capacities}
+            actions={<EditButton onClick={() => setActiveModal("details")} />}
+            delay={0.1}
+          />
+        }
+        capacitiesCard={
+          <CapacitiesSectionCard
+            size="lg"
+            variant="orange"
+            capacities={capacities}
+            delay={0.15}
+          />
+        }
+        adminCard={
+          <VenueAdminCard
+            size="lg"
+            variant="orange"
+            actions={
+              <EditButton onClick={() => setActiveModal("replace-admin")} />
+            }
+            adminData={publicAdminData}
+            delay={0.2}
+          />
+        }
+        descriptionCard={
+          <DescriptionSectionCard
+            descriptionText={descriptionText}
+            size="lg"
+            variant="orange"
+            actions={
+              <EditButton onClick={() => setActiveModal("description")} />
+            }
+            delay={0.25}
+          />
+        }
+        hoursCard={
+          <WorkingHoursSectionCard
+            size="lg"
+            variant="orange"
+            hours={venueHours}
+            delay={0.2}
+            actions={<EditButton onClick={() => setActiveModal("hours")} />}
+          />
+        }
+        cuisinesCard={
+          <CuisinesSectionCard
+            variant="orange"
+            size="lg"
+            detailsData={detailsData}
+            actions={<EditButton onClick={() => setActiveModal("cuisines")} />}
+            delay={0.25}
+          />
+        }
+        amenitiesCard={
           <AmenitySectionCard
             variant="orange"
-            className="p-8"
+            size="lg"
             delay={0.25}
             amenities={amenitiesData}
             actions={<EditButton onClick={() => setActiveModal("amenities")} />}
           />
-
+        }
+        contactsCard={
           <ContactsSectionCard
             variant="orange"
-            className="p-8"
+            size="lg"
             contactsData={contactsData}
             delay={0.3}
             actions={<EditButton onClick={() => setActiveModal("contacts")} />}
           />
-
-          <VenueInfoCard
-            title={<h2>Администратор</h2>}
-            icon={<UserCog size={20} />}
-            onEdit={() => navigate("/super-admin/venues")}
-          >
-            {!isEmpty && publicAdminData ? (
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-brand-primary flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-primary/20">
-                  {(publicAdminData.fullName || "A").charAt(0)}
-                </div>
-                <div>
-                  <h4 className="font-black text-slate-900">
-                    {publicAdminData.fullName || "Имя не указано"}
-                  </h4>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                <p className="text-sm text-slate-400 font-medium italic">
-                  Администратор не назначен
-                </p>
-              </div>
-            )}
-          </VenueInfoCard>
-
-          <VenueInfoCard
-            title={<h2>Описание</h2>}
-            icon={<FileText size={20} />}
-            onEdit={() => setActiveModal("description")}
-          >
-            <div className="prose prose-slate max-w-none">
-              <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
-                {descriptionText ||
-                  "Описание пока не заполнено владельцем заведения"}
-              </p>
-            </div>
-          </VenueInfoCard>
-
+        }
+        feedbackSection={
           <FeedbackSectionCard
             variant="orange"
-            className="p-8"
+            size="lg"
             venueId={id}
             service="SUPER_ADMIN"
             delay={0.6}
           />
-        </div>
-      </div>
+        }
+      />
 
       <VenueHoursModal
         isOpen={activeModal === "hours"}
@@ -422,14 +261,9 @@ export const VenueDetailPage = () => {
         isOpen={activeModal === "details"}
         onClose={onClose}
         initialDetails={{
-          cityId: 0,
-          address: "",
-          averageCheck: 0,
-          capacities: [],
-        }}
-        basicInfo={{
           address: basicData?.address || "",
           averageCheck: basicData?.averageCheck || 0,
+          capacities: detailsData?.capacities || {},
         }}
         cities={allCitiesData || []}
         onSave={(details) => updateDetailsMutation.mutate(details)}
@@ -460,6 +294,18 @@ export const VenueDetailPage = () => {
         initialDescription={descriptionText}
         onSave={(data) => updateDescMutation.mutate(data)}
         isSaving={updateDescMutation.isPending}
+      />
+      <ReplaceAdminModal
+        isOpen={activeModal === "replace-admin"}
+        onClose={onClose}
+        venueId={id}
+        description={basicData?.name ?? ""}
+      />
+      <CuisinesModal
+        isOpen={activeModal === "cuisines"}
+        onClose={onClose}
+        venueId={id}
+        description={basicData?.name ?? ""}
       />
     </div>
   );

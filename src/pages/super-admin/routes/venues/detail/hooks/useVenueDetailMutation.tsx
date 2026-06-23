@@ -4,14 +4,11 @@ import {
   VenueContactData,
   VenueDetailsData,
 } from "@/api/super-admin/venue";
-import { VenueWorkingHoursType } from "@/features/venue";
+import {VenueWorkingHoursType} from "@/features/venue-detail";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {toast} from "sonner";
 
-export const useVenueDetailMutations = (
-  id: number,
-  onClose: () => void,
-) => {
+export const useVenueDetailMutations = (id: number, onClose: () => void) => {
   const queryClient = useQueryClient();
 
   // Image mutations
@@ -36,7 +33,6 @@ export const useVenueDetailMutations = (
     },
     onError: () => toast.error("Ошибка при удалении фото"),
   });
-
 
   // Hours mutation
   const updateHoursMutation = useMutation({
