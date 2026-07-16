@@ -1,14 +1,9 @@
-import {
-  superAdminVenueService,
-  VenueCondition,
-  VenueListItem,
-} from "@/api/super-admin/venue";
+import {superAdminVenueService, VenueCondition} from "@/api/super-admin/venue";
 import {Button, Input, Modal} from "@/shared/ui";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import {useState} from "react";
 import {toast} from "sonner";
-import {motion} from "framer-motion";
-import {Settings2, Wallet, X} from "lucide-react";
+import {Settings2, Wallet} from "lucide-react";
 import {ModalProps} from "../../shared/types";
 
 export const BookingConditionsModal = ({
@@ -29,9 +24,7 @@ export const BookingConditionsModal = ({
   const {isLoading, isFetching} = useQuery({
     queryKey: ["venue-conditions", venueId],
     queryFn: async () => {
-      const data = await superAdminVenueService.getVenueConditions(
-        venueId,
-      );
+      const data = await superAdminVenueService.getVenueConditions(venueId);
 
       const formatTimeArray = (arr: number[]) => {
         if (!arr || arr.length < 2) return "00:00";

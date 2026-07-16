@@ -7,10 +7,7 @@ import {cn} from "@/shared/utils/cn";
 
 const actionMenu = tv({
   slots: {
-    trigger:
-      "w-9 h-9 flex items-center justify-center rounded-xl transition-colors",
-    triggerLight: "text-slate-400 hover:bg-slate-100 active:bg-slate-200",
-    triggerDark: "text-white/60 hover:bg-white/10 active:bg-white/20",
+    trigger: "flex items-center justify-center rounded-xl transition-colors",
     // menuContainer intentionally has no positioning classes - position is applied inline
     menuContainer:
       "z-[60] bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden",
@@ -26,9 +23,15 @@ const actionMenu = tv({
       light: {trigger: "text-slate-400 hover:bg-slate-100 active:bg-slate-200"},
       dark: {trigger: "text-white/60 hover:bg-white/10 active:bg-white/20"},
     },
+    size: {
+      small: {trigger: "w-8 h-8"},
+      medium: {trigger: "w-9 h-9"},
+      large: {trigger: "w-10 h-10"},
+    },
   },
   defaultVariants: {
     variant: "light",
+    size: "medium",
   },
 });
 
@@ -49,10 +52,12 @@ export const ActionMenu = ({
   variant = "light",
   triggerIcon,
   triggerClassName,
+  size = "medium",
 }: {
   items: ActionMenuItem[];
   className?: string;
   variant?: "light" | "dark";
+  size?: "small" | "medium" | "large";
   triggerIcon?: ReactNode;
   triggerClassName?: string;
 }) => {
@@ -98,7 +103,11 @@ export const ActionMenu = ({
   }, [open]);
 
   const styles = actionMenu();
-
+  const iconSize = {
+    small: 14,
+    medium: 16,
+    large: 18,
+  };
   return (
     <div
       ref={menuRef}
@@ -112,13 +121,9 @@ export const ActionMenu = ({
           setOpen((v) => !v);
         }}
         ref={triggerRef}
-        className={cn(
-          styles.trigger(),
-          variant === "dark" ? styles.triggerDark() : styles.triggerLight(),
-          triggerClassName,
-        )}
+        className={cn(styles.trigger({variant, size}), triggerClassName)}
       >
-        {triggerIcon || <MoreVertical size={16} />}
+        {triggerIcon || <MoreVertical size={iconSize[size]} />}
       </button>
 
       <Portal>
