@@ -1,5 +1,5 @@
 import {useVenueCreationStore} from "@/app/store/venueCreationStore";
-import {Input, TextArea} from "@/shared/ui";
+import {ImageUploader, Input, TextArea} from "@/shared/ui";
 import {s3Service} from "@/api/s3";
 import {Loader2, Upload, X} from "lucide-react";
 import {useEffect, useState} from "react";
@@ -69,86 +69,22 @@ export const Step1BasicInfo = () => {
   return (
     <div className="space-y-6">
       {/* Main Images */}
-      <div>
-        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider  mb-3">
-          Фото заведения
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {images.map((url, idx) => (
-            <div
-              key={idx}
-              className="relative aspect-square rounded-xl overflow-hidden group"
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => removeImage(idx, "main")}
-                className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-          <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-primary transition-colors">
-            {uploading.main ? (
-              <Loader2 size={24} className="text-slate-400 animate-spin" />
-            ) : (
-              <>
-                <Upload size={24} className="text-slate-400" />
-                <span className="text-xs text-slate-500 mt-2">Добавить</span>
-              </>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handleImageUpload(e, "main")}
-              className="hidden"
-              disabled={uploading.main}
-            />
-          </label>
-        </div>
-      </div>
+      <ImageUploader
+        label="Фото заведения"
+        images={images}
+        onRemove={(idx) => removeImage(idx, "main")}
+        onUpload={(e) => handleImageUpload(e, "main")}
+        isUploading={uploading.main}
+      />
 
       {/* Schema Images */}
-      <div>
-        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-3">
-          Схема заведения
-        </label>
-        <div className="grid grid-cols-3 gap-3">
-          {schemaImages.map((url, idx) => (
-            <div
-              key={idx}
-              className="relative aspect-square rounded-xl overflow-hidden group"
-            >
-              <img src={url} alt="" className="w-full h-full object-cover" />
-              <button
-                onClick={() => removeImage(idx, "schema")}
-                className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-          <label className="aspect-square rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer hover:border-brand-primary transition-colors">
-            {uploading.schema ? (
-              <Loader2 size={24} className="text-slate-400 animate-spin" />
-            ) : (
-              <>
-                <Upload size={24} className="text-slate-400" />
-                <span className="text-xs text-slate-500 mt-2">Добавить</span>
-              </>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handleImageUpload(e, "schema")}
-              className="hidden"
-              disabled={uploading.schema}
-            />
-          </label>
-        </div>
-      </div>
+      <ImageUploader
+        label="Схема заведения"
+        images={schemaImages}
+        onRemove={(idx) => removeImage(idx, "schema")}
+        onUpload={(e) => handleImageUpload(e, "schema")}
+        isUploading={uploading.schema}
+      />
 
       {/* Name */}
       <Input

@@ -1,30 +1,15 @@
 import React, {useState} from "react";
-import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
-import {
-  Plus,
-  Users,
-  LayoutGrid,
-  Trash2,
-  Edit2,
-  Settings2,
-  Calendar,
-  MoreVertical,
-  AlertTriangle,
-  Loader2,
-} from "lucide-react";
-import {Button} from "@/shared/ui";
-import {motion, AnimatePresence} from "framer-motion";
-import {adminTableService, TableResponse} from "@/api/admin/table";
-import {AddTableModal} from "./AddTableModal";
-import {EditTableModal} from "./EditTableModal";
-import {EditTableTypeModal} from "./EditTableTypeModal";
-import {EditTableServicesModal} from "./EditTableServicesModal";
-import {EditTableEventsModal} from "./EditTableEventsModal";
-import {toast} from "sonner";
+import {useQuery} from "@tanstack/react-query";
+import {Plus, LayoutGrid, Calendar} from "lucide-react";
+import {adminTableService} from "@/api/admin/table";
+import {AddTableModal} from "./ui/AddTableModal";
 import {PageLayout} from "@/shared/layouts";
+import {formatDateDisplay} from "@/shared/utils/functions";
+import {TablesList} from "./ui/TablesList";
+import {Button} from "@/shared/ui";
+import {motion} from "framer-motion";
 
 export const AdminTablesPage: React.FC = () => {
-  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"ALL" | "OPEN" | "BUSY" | "RSVN">("ALL");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -32,18 +17,6 @@ export const AdminTablesPage: React.FC = () => {
   const [floor, setFloor] = useState<number>(1);
   const [page, setPage] = useState(0);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTableId, setEditingTableId] = useState<number | null>(null);
-  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
-  const [editingTableData, setEditingTableData] =
-    useState<TableResponse | null>(null);
-
-  // New modals state
-  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
-  const [isServicesModalOpen, setIsServicesModalOpen] = useState(false);
-  const [isEventsModalOpen, setIsEventsModalOpen] = useState(false);
-  const [deleteTableId, setDeleteTableId] = useState<number | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const limit = 20;
 
   // Fetch tables
@@ -66,120 +39,20 @@ export const AdminTablesPage: React.FC = () => {
   const filteredTables =
     filter === "ALL" ? tables : tables.filter((t) => t.tableStatus === filter);
 
-  // Format date for display
-  const formatDateDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    if (date.toDateString() === today.toDateString()) return "Сегодня";
-    if (date.toDateString() === tomorrow.toDateString()) return "Завтра";
-
-    return date.toLocaleDateString("ru-RU", {
-      weekday: "short",
-      day: "numeric",
-      month: "long",
-    });
-  };
-
-  const handleEdit = (tableId: number) => {
-    console.log("Card clicked, tableId:", tableId);
-    setEditingTableId(tableId);
-    setIsEditModalOpen(true);
-  };
-
-  const toggleMenu = (tableId: number, tableData?: TableResponse) => {
-    if (tableData) setEditingTableData(tableData);
-    setActiveMenuId(activeMenuId === tableId ? null : tableId);
-  };
-
-  const closeMenu = () => {
-    setActiveMenuId(null);
-  };
-
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (!deleteTableId) return Promise.reject("No tableId");
-      return adminTableService.deleteTable(deleteTableId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["admin-tables"]});
-      toast.success("Столик удален");
-      setIsDeleteModalOpen(false);
-      setDeleteTableId(null);
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.message || error?.message || "Ошибка удаления";
-      toast.error(errorMessage);
-    },
-  });
-
-  const handleDeleteClick = (tableId: number) => {
-    setDeleteTableId(tableId);
-    setIsDeleteModalOpen(true);
-    closeMenu();
-  };
-
-  const confirmDelete = () => {
-    deleteMutation.mutate();
-  };
-
   // Status update mutation
-  const statusMutation = useMutation({
-    mutationFn: ({
-      tableId,
-      action,
-    }: {
-      tableId: number;
-      action: "OPEN" | "CLOSE";
-    }) => {
-      return adminTableService.updateTableStatus(tableId, selectedDate, action);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["admin-tables"]});
-      toast.success("Статус столика обновлен");
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Ошибка обновления статуса";
-      toast.error(errorMessage);
-    },
-  });
-
-  const handleStatusToggle = (tableId: number, currentStatus: string) => {
-    const newAction = currentStatus === "OPEN" ? "CLOSE" : "OPEN";
-    const actionLabel = newAction === "OPEN" ? "открыть" : "закрыть";
-
-    toast.promise(statusMutation.mutateAsync({tableId, action: newAction}), {
-      loading: `Обновление статуса...`,
-      success: `Столик ${actionLabel}`,
-      error: "Ошибка обновления статуса",
-    });
-  };
-
-  const statusStyles = {
-    OPEN: "border-brand-200 bg-gradient-to-br from-brand-50 to-brand-100/50 text-brand-700 shadow-lg shadow-brand-100/50",
-    BUSY: "border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-700 shadow-lg shadow-blue-100/50",
-    RSVN: "border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-700 shadow-lg shadow-amber-100/50",
-  };
-
-  const statusLabels = {
-    OPEN: "FREE",
-    BUSY: "BUSY",
-    RSVN: "RSVN",
-  };
 
   const typeLabels: Record<string, string> = {
     TABLE: "Стол",
     BOOTH: "Кабина",
     VIP: "VIP",
   };
-
+  const tabs = [
+    {key: "ALL", label: "Все"},
+    {key: "OPEN", label: "Свободны"},
+    {key: "BUSY", label: "Заняты"},
+    {key: "RSVN", label: "Бронь"},
+  ];
+  motion;
   return (
     <PageLayout
       title=" Схема столов"
@@ -203,24 +76,23 @@ export const AdminTablesPage: React.FC = () => {
     >
       {/* Filters */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 px-1 md:px-0 pb-2">
-        {[
-          {key: "ALL", label: "Все"},
-          {key: "OPEN", label: "Свободны"},
-          {key: "BUSY", label: "Заняты"},
-          {key: "RSVN", label: "Бронь"},
-        ].map(({key, label}) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key as any)}
-            className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest border-2 transition-all whitespace-nowrap ${
-              filter === key
-                ? "bg-slate-900 border-slate-900 text-white shadow-lg"
-                : "bg-white border-slate-100 text-slate-500 hover:border-slate-300"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+        <div className="relative flex p-1 bg-slate-100 rounded-2xl w-fit">
+          {tabs.map((tab) => (
+            <button
+              onClick={() => setFilter(tab.key as any)}
+              key={tab.key}
+              className="relative z-10 px-6 py-2 ..."
+            >
+              {filter === tab.key && (
+                <motion.div
+                  layoutId="tab-pill" // Главная магия Framer Motion
+                  className="absolute inset-0 bg-white rounded-xl shadow-sm"
+                />
+              )}
+              <span className="relative z-20">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Date Picker */}
@@ -235,7 +107,7 @@ export const AdminTablesPage: React.FC = () => {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 cursor-pointer"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 cursor-pointer"
               min={new Date().toISOString().split("T")[0]}
             />
           </div>
@@ -249,7 +121,7 @@ export const AdminTablesPage: React.FC = () => {
 
       {/* Tables Grid */}
       {isLoading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-6">
           {Array.from({length: 12}).map((_, i) => (
             <div
               key={i}
@@ -278,185 +150,7 @@ export const AdminTablesPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredTables.map((table: TableResponse) => {
-              console.log("Table object:", table);
-              return (
-                <motion.div
-                  layout
-                  initial={{scale: 0.9, opacity: 0}}
-                  animate={{scale: 1, opacity: 1}}
-                  exit={{scale: 0.9, opacity: 0}}
-                  key={table.etableId}
-                  onClick={() => {
-                    console.log(
-                      "Clicked table.etableId:",
-                      table.etableId,
-                      "full table:",
-                      table,
-                    );
-                    handleEdit(table.etableId);
-                  }}
-                  className={`relative p-6 md:p-8 rounded-3xl border-2 transition-all active:scale-95 touch-manipulation cursor-pointer hover:shadow-xl hover:-translate-y-1 ${statusStyles[table.tableStatus as keyof typeof statusStyles]}`}
-                >
-                  {/* Menu Button */}
-                  <div className="absolute top-4 right-4 z-10">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleMenu(table.etableId, table);
-                      }}
-                      className="p-2 rounded-xl bg-white/60 hover:bg-white transition-colors backdrop-blur-sm"
-                    >
-                      <MoreVertical size={18} className="text-slate-600" />
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    <AnimatePresence>
-                      {activeMenuId === table.etableId && (
-                        <motion.div
-                          initial={{opacity: 0, scale: 0.95, y: -10}}
-                          animate={{opacity: 1, scale: 1, y: 0}}
-                          exit={{opacity: 0, scale: 0.95, y: -10}}
-                          className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50"
-                        >
-                          <div className="p-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                closeMenu();
-                                setIsTypeModalOpen(true);
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <Settings2
-                                  size={16}
-                                  className="text-blue-600"
-                                />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">
-                                  Тип столика
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  {table.tableType}
-                                </p>
-                              </div>
-                            </button>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                closeMenu();
-                                setIsServicesModalOpen(true);
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                                <LayoutGrid
-                                  size={16}
-                                  className="text-purple-600"
-                                />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">
-                                  Услуги и удобства
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  Настроить
-                                </p>
-                              </div>
-                            </button>
-
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                closeMenu();
-                                setIsEventsModalOpen(true);
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
-                            >
-                              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                                <Calendar
-                                  size={16}
-                                  className="text-amber-600"
-                                />
-                              </div>
-                              <div>
-                                <p className="text-sm font-bold text-slate-900">
-                                  Типы мероприятий
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                  Настроить
-                                </p>
-                              </div>
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  <div className="flex flex-col items-center text-center space-y-4 pt-2">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-full border-3 border-current flex items-center justify-center font-black text-2xl md:text-3xl bg-white/40 backdrop-blur-sm">
-                      {table.tableTitle}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-xs font-black uppercase tracking-widest opacity-70">
-                        {
-                          statusLabels[
-                            table.tableStatus as keyof typeof statusLabels
-                          ]
-                        }
-                      </p>
-                      <div className="flex items-center justify-center gap-2 font-bold text-sm">
-                        <Users size={16} strokeWidth={3} />
-                        <span>{table.capacity} мест</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 pt-4 border-t border-current/10 flex items-center justify-around">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleStatusToggle(table.etableId, table.tableStatus);
-                      }}
-                      className="p-3 rounded-xl hover:bg-white/50 transition-colors"
-                      title={
-                        table.tableStatus === "OPEN"
-                          ? "Закрыть столик"
-                          : "Открыть столик"
-                      }
-                    >
-                      <Settings2 size={20} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(table.etableId);
-                      }}
-                      className="p-3 rounded-xl hover:bg-white/50 transition-colors"
-                    >
-                      <Edit2 size={20} />
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(table.etableId);
-                      }}
-                      className="p-3 rounded-xl hover:bg-red-500 hover:text-white transition-colors"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
+        <TablesList tables={filteredTables} selectedDate={selectedDate} />
       )}
 
       {/* Add Table Modal */}
@@ -465,130 +159,6 @@ export const AdminTablesPage: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         defaultFloor={floor}
       />
-
-      {/* Edit Table Modal */}
-      <EditTableModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setEditingTableId(null);
-        }}
-        tableId={editingTableId}
-        selectedDate={selectedDate}
-      />
-
-      {/* Edit Table Type Modal */}
-      <EditTableTypeModal
-        isOpen={isTypeModalOpen}
-        onClose={() => {
-          setIsTypeModalOpen(false);
-          setEditingTableData(null);
-        }}
-        tableId={editingTableData?.etableId || null}
-        currentType={editingTableData?.tableType || ""}
-      />
-
-      {/* Edit Table Services Modal */}
-      <EditTableServicesModal
-        isOpen={isServicesModalOpen}
-        onClose={() => {
-          setIsServicesModalOpen(false);
-          setEditingTableData(null);
-        }}
-        tableId={editingTableData?.etableId || null}
-        currentAmenities={[]}
-      />
-
-      {/* Edit Table Events Modal */}
-      <EditTableEventsModal
-        isOpen={isEventsModalOpen}
-        onClose={() => {
-          setIsEventsModalOpen(false);
-          setEditingTableData(null);
-        }}
-        tableId={editingTableData?.etableId || null}
-        currentEvents={[]}
-      />
-
-      {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {isDeleteModalOpen && deleteTableId && (
-          <>
-            <motion.div
-              initial={{opacity: 0}}
-              animate={{opacity: 1}}
-              exit={{opacity: 0}}
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]"
-            />
-
-            <motion.div
-              initial={{opacity: 0, scale: 0.95}}
-              animate={{opacity: 1, scale: 1}}
-              exit={{opacity: 0, scale: 0.95}}
-              transition={{type: "spring", duration: 0.3, bounce: 0.3}}
-              className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
-            >
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                <div className="bg-gradient-to-br from-red-500 to-red-600 p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                      <AlertTriangle size={24} className="text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-black text-white">
-                        Удалить столик?
-                      </h2>
-                      <p className="text-sm text-red-100 font-bold mt-1">
-                        Это действие нельзя отменить
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <div className="bg-red-50 border border-red-100 rounded-xl p-4">
-                    <p className="text-sm font-bold text-red-900">
-                      Вы собираетесь удалить столик #{deleteTableId}. Все
-                      связанные данные будут потеряны.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 h-12 rounded-xl font-bold"
-                    disabled={deleteMutation.isPending}
-                  >
-                    Отмена
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={confirmDelete}
-                    disabled={deleteMutation.isPending}
-                    className="flex-1 h-12 rounded-xl font-bold bg-red-500 hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {deleteMutation.isPending ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 size={18} className="animate-spin" />
-                        <span>Удаление...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <Trash2 size={18} />
-                        <span>Удалить</span>
-                      </div>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </PageLayout>
   );
 };

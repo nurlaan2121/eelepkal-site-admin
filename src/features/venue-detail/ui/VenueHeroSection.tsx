@@ -97,7 +97,7 @@ export const VenueHeroSection = ({
             <h1 className="text-3xl md:text-4xl font-black mb-2">
               {basicData?.name}
             </h1>
-            <div className="flex gap-2 items-end">
+            <div className="flex gap-2 items-end flex-wrap">
               <span className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl">
                 <Star
                   size={16}
@@ -120,7 +120,7 @@ export const VenueHeroSection = ({
             className="bg-black/20 hover:bg-black/40 backdrop-blur-md text-white px-4 py-2 md:py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 transition-all flex items-center gap-2"
           >
             <Maximize2 size={18} />
-            <span className="hidden md:inline">Развернуть галерею</span>
+            <span className="hidden md:inline">Развернуть</span>
           </button>
         </div>
       </div>

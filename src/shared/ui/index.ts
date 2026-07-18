@@ -11,3 +11,4 @@ export {Accordion, AccordionContent, AccordionTrigger} from "./Accordion";
 export {ActionSheet} from "./ActionSheet";
 export {DraggableContextMenu} from "./DraggableContextMenu";
 export {ConfirmDialog} from "./ConfirmDialog";
+export {ImageUploader} from "./ImageUploader";

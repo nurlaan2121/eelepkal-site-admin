@@ -1,5 +1,5 @@
 import {AnimatePresence, motion} from "framer-motion";
-import {X} from "lucide-react";
+import {Loader2, X} from "lucide-react";
 import {type ReactNode, useEffect} from "react";
 import {tv} from "tailwind-variants";
 import {Portal} from "./portal/Portal";
@@ -16,6 +16,7 @@ const modal = tv({
     titleGroup: "flex items-center gap-3",
     icon: "w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-primary",
     title: "text-xl font-black text-slate-900",
+    description: "text-xs text-slate-500 font-medium",
     closeButton:
       "w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 transition-colors",
     content: "p-6 space-y-6 overflow-y-auto flex-1",
@@ -36,9 +37,30 @@ const modal = tv({
       danger: {
         header: "bg-red-50",
         icon: "bg-red-100 text-red-600",
-        title: 'text-slate-800',
+        title: "text-slate-800",
         closeButton: "hover:bg-red-100 text-slate-500",
       },
+      blue: {
+        header: 'bg-gradient-to-br from-blue-500 to-blue-600',
+        icon: 'bg-blue-100 text-blue-600',
+        title: 'text-white',
+        description: 'text-blue-100',
+        closeButton: 'hover:bg-blue-100 hover:text-gray-900 text-gray-100',
+      },
+      purple: {
+        header: 'bg-gradient-to-br from-purple-500 to-purple-600',
+        icon: 'bg-purple-100 text-purple-600',
+        title: 'text-white',
+        description: 'text-purple-100',
+        closeButton: 'hover:bg-purple-100 hover:text-gray-900 text-gray-100',
+      },
+      amber: {
+        header: 'bg-gradient-to-br from-amber-500 to-amber-600',
+        icon: 'bg-amber-100 text-amber-600',
+        title: 'text-white',
+        description: 'text-amber-100',
+        closeButton: 'hover:bg-amber-100 hover:text-gray-900 text-gray-100',
+      }
     },
   },
 });
@@ -48,6 +70,7 @@ export const Modal = ({
   open,
   header,
   isShaded,
+  isLoading,
   children,
   footer,
   onClose,
@@ -62,10 +85,11 @@ export const Modal = ({
     iconClassName?: string;
   };
   isShaded?: boolean;
+  isLoading?: boolean;
   children: ReactNode;
   footer?: ReactNode;
   onClose: () => void;
-  tone?: "danger" | undefined;
+  tone?: "danger" | "blue" | "purple" | "amber" | undefined;
 }) => {
   const styles = modal({tone});
   useLockScreen(open);
@@ -105,15 +129,13 @@ export const Modal = ({
                 {/* Header */}
                 <div className={styles.header()}>
                   <div className={styles.titleGroup()}>
-                    <div
-                      className={cn(styles.icon(), header.iconClassName)}
-                    >
+                    <div className={cn(styles.icon(), header.iconClassName)}>
                       {header.icon}
                     </div>
                     <div>
                       <h2 className={styles.title()}>{header.title}</h2>
                       {header.description && (
-                        <p className="text-xs text-slate-500 font-medium">
+                        <p className={styles.description()}>
                           {header.description}
                         </p>
                       )}
@@ -125,7 +147,23 @@ export const Modal = ({
                 </div>
 
                 {/* Content */}
-                <div className={styles.content()}>{children}</div>
+                <div className={styles.content()}>
+                  {isLoading ? (
+                    <div className="flex-1 flex items-center justify-center p-12">
+                      <div className="flex items-center gap-3">
+                        <Loader2
+                          size={24}
+                          className="text-brand-800 animate-spin"
+                        />
+                        <span className="text-sm font-bold text-slate-600">
+                          Загрузка данных...
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    children
+                  )}
+                </div>
                 {footer && (
                   <div className="border-t border-slate-100 p-6">{footer}</div>
                 )}
