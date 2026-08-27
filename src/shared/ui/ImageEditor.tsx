@@ -234,7 +234,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [open]);
+  }, [open, image]);
 
   const rotatedDimensions = useMemo(() => {
     if (!image) return { width: 0, height: 0 };
