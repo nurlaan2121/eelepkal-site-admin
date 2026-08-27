@@ -158,7 +158,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                                                           onClose,
                                                           onConfirm,
                                                         }) => {
-  const cropRef = useRef<HTMLDivElement>(null); // FIXED: removed | null
+  const cropRef = useRef<HTMLDivElement>(null!);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const previewUrlRef = useRef<string | null>(null);
   const pointerStateRef = useRef<{
