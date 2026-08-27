@@ -40,14 +40,14 @@ export const devService = {
 
   getCategoriesSimple: async (): Promise<MenuCategorySimple[]> => {
     const response = await apiClient.get<MenuCategorySimple[]>(
-      "/api/dev/category/allIdAndName",
+      "/api/dev/category/allIdAndNameForAdmin",
     );
     return response.data;
   },
 
   getCategories: async (): Promise<MenuCategory[]> => {
     const response = await apiClient.get<MenuCategory[]>(
-      "/api/dev/category/allIdAndName",
+      "/api/dev/category/allIdAndNameForAdmin",
     );
     return response.data;
   },
