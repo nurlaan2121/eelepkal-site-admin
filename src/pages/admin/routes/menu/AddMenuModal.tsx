@@ -1,16 +1,18 @@
-import React, {useState} from "react";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {X, Image as ImageIcon, Loader2} from "lucide-react";
-import {motion, AnimatePresence} from "framer-motion";
+import React, { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   adminMenuService,
   CreateMenuRequest,
   MenuStatus,
 } from "@/api/admin/menu";
-import {Button} from "@/shared/ui";
-import {toast} from "sonner";
-import {s3Service} from "@/api/s3";
-import {devService} from "@/api/dev";
+import { Button } from "@/shared/ui";
+import { toast } from "sonner";
+import { s3Service } from "@/api/s3";
+import { devService } from "@/api/dev";
+import { ImageEditor } from "@/shared/ui/ImageEditor";
+import type { EditorSource } from "@/shared/ui/ImageEditor";
 
 interface AddMenuModalProps {
   isOpen: boolean;
@@ -42,15 +44,18 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSource, setEditorSource] = useState<EditorSource | null>(null);
+
   // Fetch categories
-  const {data: categories} = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ["menu-categories-simple"],
     queryFn: devService.getCategoriesSimple,
     enabled: isOpen,
   });
 
   // Fetch units
-  const {data: units} = useQuery({
+  const { data: units } = useQuery({
     queryKey: ["menu-units"],
     queryFn: devService.getUnits,
     enabled: isOpen,
@@ -61,8 +66,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
     mutationFn: (data: CreateMenuRequest) =>
       adminMenuService.createMenu(data, status),
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["menu-items"]});
-      queryClient.invalidateQueries({queryKey: ["menu-categories"]});
+      queryClient.invalidateQueries({ queryKey: ["menu-items"] });
+      queryClient.invalidateQueries({ queryKey: ["menu-categories"] });
       onClose();
       resetForm();
     },
@@ -122,9 +127,9 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
     field: keyof CreateMenuRequest,
     value: string | number,
   ) => {
-    setFormData((prev) => ({...prev, [field]: value}));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({...prev, [field]: undefined}));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -138,10 +143,35 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Размер файла не должен превышать 5MB");
+    // Validate file size (max 15MB for source before crop)
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Размер файла не должен превышать 15MB");
       return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setEditorSource({
+      src: objectUrl,
+      fileName: file.name,
+      mimeType: file.type,
+    });
+    setEditorOpen(true);
+    e.target.value = "";
+  };
+
+  const handleEditorClose = () => {
+    setEditorOpen(false);
+    if (editorSource) {
+      URL.revokeObjectURL(editorSource.src);
+      setEditorSource(null);
+    }
+  };
+
+  const handleEditorConfirm = async (file: File) => {
+    setEditorOpen(false);
+    if (editorSource) {
+      URL.revokeObjectURL(editorSource.src);
+      setEditorSource(null);
     }
 
     setSelectedFile(file);
@@ -157,8 +187,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
     setIsUploading(true);
     try {
       const imageUrl = await s3Service.uploadFile(file);
-      setFormData((prev) => ({...prev, imageUrl}));
-      toast.success("Изображение загружено");
+      setFormData((prev) => ({ ...prev, imageUrl }));
+      toast.success("Изображение обработано и загружено");
     } catch (error: any) {
       console.error("Upload error:", error);
       const errorMessage =
@@ -179,18 +209,18 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
         <>
           {/* Backdrop */}
           <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 0}}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
           />
 
           {/* Modal */}
           <motion.div
-            initial={{opacity: 0, scale: 0.95, y: 20}}
-            animate={{opacity: 1, scale: 1, y: 0}}
-            exit={{opacity: 0, scale: 0.95, y: 20}}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
@@ -222,22 +252,20 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStatus("ACTIVE")}
-                    className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-                      status === "ACTIVE"
+                    className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${status === "ACTIVE"
                         ? "bg-brand-primary text-white shadow-md"
                         : "bg-transparent text-slate-500 hover:bg-white"
-                    }`}
+                      }`}
                   >
                     Активное
                   </button>
                   <button
                     type="button"
                     onClick={() => setStatus("INACTIVE")}
-                    className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${
-                      status === "INACTIVE"
+                    className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${status === "INACTIVE"
                         ? "bg-brand-primary text-white shadow-md"
                         : "bg-transparent text-slate-500 hover:bg-white"
-                    }`}
+                      }`}
                   >
                     Резервное
                   </button>
@@ -298,7 +326,7 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                         onClick={() => {
                           setSelectedFile(null);
                           setImagePreview(null);
-                          setFormData((prev) => ({...prev, imageUrl: ""}));
+                          setFormData((prev) => ({ ...prev, imageUrl: "" }));
                         }}
                         disabled={isUploading}
                         className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50"
@@ -326,11 +354,10 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                   value={formData.title}
                   onChange={(e) => handleChange("title", e.target.value)}
                   placeholder="например, Цезарь"
-                  className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                    errors.title
+                  className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.title
                       ? "border-red-300"
                       : "border-slate-200 focus:border-brand-500"
-                  }`}
+                    }`}
                 />
                 {errors.title && (
                   <p className="mt-1.5 text-xs font-bold text-red-500">
@@ -349,11 +376,10 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                   onChange={(e) => handleChange("description", e.target.value)}
                   placeholder="куриное филе, помидор, микс зелени, сыр пармезан, соус цезарь"
                   rows={3}
-                  className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none ${
-                    errors.description
+                  className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none ${errors.description
                       ? "border-red-300"
                       : "border-slate-200 focus:border-brand-500"
-                  }`}
+                    }`}
                 />
                 {errors.description && (
                   <p className="mt-1.5 text-xs font-bold text-red-500">
@@ -376,11 +402,10 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     }
                     placeholder="170"
                     min="0"
-                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.price
+                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.price
                         ? "border-red-300"
                         : "border-slate-200 focus:border-brand-500"
-                    }`}
+                      }`}
                   />
                   {errors.price && (
                     <p className="mt-1.5 text-xs font-bold text-red-500">
@@ -417,11 +442,10 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     onChange={(e) =>
                       handleChange("categoryId", parseInt(e.target.value))
                     }
-                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.categoryId
+                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.categoryId
                         ? "border-red-300"
                         : "border-slate-200 focus:border-brand-500"
-                    }`}
+                      }`}
                   >
                     <option value={0}>Выберите категорию</option>
                     {categories?.map((cat) => (
@@ -446,11 +470,10 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     onChange={(e) =>
                       handleChange("unitAsEnumId", parseInt(e.target.value))
                     }
-                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${
-                      errors.unitAsEnumId
+                    className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.unitAsEnumId
                         ? "border-red-300"
                         : "border-slate-200 focus:border-brand-500"
-                    }`}
+                      }`}
                   >
                     <option value={0}>Выберите единицу</option>
                     {units?.map((unit) => (
@@ -491,6 +514,12 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
               </Button>
             </div>
           </motion.div>
+          <ImageEditor
+            open={editorOpen}
+            source={editorSource}
+            onClose={handleEditorClose}
+            onConfirm={handleEditorConfirm}
+          />
         </>
       )}
     </AnimatePresence>

@@ -1,5 +1,5 @@
-import React, {useState, useEffect} from "react";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   X,
   Upload,
@@ -7,16 +7,18 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import {motion, AnimatePresence} from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   adminMenuService,
   CreateMenuRequest,
   MenuStatus,
 } from "@/api/admin/menu";
-import {Button} from "@/shared/ui";
-import {toast} from "sonner";
-import {s3Service} from "@/api/s3";
-import {devService} from "@/api/dev";
+import { Button } from "@/shared/ui";
+import { toast } from "sonner";
+import { s3Service } from "@/api/s3";
+import { devService } from "@/api/dev";
+import { ImageEditor } from "@/shared/ui/ImageEditor";
+import type { EditorSource } from "@/shared/ui/ImageEditor";
 
 interface EditMenuModalProps {
   isOpen: boolean;
@@ -46,22 +48,25 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorSource, setEditorSource] = useState<EditorSource | null>(null);
+
   // Fetch menu item data
-  const {data: menuItem, isLoading: isLoadingMenuItem} = useQuery({
+  const { data: menuItem, isLoading: isLoadingMenuItem } = useQuery({
     queryKey: ["menu-item", menuId],
     queryFn: () => adminMenuService.getMenuItem(menuId!),
     enabled: isOpen && !!menuId,
   });
 
   // Fetch categories
-  const {data: categories} = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ["menu-categories-simple"],
     queryFn: devService.getCategoriesSimple,
     enabled: isOpen,
   });
 
   // Fetch units
-  const {data: units} = useQuery({
+  const { data: units } = useQuery({
     queryKey: ["menu-units"],
     queryFn: devService.getUnits,
     enabled: isOpen,
@@ -90,7 +95,7 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
       // Try to match unit by name
       const matchedUnit = units.find((u) => u.name === menuItem.unit);
       if (matchedUnit) {
-        setFormData((prev) => ({...prev, unitAsEnumId: matchedUnit.id}));
+        setFormData((prev) => ({ ...prev, unitAsEnumId: matchedUnit.id }));
       }
     }
   }, [menuItem, categories, units]);
@@ -100,7 +105,7 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
     mutationFn: (data: CreateMenuRequest) =>
       adminMenuService.updateMenu(menuId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ["menu-items"]});
+      queryClient.invalidateQueries({ queryKey: ["menu-items"] });
       toast.success("Блюдо успешно обновлено");
       onClose();
       resetForm();
@@ -169,7 +174,7 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
     field: keyof CreateMenuRequest,
     value: string | number,
   ) => {
-    setFormData((prev) => ({...prev, [field]: value}));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,10 +187,35 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Размер файла не должен превышать 5MB");
+    // Validate file size (max 15MB for source before crop)
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Размер файла не должен превышать 15MB");
       return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setEditorSource({
+      src: objectUrl,
+      fileName: file.name,
+      mimeType: file.type,
+    });
+    setEditorOpen(true);
+    e.target.value = "";
+  };
+
+  const handleEditorClose = () => {
+    setEditorOpen(false);
+    if (editorSource) {
+      URL.revokeObjectURL(editorSource.src);
+      setEditorSource(null);
+    }
+  };
+
+  const handleEditorConfirm = async (file: File) => {
+    setEditorOpen(false);
+    if (editorSource) {
+      URL.revokeObjectURL(editorSource.src);
+      setEditorSource(null);
     }
 
     setSelectedFile(file);
@@ -201,8 +231,8 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
     setIsUploading(true);
     try {
       const imageUrl = await s3Service.uploadFile(file);
-      setFormData((prev) => ({...prev, imageUrl}));
-      toast.success("Изображение загружено");
+      setFormData((prev) => ({ ...prev, imageUrl }));
+      toast.success("Изображение обработано и загружено");
     } catch (error: any) {
       console.error("Upload error:", error);
       const errorMessage =
@@ -225,18 +255,18 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
         <>
           {/* Backdrop */}
           <motion.div
-            initial={{opacity: 0}}
-            animate={{opacity: 1}}
-            exit={{opacity: 0}}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
           />
 
           {/* Modal */}
           <motion.div
-            initial={{opacity: 0, scale: 0.95, y: 20}}
-            animate={{opacity: 1, scale: 1, y: 0}}
-            exit={{opacity: 0, scale: 0.95, y: 20}}
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-white rounded-2xl shadow-2xl z-50 overflow-hidden flex flex-col"
           >
             {/* Header */}
@@ -346,7 +376,7 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
                             onClick={() => {
                               setSelectedFile(null);
                               setImagePreview(null);
-                              setFormData((prev) => ({...prev, imageUrl: ""}));
+                              setFormData((prev) => ({ ...prev, imageUrl: "" }));
                             }}
                             disabled={isUploading}
                             className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-lg disabled:opacity-50"
@@ -492,6 +522,12 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
               </Button>
             </div>
           </motion.div>
+          <ImageEditor
+            open={editorOpen}
+            source={editorSource}
+            onClose={handleEditorClose}
+            onConfirm={handleEditorConfirm}
+          />
         </>
       )}
     </AnimatePresence>
