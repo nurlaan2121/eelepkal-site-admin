@@ -345,14 +345,29 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
                         />
                       </label>
                     ) : (
-                      <div className="relative rounded-xl overflow-hidden bg-slate-100">
+                      <div className="relative rounded-xl overflow-hidden bg-slate-100 group cursor-pointer" onClick={() => {
+                        if (!isUploading) {
+                          setEditorSource({
+                            src: imagePreview,
+                            fileName: "Редактируемое изображение",
+                            mimeType: "image/jpeg"
+                          });
+                          setEditorOpen(true);
+                        }
+                      }}>
                         <img
                           src={imagePreview}
                           alt="Предпросмотр"
-                          className="w-full h-48 object-cover"
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
+                        {/* Overlay text for instruction */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                          <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md">
+                            Изменить
+                          </span>
+                        </div>
                         {isUploading && (
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg">
                               <Loader2
                                 size={20}
@@ -373,7 +388,8 @@ export const EditMenuModal: React.FC<EditMenuModalProps> = ({
                           )}
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation(); // prevent opening editor
                               setSelectedFile(null);
                               setImagePreview(null);
                               setFormData((prev) => ({ ...prev, imageUrl: "" }));

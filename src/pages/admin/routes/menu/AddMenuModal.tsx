@@ -253,8 +253,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     type="button"
                     onClick={() => setStatus("ACTIVE")}
                     className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${status === "ACTIVE"
-                        ? "bg-brand-primary text-white shadow-md"
-                        : "bg-transparent text-slate-500 hover:bg-white"
+                      ? "bg-brand-primary text-white shadow-md"
+                      : "bg-transparent text-slate-500 hover:bg-white"
                       }`}
                   >
                     Активное
@@ -263,8 +263,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     type="button"
                     onClick={() => setStatus("INACTIVE")}
                     className={`py-2.5 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all ${status === "INACTIVE"
-                        ? "bg-brand-primary text-white shadow-md"
-                        : "bg-transparent text-slate-500 hover:bg-white"
+                      ? "bg-brand-primary text-white shadow-md"
+                      : "bg-transparent text-slate-500 hover:bg-white"
                       }`}
                   >
                     Резервное
@@ -295,14 +295,28 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     />
                   </label>
                 ) : (
-                  <div className="relative rounded-xl overflow-hidden bg-slate-100">
+                  <div className="relative rounded-xl overflow-hidden bg-slate-100 group cursor-pointer" onClick={() => {
+                    if (!isUploading) {
+                      setEditorSource({
+                        src: imagePreview,
+                        fileName: "Редактируемое изображение",
+                        mimeType: "image/jpeg"
+                      });
+                      setEditorOpen(true);
+                    }
+                  }}>
                     <img
                       src={imagePreview}
                       alt="Предпросмотр"
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <span className="bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full backdrop-blur-md">
+                        Изменить
+                      </span>
+                    </div>
                     {isUploading && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                         <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-lg">
                           <Loader2
                             size={20}
@@ -323,7 +337,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                       )}
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setSelectedFile(null);
                           setImagePreview(null);
                           setFormData((prev) => ({ ...prev, imageUrl: "" }));
@@ -355,8 +370,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                   onChange={(e) => handleChange("title", e.target.value)}
                   placeholder="например, Цезарь"
                   className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.title
-                      ? "border-red-300"
-                      : "border-slate-200 focus:border-brand-500"
+                    ? "border-red-300"
+                    : "border-slate-200 focus:border-brand-500"
                     }`}
                 />
                 {errors.title && (
@@ -377,8 +392,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                   placeholder="куриное филе, помидор, микс зелени, сыр пармезан, соус цезарь"
                   rows={3}
                   className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none ${errors.description
-                      ? "border-red-300"
-                      : "border-slate-200 focus:border-brand-500"
+                    ? "border-red-300"
+                    : "border-slate-200 focus:border-brand-500"
                     }`}
                 />
                 {errors.description && (
@@ -403,8 +418,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                     placeholder="170"
                     min="0"
                     className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.price
-                        ? "border-red-300"
-                        : "border-slate-200 focus:border-brand-500"
+                      ? "border-red-300"
+                      : "border-slate-200 focus:border-brand-500"
                       }`}
                   />
                   {errors.price && (
@@ -443,8 +458,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                       handleChange("categoryId", parseInt(e.target.value))
                     }
                     className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.categoryId
-                        ? "border-red-300"
-                        : "border-slate-200 focus:border-brand-500"
+                      ? "border-red-300"
+                      : "border-slate-200 focus:border-brand-500"
                       }`}
                   >
                     <option value={0}>Выберите категорию</option>
@@ -471,8 +486,8 @@ export const AddMenuModal: React.FC<AddMenuModalProps> = ({
                       handleChange("unitAsEnumId", parseInt(e.target.value))
                     }
                     className={`w-full px-4 py-3 rounded-xl border-2 bg-white text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 ${errors.unitAsEnumId
-                        ? "border-red-300"
-                        : "border-slate-200 focus:border-brand-500"
+                      ? "border-red-300"
+                      : "border-slate-200 focus:border-brand-500"
                       }`}
                   >
                     <option value={0}>Выберите единицу</option>

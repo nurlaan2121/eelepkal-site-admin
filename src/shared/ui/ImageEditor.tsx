@@ -1,13 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, RotateCcw, RotateCw, ZoomIn, ZoomOut, X } from "lucide-react";
-import { Modal, Button } from "@/shared/ui";
+import { ArrowLeft, RotateCcw, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   clamp,
   clampOffset,
   getEditorFileName,
   getMinimumZoom,
   getRotatedDimensions,
-  isValidEditorMimeType,
   loadImage,
   renderEditedImage,
   supportsWebpCanvasEncoding,
@@ -22,23 +21,17 @@ type EditorSource = {
 interface ImageEditorProps {
   open: boolean;
   source: EditorSource | null;
-  title?: string;
-  description?: string;
   onClose: () => void;
   onConfirm: (file: File) => void;
 }
 
 const MAX_ZOOM_FACTOR = 5;
 const MIN_ZOOM_FACTOR = 0.05;
-const PREVIEW_SIZE = 300;
 const OUTPUT_SIZE = 1280;
 
 const Stage = ({
   source,
-  image,
   cropRef,
-  cropWidth,
-  cropHeight,
   displayWidth,
   displayHeight,
   offsetX,
@@ -49,13 +42,9 @@ const Stage = ({
   onPointerUp,
   onWheel,
   imageAlt,
-  label,
 }: {
   source: string;
-  image: HTMLImageElement;
-  cropRef: React.RefObject<HTMLDivElement>; // changed from HTMLDivElement | null
-  cropWidth: number;
-  cropHeight: number;
+  cropRef: React.RefObject<HTMLDivElement>;
   displayWidth: number;
   displayHeight: number;
   offsetX: number;
@@ -66,37 +55,18 @@ const Stage = ({
   onPointerUp: React.PointerEventHandler<HTMLDivElement>;
   onWheel: React.WheelEventHandler<HTMLDivElement>;
   imageAlt: string;
-  label: string;
 }) => {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-          {label}
-        </p>
-        <p className="text-[11px] font-bold text-slate-500">
-          {Math.round(cropWidth)} × {Math.round(cropHeight)} px
-        </p>
-      </div>
-
+    <div className="w-full max-w-lg mx-auto flex flex-col items-center justify-center p-4">
       <div
         ref={cropRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onWheel={onWheel}
-        className="relative aspect-square w-full overflow-hidden rounded-3xl border border-slate-200 bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.96),_rgba(15,23,42,0.88))] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] touch-none select-none"
+        className="relative aspect-square w-full overflow-hidden bg-black/50 touch-none select-none rounded-[16px] md:rounded-[32px] shadow-2xl border border-white/10"
         style={{ touchAction: "none" }}
       >
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-            backgroundSize: "24px 24px",
-          }}
-        />
-
         <div className="absolute inset-0 flex items-center justify-center">
           <div
             className="relative overflow-hidden will-change-transform"
@@ -110,7 +80,7 @@ const Stage = ({
               src={source}
               alt={imageAlt}
               draggable={false}
-              className="h-full w-full select-none object-cover"
+              className="h-full w-full select-none object-cover pointer-events-none"
               style={{
                 transform: `rotate(${rotation}deg)`,
                 transformOrigin: "center center",
@@ -119,32 +89,18 @@ const Stage = ({
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-[16%] rounded-[28px] border-2 border-white/90 shadow-[0_0_0_9999px_rgba(15,23,42,0.34)]">
-          <div className="absolute left-1/3 top-0 h-full w-px bg-white/45" />
-          <div className="absolute left-2/3 top-0 h-full w-px bg-white/45" />
-          <div className="absolute top-1/3 left-0 h-px w-full bg-white/45" />
-          <div className="absolute top-2/3 left-0 h-px w-full bg-white/45" />
-        </div>
-
-        <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-black/40 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur">
-          Мобильный свайп / Drag
-        </div>
-
-        <div className="pointer-events-none absolute bottom-4 right-4 rounded-full bg-black/40 px-3 py-1.5 text-[11px] font-bold text-white backdrop-blur">
-          Pinch-зум / Колесо мыши
+        {/* 3x3 Grid Overlay inspired by Instagram */}
+        <div className="pointer-events-none absolute inset-0 border border-white/20">
+          <div className="absolute left-1/3 top-0 h-full w-px bg-white/30" />
+          <div className="absolute left-2/3 top-0 h-full w-px bg-white/30" />
+          <div className="absolute top-1/3 left-0 h-px w-full bg-white/30" />
+          <div className="absolute top-2/3 left-0 h-px w-full bg-white/30" />
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-[11px] font-bold text-slate-500">
-        <div className="rounded-2xl bg-slate-50 px-3 py-2">
-          Zoom: {Math.round((displayWidth / getRotatedDimensions(image.naturalWidth, image.naturalHeight, rotation).width) * 100)}%
-        </div>
-        <div className="rounded-2xl bg-slate-50 px-3 py-2">
-          Rotate: {rotation}°
-        </div>
-        <div className="rounded-2xl bg-slate-50 px-3 py-2">
-          Move: active
-        </div>
+      <div className="mt-6 flex flex-wrap justify-center gap-2 pointer-events-none opacity-50">
+        <span className="bg-white/10 backdrop-blur rounded-full px-3 py-1 text-[10px] uppercase font-bold text-white tracking-widest border border-white/10">Свайп / Drag</span>
+        <span className="bg-white/10 backdrop-blur rounded-full px-3 py-1 text-[10px] uppercase font-bold text-white tracking-widest border border-white/10">Pinch / Zoom</span>
       </div>
     </div>
   );
@@ -153,14 +109,11 @@ const Stage = ({
 export const ImageEditor: React.FC<ImageEditorProps> = ({
   open,
   source,
-  title = "Редактировать фото",
-  description = "Подгоните кадр перед загрузкой",
   onClose,
   onConfirm,
 }) => {
   const cropRef = useRef<HTMLDivElement>(null!);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const previewUrlRef = useRef<string | null>(null);
   const pointerStateRef = useRef<{
     pointers: Map<number, { x: number; y: number }>;
     gesture: null
@@ -188,9 +141,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    if (!open || !source) {
-      return;
-    }
+    if (!open || !source) return;
 
     let cancelled = false;
     setLoadError(null);
@@ -271,7 +222,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const displayHeight = rotatedDimensions.height * effectiveScale;
 
   useEffect(() => {
-    // FIXED: map clampOffset result to { x, y }
     setOffset((prev) => {
       const clamped = clampOffset(
         prev.x,
@@ -291,19 +241,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
   const clampZoom = (nextZoom: number) => {
     setZoomFactor(clamp(nextZoom, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
-  };
-
-  const moveOffset = (nextX: number, nextY: number) => {
-    // FIXED: map clampOffset result to { x, y }
-    const clamped = clampOffset(
-      nextX,
-      nextY,
-      displayWidth,
-      displayHeight,
-      cropSize.width,
-      cropSize.height,
-    );
-    setOffset({ x: clamped.offsetX, y: clamped.offsetY });
   };
 
   const handlePointerDown: React.PointerEventHandler<HTMLDivElement> = (event) => {
@@ -389,10 +326,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         startOffsetX: offset.x,
         startOffsetY: offset.y,
       };
-
-      if (remaining) {
-        // Just rely on the current clamped offset
-      }
     }
   };
 
@@ -400,14 +333,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     if (!image) return;
     event.preventDefault();
 
-    const delta = event.deltaY > 0 ? -0.08 : 0.08;
+    const delta = event.deltaY > 0 ? -0.05 : 0.05;
     clampZoom(zoomFactor + delta);
-  };
-
-  const resetTransform = () => {
-    setRotation(0);
-    setZoomFactor(minZoom);
-    setOffset({ x: 0, y: 0 });
   };
 
   const handleConfirm = async () => {
@@ -444,97 +371,52 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (!open) return;
-
-    return () => {
-      if (previewUrlRef.current) {
-        URL.revokeObjectURL(previewUrlRef.current);
-        previewUrlRef.current = null;
-      }
-    };
-  }, [open]);
-
-  if (!open || !source) return null;
-
-  const imageAlt = source.fileName || "Выбранное изображение";
-
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      isShaded
-      className="md:max-w-6xl w-full max-h-[100vh] lg:max-h-[92vh] h-full lg:h-auto"
-      header={{
-        title,
-        description,
-        icon: <ArrowLeftRight size={20} />,
-      }}
-      footer={
-        <div className="flex flex-col-reverse sm:flex-row gap-3">
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={resetTransform}
-              className="flex-1 sm:flex-initial h-11 rounded-xl font-bold px-0 sm:px-4"
-              disabled={isProcessing || !image}
-              title="Сбросить"
+    <AnimatePresence>
+      {open && source && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 15 }}
+          transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-between touch-none select-none"
+        >
+          {/* Header */}
+          <div className="w-full flex items-center justify-between px-4 py-4 md:py-6 max-w-screen-md mx-auto">
+            <button
+              onClick={onClose}
+              className="p-3 -ml-3 text-white hover:bg-white/10 rounded-full transition-colors flex items-center gap-2"
             >
-              <RotateCcw size={16} />
-              <span className="hidden sm:inline ml-2">Сбросить</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setRotation((value) => (value + 270) % 360)}
-              className="flex-1 sm:flex-initial h-11 rounded-xl font-bold px-0 sm:px-4"
+              <ArrowLeft size={24} />
+            </button>
+
+            <div className="text-xs font-black uppercase tracking-[0.2em] text-white/50">
+              Кадрирование
+            </div>
+
+            <button
+              onClick={handleConfirm}
               disabled={isProcessing || !image}
-              title="Повернуть влево"
+              className="px-4 py-2 -mr-2 text-brand-primary font-bold tracking-wide transition-colors disabled:opacity-50 hover:bg-brand-primary/10 rounded-full"
             >
-              <RotateCcw size={16} />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setRotation((value) => (value + 90) % 360)}
-              className="flex-1 sm:flex-initial h-11 rounded-xl font-bold px-0 sm:px-4"
-              disabled={isProcessing || !image}
-              title="Повернуть вправо"
-            >
-              <RotateCw size={16} />
-            </Button>
+              {isProcessing ? "ОБРАБОТКА" : "ГОТОВО"}
+            </button>
           </div>
-          <Button
-            type="button"
-            onClick={handleConfirm}
-            className="w-full flex-1 h-11 rounded-xl font-bold"
-            isLoading={isProcessing}
-            disabled={isProcessing || !image}
-          >
-            Готово
-          </Button>
-        </div>
-      }
-    >
-      <div className="grid gap-6 lg:grid-cols-[1.4fr_0.9fr]">
-        <div className="space-y-5">
-          {loadError ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm font-medium text-red-700">
-              {loadError}
-            </div>
-          ) : !image ? (
-            <div className="flex min-h-[420px] items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-slate-50 text-sm font-bold text-slate-500">
-              Загрузка изображения...
-            </div>
-          ) : (
-            <>
+
+          {/* Main Stage */}
+          <div className="flex-1 w-full flex flex-col items-center justify-center relative overscroll-none">
+            {loadError ? (
+              <div className="text-red-400 font-medium px-6 text-center">
+                {loadError}
+              </div>
+            ) : !image ? (
+              <div className="text-white/40 font-bold tracking-widest uppercase animate-pulse">
+                Загрунка...
+              </div>
+            ) : (
               <Stage
                 source={source.src}
-                image={image}
                 cropRef={cropRef}
-                cropWidth={cropSize.width}
-                cropHeight={cropSize.height}
                 displayWidth={displayWidth}
                 displayHeight={displayHeight}
                 offsetX={offset.x}
@@ -544,168 +426,48 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onWheel={handleWheel}
-                imageAlt={imageAlt}
-                label="Область crop"
+                imageAlt={source.fileName || "Выбранное изображение"}
               />
-
-              <div className="grid gap-3 rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-3">
-                <div className="space-y-1">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    Zoom
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => clampZoom(zoomFactor - 0.1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-slate-50"
-                      disabled={isProcessing || !image}
-                    >
-                      <ZoomOut size={16} />
-                    </button>
-                    <input
-                      type="range"
-                      min={MIN_ZOOM_FACTOR}
-                      max={MAX_ZOOM_FACTOR}
-                      step={0.01}
-                      value={zoomFactor}
-                      onChange={(event) =>
-                        clampZoom(parseFloat(event.target.value))
-                      }
-                      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-brand-primary"
-                      aria-label="Zoom"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => clampZoom(zoomFactor + 0.1)}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-slate-50"
-                      disabled={isProcessing || !image}
-                    >
-                      <ZoomIn size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    Поворот
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-slate-700">
-                    {rotation}°
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    Размер
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-slate-700">
-                    {Math.round(displayWidth)} × {Math.round(displayHeight)}
-                  </p>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="hidden lg:block space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                  Original
-                </p>
-                <p className="mt-1 text-sm font-bold text-slate-700 break-all">
-                  {source.fileName}
-                </p>
-              </div>
-              <div className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500">
-                {source.mimeType}
-              </div>
-            </div>
-
-            <div className="mt-4 overflow-hidden rounded-2xl bg-slate-100">
-              <img
-                src={source.src}
-                alt={imageAlt}
-                className="h-56 w-full object-cover"
-              />
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                  Result
-                </p>
-                <p className="mt-1 text-sm font-bold text-slate-700">
-                  Preview after crop
-                </p>
-              </div>
-              <div className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-600">
-                {supportsWebpCanvasEncoding() ? "WebP" : "JPEG"}
-              </div>
-            </div>
-
-            {image ? (
-              <div className="mt-4 overflow-hidden rounded-2xl bg-slate-100">
-                <div
-                  className="relative mx-auto overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(15,23,42,0.96),_rgba(15,23,42,0.88))]"
-                  style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
-                >
-                  <div
-                    className="absolute inset-0 opacity-35"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px)",
-                      backgroundSize: "18px 18px",
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div
-                      className="overflow-hidden"
-                      style={{
-                        width: `${(PREVIEW_SIZE / cropSize.width) * displayWidth}px`,
-                        height: `${(PREVIEW_SIZE / cropSize.height) * displayHeight}px`,
-                        transform: `translate(${offset.x * (PREVIEW_SIZE / cropSize.width)
-                          }px, ${offset.y * (PREVIEW_SIZE / cropSize.height)}px)`,
-                      }}
-                    >
-                      <img
-                        src={source.src}
-                        alt={imageAlt}
-                        draggable={false}
-                        className="h-full w-full object-cover"
-                        style={{
-                          transform: `rotate(${rotation}deg)`,
-                          transformOrigin: "center center",
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 flex h-64 items-center justify-center rounded-2xl bg-slate-50 text-sm font-bold text-slate-400">
-                Результат появится после загрузки изображения
-              </div>
             )}
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-full bg-brand-50 p-2 text-brand-primary">
-                <X size={14} className="rotate-45" />
+          {/* Bottom Controls */}
+          {image && (
+            <div className="w-full max-w-screen-md mx-auto px-6 py-8 flex flex-col gap-8 pb-safe">
+              <div className="flex items-center justify-center gap-6">
+                <button
+                  onClick={() => setRotation((r) => (r - 90) % 360)}
+                  className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95 text-xs font-bold"
+                >
+                  <RotateCcw size={20} />
+                </button>
+
+                <div className="flex flex-1 max-w-[200px] items-center gap-4">
+                  <ZoomOut size={18} className="text-white/50" />
+                  <input
+                    type="range"
+                    min={Math.max(0.01, minZoom)}
+                    max={MAX_ZOOM_FACTOR}
+                    step={0.01}
+                    value={zoomFactor}
+                    onChange={(e) => clampZoom(parseFloat(e.target.value))}
+                    className="w-full h-1 bg-white/20 rounded-full appearance-none accent-white cursor-pointer"
+                  />
+                  <ZoomIn size={18} className="text-white/50" />
+                </div>
+
+                <button
+                  onClick={() => setRotation((r) => (r + 90) % 360)}
+                  className="p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95 text-xs font-bold"
+                >
+                  <RotateCw size={20} />
+                </button>
               </div>
-              <p className="font-medium leading-relaxed">
-                Кадрирование и поворот выполняются локально в браузере. На
-                сервер уйдет только уже готовый файл.
-              </p>
             </div>
-          </div>
-        </div>
-      </div>
-    </Modal>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
