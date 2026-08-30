@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { ArrowLeft, RotateCcw, RotateCw, ZoomIn, ZoomOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -29,11 +29,14 @@ const MAX_ZOOM_FACTOR = 5;
 const MIN_ZOOM_FACTOR = 0.05;
 const OUTPUT_SIZE = 1280;
 
+
 const Stage = ({
   source,
+  image,
   cropRef,
-  displayWidth,
-  displayHeight,
+  baseWidth,
+  baseHeight,
+  cssScale,
   offsetX,
   offsetY,
   rotation,
@@ -44,9 +47,11 @@ const Stage = ({
   imageAlt,
 }: {
   source: string;
+  image: HTMLImageElement;
   cropRef: React.RefObject<HTMLDivElement>;
-  displayWidth: number;
-  displayHeight: number;
+  baseWidth: number;
+  baseHeight: number;
+  cssScale: number;
   offsetX: number;
   offsetY: number;
   rotation: number;
@@ -67,29 +72,23 @@ const Stage = ({
         className="relative aspect-square w-full overflow-hidden bg-black/50 touch-none select-none rounded-[16px] md:rounded-[32px] shadow-2xl border border-white/10"
         style={{ touchAction: "none" }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="relative overflow-hidden will-change-transform"
-            style={{
-              width: `${displayWidth}px`,
-              height: `${displayHeight}px`,
-              transform: `translate(${offsetX}px, ${offsetY}px)`,
-            }}
-          >
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {image && (
             <img
               src={source}
               alt={imageAlt}
               draggable={false}
-              className="h-full w-full select-none object-cover pointer-events-none"
+              className="max-w-none will-change-transform select-none pointer-events-none origin-center"
               style={{
-                transform: `rotate(${rotation}deg)`,
-                transformOrigin: "center center",
+                width: `${baseWidth}px`,
+                height: `${baseHeight}px`,
+                transform: `translate(${offsetX}px, ${offsetY}px) scale(${cssScale}) rotate(${rotation}deg)`,
               }}
             />
-          </div>
+          )}
         </div>
 
-        {/* 3x3 Grid Overlay inspired by Instagram */}
+        {/* 3x3 Grid Overlay */}
         <div className="pointer-events-none absolute inset-0 border border-white/20">
           <div className="absolute left-1/3 top-0 h-full w-px bg-white/30" />
           <div className="absolute left-2/3 top-0 h-full w-px bg-white/30" />
@@ -113,7 +112,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   onConfirm,
 }) => {
   const cropRef = useRef<HTMLDivElement>(null!);
-  const imageRef = useRef<HTMLImageElement | null>(null);
   const pointerStateRef = useRef<{
     pointers: Map<number, { x: number; y: number }>;
     gesture: null
@@ -134,8 +132,24 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [cropSize, setCropSize] = useState({ width: 0, height: 0 });
   const [rotation, setRotation] = useState(0);
-  const [zoomFactor, setZoomFactor] = useState(1);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
+
+  // State refs for fast synced physical gesture math
+  const zoomFactorRef = useRef(1);
+  const offsetRef = useRef({ x: 0, y: 0 });
+
+  const [zoomFactor, _setZoomFactor] = useState(1);
+  const [offset, _setOffset] = useState({ x: 0, y: 0 });
+
+  const setZoomFactor = useCallback((val: number) => {
+    zoomFactorRef.current = val;
+    _setZoomFactor(val);
+  }, []);
+
+  const setOffset = useCallback((val: { x: number; y: number }) => {
+    offsetRef.current = val;
+    _setOffset(val);
+  }, []);
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -150,11 +164,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     setZoomFactor(1);
     setOffset({ x: 0, y: 0 });
     setIsInitialized(false);
+    pointerStateRef.current = { pointers: new Map(), gesture: null };
 
     loadImage(source.src)
       .then((loadedImage) => {
         if (cancelled) return;
-        imageRef.current = loadedImage;
         setImage(loadedImage);
       })
       .catch((error: unknown) => {
@@ -166,7 +180,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [open, source?.src]);
+  }, [open, source?.src, setZoomFactor, setOffset]);
 
   useEffect(() => {
     if (!open || !cropRef.current) return;
@@ -200,7 +214,6 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     if (!image || cropSize.width === 0 || cropSize.height === 0) {
       return 1;
     }
-
     return getMinimumZoom(
       image.naturalWidth,
       image.naturalHeight,
@@ -210,38 +223,79 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     );
   }, [image, cropSize, rotation]);
 
+  // Always use minZoom at rotation 0 for consistent base DOM scale
+  const baseScale = useMemo(() => {
+    if (!image || cropSize.width === 0 || cropSize.height === 0) return 1;
+    return getMinimumZoom(image.naturalWidth, image.naturalHeight, cropSize.width, cropSize.height, 0);
+  }, [image, cropSize.width, cropSize.height]);
+
+  const cssScale = zoomFactor / baseScale;
+  const baseWidth = image ? image.naturalWidth * baseScale : 0;
+  const baseHeight = image ? image.naturalHeight * baseScale : 0;
+
   useEffect(() => {
     if (image && cropSize.width > 0 && cropSize.height > 0 && !isInitialized) {
       setZoomFactor(minZoom);
       setIsInitialized(true);
     }
-  }, [image, cropSize, minZoom, isInitialized]);
+  }, [image, cropSize, minZoom, isInitialized, setZoomFactor]);
 
-  const effectiveScale = zoomFactor;
-  const displayWidth = rotatedDimensions.width * effectiveScale;
-  const displayHeight = rotatedDimensions.height * effectiveScale;
-
+  // Keep strictly bounded
   useEffect(() => {
-    setOffset((prev) => {
-      const clamped = clampOffset(
-        prev.x,
-        prev.y,
-        displayWidth,
-        displayHeight,
-        cropSize.width,
-        cropSize.height,
-      );
-      return { x: clamped.offsetX, y: clamped.offsetY };
-    });
-  }, [displayWidth, displayHeight, cropSize.width, cropSize.height]);
+    if (!isInitialized) return;
+    const currentZ = zoomFactorRef.current;
+    const clampedZ = clamp(currentZ, minZoom, MAX_ZOOM_FACTOR);
 
-  const outputMimeType = supportsWebpCanvasEncoding()
-    ? "image/webp"
-    : "image/jpeg";
+    if (clampedZ !== currentZ) {
+      setZoomFactor(clampedZ);
+    }
 
-  const clampZoom = (nextZoom: number) => {
-    setZoomFactor(clamp(nextZoom, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR));
-  };
+    const dw = rotatedDimensions.width * clampedZ;
+    const dh = rotatedDimensions.height * clampedZ;
+    const currentOffset = offsetRef.current;
+
+    const clampedOffset = clampOffset(
+      currentOffset.x,
+      currentOffset.y,
+      dw,
+      dh,
+      cropSize.width,
+      cropSize.height,
+    );
+
+    if (clampedOffset.offsetX !== currentOffset.x || clampedOffset.offsetY !== currentOffset.y) {
+      setOffset({ x: clampedOffset.offsetX, y: clampedOffset.offsetY });
+    }
+  }, [rotation, minZoom, rotatedDimensions, cropSize, isInitialized, setZoomFactor, setOffset]);
+
+  const applyZoom = useCallback((nextZoom: number, focalScreenX = 0, focalScreenY = 0) => {
+    const startZ = zoomFactorRef.current;
+    const startOffset = offsetRef.current;
+    const clampedZoom = clamp(nextZoom, minZoom, MAX_ZOOM_FACTOR);
+
+    if (startZ === clampedZoom) return;
+
+    const unscaledImgPtX = (focalScreenX - startOffset.x) / startZ;
+    const unscaledImgPtY = (focalScreenY - startOffset.y) / startZ;
+
+    const newOffsetX = focalScreenX - unscaledImgPtX * clampedZoom;
+    const newOffsetY = focalScreenY - unscaledImgPtY * clampedZoom;
+
+    const newDisplayWidth = rotatedDimensions.width * clampedZoom;
+    const newDisplayHeight = rotatedDimensions.height * clampedZoom;
+
+    const clamped = clampOffset(
+      newOffsetX,
+      newOffsetY,
+      newDisplayWidth,
+      newDisplayHeight,
+      cropSize.width,
+      cropSize.height,
+    );
+
+    setZoomFactor(clampedZoom);
+    setOffset({ x: clamped.offsetX, y: clamped.offsetY });
+  }, [minZoom, rotatedDimensions, cropSize, setZoomFactor, setOffset]);
 
   const handlePointerDown: React.PointerEventHandler<HTMLDivElement> = (event) => {
     if (!image) return;
@@ -255,8 +309,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         type: "drag",
         startX: event.clientX,
         startY: event.clientY,
-        startOffsetX: offset.x,
-        startOffsetY: offset.y,
+        startOffsetX: offsetRef.current.x,
+        startOffsetY: offsetRef.current.y,
       };
     }
 
@@ -264,7 +318,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       const [first, second] = Array.from(current.pointers.values());
       current.gesture = {
         type: "pinch",
-        startZoom: zoomFactor,
+        startZoom: zoomFactorRef.current,
         startDistance: Math.hypot(first.x - second.x, first.y - second.y),
       };
     }
@@ -282,11 +336,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       const deltaX = event.clientX - current.gesture.startX;
       const deltaY = event.clientY - current.gesture.startY;
 
+      const currentZ = zoomFactorRef.current;
+      const dw = rotatedDimensions.width * currentZ;
+      const dh = rotatedDimensions.height * currentZ;
+
       const clamped = clampOffset(
         current.gesture.startOffsetX + deltaX,
         current.gesture.startOffsetY + deltaY,
-        displayWidth,
-        displayHeight,
+        dw,
+        dh,
         cropSize.width,
         cropSize.height,
       );
@@ -299,12 +357,15 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       const nextDistance = Math.hypot(first.x - second.x, first.y - second.y);
       if (current.gesture.startDistance === 0) return;
 
-      const nextZoom = clamp(
-        current.gesture.startZoom * (nextDistance / current.gesture.startDistance),
-        MIN_ZOOM_FACTOR,
-        MAX_ZOOM_FACTOR,
-      );
-      setZoomFactor(nextZoom);
+      const nextZoom = current.gesture.startZoom * (nextDistance / current.gesture.startDistance);
+
+      const rect = cropRef.current.getBoundingClientRect();
+      const pinchMidX = (first.x + second.x) / 2;
+      const pinchMidY = (first.y + second.y) / 2;
+      const focalScreenX = pinchMidX - rect.left - rect.width / 2;
+      const focalScreenY = pinchMidY - rect.top - rect.height / 2;
+
+      applyZoom(nextZoom, focalScreenX, focalScreenY);
     }
   };
 
@@ -323,18 +384,24 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         type: "drag",
         startX: remaining.x,
         startY: remaining.y,
-        startOffsetX: offset.x,
-        startOffsetY: offset.y,
+        startOffsetX: offsetRef.current.x,
+        startOffsetY: offsetRef.current.y,
       };
     }
   };
 
   const handleWheel: React.WheelEventHandler<HTMLDivElement> = (event) => {
-    if (!image) return;
+    if (!image || !cropRef.current) return;
     event.preventDefault();
 
-    const delta = event.deltaY > 0 ? -0.05 : 0.05;
-    clampZoom(zoomFactor + delta);
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    const nextZoom = zoomFactorRef.current * (1 + delta);
+
+    const rect = cropRef.current.getBoundingClientRect();
+    const focalScreenX = event.clientX - rect.left - rect.width / 2;
+    const focalScreenY = event.clientY - rect.top - rect.height / 2;
+
+    applyZoom(nextZoom, focalScreenX, focalScreenY);
   };
 
   const handleConfirm = async () => {
@@ -351,17 +418,17 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         cropHeight: cropSize.height,
         outputSize: OUTPUT_SIZE,
         rotation,
-        scale: effectiveScale,
-        offsetX: offset.x,
-        offsetY: offset.y,
-        mimeType: outputMimeType,
+        scale: zoomFactorRef.current,
+        offsetX: offsetRef.current.x,
+        offsetY: offsetRef.current.y,
+        mimeType: supportsWebpCanvasEncoding() ? "image/webp" : "image/jpeg",
       });
 
       const file = new File(
         [blob],
-        getEditorFileName(source.fileName, blob.type || outputMimeType),
+        getEditorFileName(source.fileName, blob.type || "image/jpeg"),
         {
-          type: blob.type || outputMimeType,
+          type: blob.type || "image/jpeg",
         },
       );
 
@@ -411,14 +478,16 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
               </div>
             ) : !image ? (
               <div className="text-white/40 font-bold tracking-widest uppercase animate-pulse">
-                Загрунка...
+                Загрузка...
               </div>
             ) : (
               <Stage
                 source={source.src}
+                image={image}
                 cropRef={cropRef}
-                displayWidth={displayWidth}
-                displayHeight={displayHeight}
+                baseWidth={baseWidth}
+                baseHeight={baseHeight}
+                cssScale={cssScale}
                 offsetX={offset.x}
                 offsetY={offset.y}
                 rotation={rotation}
@@ -450,7 +519,7 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
                     max={MAX_ZOOM_FACTOR}
                     step={0.01}
                     value={zoomFactor}
-                    onChange={(e) => clampZoom(parseFloat(e.target.value))}
+                    onChange={(e) => applyZoom(parseFloat(e.target.value), 0, 0)}
                     className="w-full h-1 bg-white/20 rounded-full appearance-none accent-white cursor-pointer"
                   />
                   <ZoomIn size={18} className="text-white/50" />
